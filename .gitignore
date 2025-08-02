@@ -1,0 +1,37 @@
+# dependencies
+node_modules/
+
+# yarn
+.yarn/
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
+.yarn/install-state.gz
+.yarn/patches/
+.yarn/plugins/
+.yarn/releases/
+.yarn/sdks/
+.yarn/versions/
+.pnp.*
+.yarnrc.yml
+
+# eslint
+.eslintcache
+
+# misc
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# IDE
+.vscode/
+.idea/
+
+# build output
+dist/
+out/
+build/
+
+# environment
+.env
+.env.*
