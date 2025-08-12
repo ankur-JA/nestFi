@@ -1,10 +1,86 @@
-<svg width="103" height="102" viewBox="0 0 103 102" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="0.72229" y="0.99707" width="101.901" height="100.925" rx="19.6606" fill="black"/>
-<path d="M69.4149 42.5046L70.9118 39.812L72.5438 42.5046L83.0241 59.1906L70.9533 65.9361L59.1193 59.1906L69.4149 42.5046Z" fill="white"/>
-<path d="M70.9533 69.2496L60.6577 63.6876L70.9533 79.0719L81.184 63.4985L70.9533 69.2496Z" fill="white"/>
-<path d="M70.953 65.9259V41.8533V39.8499L83.063 59.1785L70.953 65.9259Z" fill="#DFDFDF"/>
-<path d="M70.9617 79.0499L71.0409 69.2969L81.2062 63.4629L70.9617 79.0499Z" fill="#DFDFDF"/>
-<path d="M34.409 21.6931V24.6125H34.4132L34.4124 27.747H26.8093L26.8093 27.7566H25.5383L21.3839 36.4914H34.4135V39.9723H34.4091L34.4135 69.4549C34.4135 73.5268 31.1126 76.8277 27.0408 76.8277H24.7346L19.8064 84.0772H62.4172L57.3539 76.8277H51.7795C47.7076 76.8277 44.4067 73.5268 44.4067 69.4549L44.4024 43.665C44.5071 39.7076 47.7304 36.5273 51.7046 36.4914H79.5481L74.6584 27.7566H53.6021L53.6021 27.747L44.3987 27.7469L44.3994 24.6125H44.4022V18.3245L34.409 21.6931Z" fill="white"/>
-<path d="M39.882 19.8517V76.5496C39.9731 74.9642 41.0475 70.8554 44.3648 69.1027V50.8665L44.4703 50.8998V43.8309C44.4703 39.7591 47.7712 36.4582 51.843 36.4582H79.5812L76.9508 31.8656H49.9083C46.1286 31.8656 44.3648 34.556 44.3648 34.556L44.4435 18.3066L39.882 19.8517Z" fill="#DFDFDF"/>
-<path d="M23.622 31.7927L21.3295 36.5083H34.4247V31.7927H23.622Z" fill="#DFDFDF"/>
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1400" height="700" viewBox="0 0 1400 700" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <title>NestFi — Fancy Graphic Logo</title>
+  <desc>High-end vector logo with glowing gradients, orbital rings, and a stylized N monogram.</desc>
+
+  <defs>
+    <!-- Gradients -->
+    <linearGradient id="grad-ring" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14B8A6"/>
+      <stop offset="50%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#D946EF"/>
+    </linearGradient>
+    <radialGradient id="grad-core" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.9"/>
+      <stop offset="55%" stop-color="#38BDF8" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#14B8A6" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="grad-word" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#F59E0B"/>
+    </linearGradient>
+    <linearGradient id="grad-N" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="100%" stop-color="#D946EF"/>
+    </linearGradient>
+
+    <!-- Filters -->
+    <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+
+    <filter id="soft-shadow" x="-50%" y="-50%" width="200%" height="200%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#000000" flood-opacity="0.45"/>
+    </filter>
+
+    <!-- Sparkle shape -->
+    <g id="sparkle">
+      <circle cx="0" cy="0" r="2.2" fill="#ffffff"/>
+      <path d="M-8 0 H8 M0 -8 V8" stroke="#ffffff" stroke-width="1.2" stroke-linecap="round" opacity="0.9"/>
+    </g>
+  </defs>
+
+  
+
+  <!-- Emblem -->
+  <g transform="translate(150,110)">
+    <!-- Outer glowing halo -->
+    <circle cx="200" cy="200" r="170" fill="url(#grad-core)" filter="url(#glow-strong)" opacity="0.8"/>
+    <!-- Main ring -->
+    <circle cx="200" cy="200" r="160" fill="none" stroke="url(#grad-ring)" stroke-width="22" filter="url(#soft-shadow)"/>
+    <!-- Dash ring -->
+    <circle cx="200" cy="200" r="130" fill="none" stroke="url(#grad-ring)" stroke-opacity="0.45" stroke-width="8" stroke-dasharray="20 18" />
+    <!-- Orbiting nodes -->
+    <circle cx="200" cy="60" r="8" fill="#F59E0B" filter="url(#glow-strong)"/>
+    <circle cx="330" cy="280" r="6" fill="#ffffff" opacity="0.9"/>
+    <circle cx="70"  cy="300" r="6" fill="#ffffff" opacity="0.9"/>
+    <use href="#sparkle" x="270" y="80" transform="scale(1.2)" opacity="0.9"/>
+    <use href="#sparkle" x="90"  y="230" opacity="0.7"/>
+
+    <!-- Stylized N monogram (ribbon strokes) -->
+    <g filter="url(#glow-strong)">
+      <path d="M110 120 L110 280" stroke="url(#grad-N)" stroke-width="30" stroke-linecap="round"/>
+      <path d="M110 120 L290 280" stroke="url(#grad-N)" stroke-width="30" stroke-linecap="round"/>
+      <path d="M290 120 L290 280" stroke="url(#grad-N)" stroke-width="30" stroke-linecap="round"/>
+      <!-- Ribbon highlight -->
+      <path d="M118 135 L118 265" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+      <path d="M283 135 L283 265" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="6" stroke-linecap="round"/>
+    </g>
+    <!-- Core dot -->
+    <circle cx="200" cy="200" r="7" fill="#F59E0B"/>
+  </g>
+
+  <!-- Wordmark -->
+  <g transform="translate(520,220)">
+    <text x="0" y="0" fill="#0B1220" font-family="Inter, ui-sans-serif, system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-weight="900" font-size="140" letter-spacing="1">
+      Nest<tspan fill="url(#grad-word)">Fi</tspan>
+    </text>
+    <!-- Underline sweep -->
+    <path d="M4 24 C140 90, 420 120, 760 48" stroke="url(#grad-word)" stroke-width="10" fill="none" stroke-linecap="round" opacity="0.85" filter="url(#glow-strong)"/>
+  </g>
 </svg>
