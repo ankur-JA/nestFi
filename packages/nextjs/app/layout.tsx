@@ -3,7 +3,6 @@ import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithPro
 import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
-import { VaultProvider } from "./_firebase/VaultContext";
 
 export const metadata = getMetadata({
   title: "NestFi",
@@ -14,11 +13,9 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
     <html suppressHydrationWarning className={``}>
       <body>
-        <VaultProvider>
-            <ThemeProvider enableSystem>
-              <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
-           </ThemeProvider>
-        </VaultProvider>
+        <ThemeProvider enableSystem>
+          <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
+        </ThemeProvider>
       </body>
     </html>
   );

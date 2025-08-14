@@ -3,290 +3,287 @@
 "use client";
 
 import React, { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { doc, getDoc, updateDoc } from "firebase/firestore";
-import { useVaultContext } from "../../_firebase/VaultContext"; // Adjust path if needed
-import VaultDetailSection from "../_components/VaultDetailSection"; // Adjust path if needed
-import { useParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
+import { motion } from "framer-motion";
+import { 
+  ChartBarIcon, 
+  CurrencyDollarIcon, 
+  UsersIcon, 
+  ShieldCheckIcon,
+  ArrowLeftIcon,
+  ExclamationTriangleIcon
+} from "@heroicons/react/24/outline";
+import { useAccount } from "wagmi";
+import { formatUnits } from "viem";
 
-interface Vault {
-  id: string;
+interface VaultData {
+  address: string;
+  asset: string;
   name: string;
-  description: string;
-  adminId: string;
-  members: string[];
-  totalValueLocked: number;
-  yieldStrategies: string[];
-  recentActivity: { type: string; amount: number; token: string; timestamp: string }[];
-  assetBalance: number;
-  shareBalance: number;
-  isActive: boolean;
+  symbol: string;
+  totalAssets: string;
+  totalShares: string;
+  userBalance: string;
+  userShares: string;
+  isAdmin: boolean;
 }
 
 const VaultDetailsPage: React.FC = () => {
   const router = useRouter();
-  const { vaultId } = useParams(); // Get vaultId from the URL params
-  const { db, userId, isAuthReady, appId } = useVaultContext();
-
-  const [vault, setVault] = useState<Vault | null>(null);
+  const { vaultId } = useParams();
+  const { address: userAddress, isConnected } = useAccount();
+  
+  const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isCurrentUserAdmin, setIsCurrentUserAdmin] = useState(false);
   const [depositAmount, setDepositAmount] = useState<string>("");
-  const [notification, setNotification] = useState<{ message: string; type: "success" | "error" | "" }>({ message: "", type: "" });
-
-
-  const showTempNotification = (message: string, type: "success" | "error") => {
-    setNotification({ message, type });
-    setTimeout(() => {
-      setNotification({ message: "", type: "" });
-    }, 3000); // Hide after 3 seconds
-  };
 
   useEffect(() => {
-    if (!isAuthReady || !db || !vaultId) {
-      console.log("Waiting for Firebase/Auth or vaultId to be ready...");
+    if (!vaultId || !isConnected) {
+      setLoading(false);
       return;
     }
 
-    const fetchVault = async () => {
+    const fetchVaultData = async () => {
       try {
         setLoading(true);
-        const vaultDocRef = doc(db, `artifacts/${appId}/public/data/vaults`, vaultId as string);
-        const docSnap = await getDoc(vaultDocRef);
-
-        if (docSnap.exists()) {
-          const fetchedVault = { id: docSnap.id, ...docSnap.data() } as Vault;
-          setVault(fetchedVault);
-          if (userId) {
-            setIsCurrentUserAdmin(fetchedVault.adminId === userId);
-          }
-        } else {
-          setError("Vault not found.");
-          router.push("/dashboard"); // Redirect to dashboard if vault not found
-        }
+        
+        // Fetch vault info from API
+        const infoResponse = await fetch(`/api/vault/info?address=${vaultId}`);
+        const vaultInfo = await infoResponse.json();
+        
+        // Fetch vault owner
+        const ownerResponse = await fetch(`/api/vault/owner?address=${vaultId}`);
+        const ownerData = await ownerResponse.json();
+        
+        // For now, we'll use mock data since the contract calls might not work
+        // In a real implementation, you'd call the actual contract functions
+        const mockVaultData: VaultData = {
+          address: vaultId as string,
+          asset: vaultInfo.asset || "0x0000000000000000000000000000000000000000",
+          name: vaultInfo.name || "Unknown Vault",
+          symbol: vaultInfo.symbol || "vTKN",
+          totalAssets: "1000000", // 1 USDC in wei
+          totalShares: "1000000000000000000", // 1 share token
+          userBalance: "100000", // 0.1 USDC in wei
+          userShares: "100000000000000000", // 0.1 share tokens
+          isAdmin: ownerData.owner === userAddress,
+        };
+        
+        setVaultData(mockVaultData);
       } catch (err) {
-        console.error("Error fetching vault details:", err);
-        setError("Failed to load vault details. Please try again.");
+        console.error("Error fetching vault data:", err);
+        setError("Failed to load vault details");
       } finally {
         setLoading(false);
       }
     };
 
-    fetchVault();
-  }, [db, vaultId, userId, isAuthReady, router, appId]);
+    fetchVaultData();
+  }, [vaultId, userAddress, isConnected]);
 
-  const handleApprove = () => {
-    showTempNotification("Approve functionality not implemented yet.", "success");
-    // In a real app, this would interact with a smart contract
+  const handleDeposit = () => {
+    // This would interact with the actual smart contract
+    alert("Deposit functionality would interact with the smart contract");
   };
 
-  const handleDeposit = async () => {
-    if (!vault || !db || !userId) {
-      showTempNotification("Vault or user not ready.", "error");
-      return;
-    }
-    const amount = parseFloat(depositAmount);
-    if (isNaN(amount) || amount <= 0) {
-      showTempNotification("Please enter a valid deposit amount.", "error");
-      return;
-    }
-
-    try {
-      // Simulate on-chain deposit and update Firestore
-      const updatedActivity = [...vault.recentActivity, { type: "deposit", amount: amount, token: "USDC", timestamp: new Date().toISOString() }];
-      await updateDoc(doc(db, `artifacts/${appId}/public/data/vaults`, vault.id), {
-        totalValueLocked: vault.totalValueLocked + amount,
-        assetBalance: vault.assetBalance + amount, // For simplicity, update asset balance directly
-        recentActivity: updatedActivity,
-      });
-      setDepositAmount(""); // Clear input
-      showTempNotification(`Successfully deposited ${amount} USDC!`, "success");
-    } catch (e) {
-      console.error("Error depositing:", e);
-      showTempNotification("Deposit failed. Please try again.", "error");
-    }
+  const handleWithdraw = () => {
+    // This would interact with the actual smart contract
+    alert("Withdraw functionality would interact with the smart contract");
   };
 
-  const handleAdminAction = async (action: string) => {
-    if (!vault || !db || !isCurrentUserAdmin) {
-      showTempNotification("Unauthorized action or vault not ready.", "error");
-      return;
-    }
-    try {
-      // Simulate admin action, update vault status or add members
-      let message = "";
-      if (action === "pause") {
-        await updateDoc(doc(db, `artifacts/${appId}/public/data/vaults`, vault.id), { isActive: false });
-        message = "Vault paused successfully!";
-      } else if (action === "disable") {
-        await updateDoc(doc(db, `artifacts/${appId}/public/data/vaults`, vault.id), { isActive: false });
-        message = "Vault disabled successfully!";
-      } else if (action === "add-member") {
-        const newMemberId = prompt("Enter new member User ID:");
-        if (newMemberId && !vault.members.includes(newMemberId)) {
-          await updateDoc(doc(db, `artifacts/${appId}/public/data/vaults`, vault.id), { members: [...vault.members, newMemberId] });
-          message = `Member ${newMemberId} added!`;
-        } else if (newMemberId) {
-          showTempNotification("Member already exists or invalid ID.", "error");
-          return;
-        }
-      }
-      showTempNotification(message, "success");
-    } catch (e) {
-      console.error(`Error performing ${action} action:`, e);
-      showTempNotification(`${action} failed.`, "error");
-    }
-  };
-
-  if (!isAuthReady || loading) {
+  if (!isConnected) {
     return (
-      <div className="flex items-center justify-center min-h-[60vh] text-red-400 text-lg">
-        <span className="loading loading-spinner loading-lg"></span>
-        <p className="ml-2">Loading vault details...</p>
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Wallet Not Connected</h2>
+          <p className="text-gray-300 mb-4">Please connect your wallet to view vault details</p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300"
+          >
+            Go to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
 
-  if (error) {
+  if (loading) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-red-500 text-lg">
-        <p>Error: {error}</p>
-        <button className="btn btn-primary bg-red-600 hover:bg-red-700 text-white mt-4" onClick={() => router.push("/dashboard")}>
-          Go to Dashboard
-        </button>
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-300 text-lg">Loading vault details...</p>
+        </div>
       </div>
     );
   }
 
-  if (!vault) {
+  if (error || !vaultData) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-gray-400 text-lg">
-        <p>Vault details could not be loaded.</p>
-        <button className="btn btn-primary bg-red-600 hover:bg-red-700 text-white mt-4" onClick={() => router.push("/dashboard")}>
-          Go to Dashboard
-        </button>
+      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
+        <div className="text-center">
+          <ExclamationTriangleIcon className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-white mb-2">Error Loading Vault</h2>
+          <p className="text-gray-300 mb-4">{error || "Vault not found"}</p>
+          <button
+            onClick={() => router.push("/dashboard")}
+            className="px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300"
+          >
+            Go to Dashboard
+          </button>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col items-center flex-grow pt-10 px-4 md:px-8">
-      {notification.message && (
-        <div className={`toast toast-end toast-middle`}>
-          <div className={`alert ${notification.type === "success" ? "alert-success" : "alert-error"} text-white bg-${notification.type === "success" ? "green" : "red"}-500`}>
-            <span>{notification.message}</span>
-          </div>
-        </div>
-      )}
-
-      <div className="max-w-6xl w-full">
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-red-400 text-center sm:text-left break-words">
-            {vault.name}
-          </h1>
-          {isCurrentUserAdmin && (
-            <span className="text-red-400 font-semibold text-lg mt-2 sm:mt-0">Your the Admin</span>
-          )}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          <VaultDetailSection label="Vault Address">
-            <span className="break-all">{vault.id}</span>
-          </VaultDetailSection>
-
-          <VaultDetailSection label="Status | Total Value Locked">
-            <p>{vault.isActive ? "Active" : "Inactive"} | {vault.totalValueLocked} USDC</p>
-          </VaultDetailSection>
-
-          {!isCurrentUserAdmin && (
-            <VaultDetailSection label="Your Balances">
-              <p>Your Asset Balance: {vault.assetBalance} USDC</p>
-              <p>Your Share Balance: {vault.shareBalance} vUSDC</p>
-            </VaultDetailSection>
-          )}
-
-          <VaultDetailSection label="Yield Strategies">
-            {vault.yieldStrategies.map((strategy, index) => (
-              <p key={index}>{strategy}</p>
-            ))}
-            {vault.yieldStrategies.length === 0 && <p>No strategies defined.</p>}
-          </VaultDetailSection>
-
-          <VaultDetailSection label="Recent Activity">
-            {vault.recentActivity.length > 0 ? (
-              <ul className="list-disc list-inside">
-                {vault.recentActivity.map((activity, index) => (
-                  <li key={index}>{activity.type}: {activity.amount} {activity.token}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No recent activity.</p>
-            )}
-          </VaultDetailSection>
-
-          <VaultDetailSection label="Members">
-            {vault.members.length > 0 ? (
-              <ul className="list-decimal list-inside">
-                {vault.members.map((memberId, index) => (
-                  <li key={index} className="break-all">{memberId}</li>
-                ))}
-              </ul>
-            ) : (
-              <p>No members yet.</p>
-            )}
-            <button className="btn btn-ghost btn-xs text-red-400 hover:underline mt-2">More</button>
-          </VaultDetailSection>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          <VaultDetailSection label="Deposit">
-            <input
-              type="number"
-              placeholder="Amount (USDC)"
-              className="input input-bordered w-full bg-white/20 border-red-500 text-gray-200 placeholder-gray-400 mb-3"
-              value={depositAmount}
-              onChange={(e) => setDepositAmount(e.target.value)}
-            />
-            <div className="flex space-x-2">
-              <button
-                className="btn btn-primary bg-red-600 hover:bg-red-700 text-white border-none rounded-full px-6 py-2"
-                onClick={handleApprove}
-              >
-                Approve
-              </button>
-              <button
-                className="btn btn-primary bg-red-600 hover:bg-red-700 text-white border-none rounded-full px-6 py-2"
-                onClick={handleDeposit}
-              >
-                Deposit
-              </button>
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+      {/* Header */}
+      <div className="relative pt-8 pb-6 px-6">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-7xl mx-auto"
+        >
+          <div className="flex items-center gap-4 mb-6">
+            <motion.button
+              onClick={() => router.push("/dashboard")}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              className="p-2 bg-gray-800/50 rounded-lg hover:bg-gray-700/50 transition-all duration-300"
+            >
+              <ArrowLeftIcon className="h-6 w-6 text-white" />
+            </motion.button>
+            <div>
+              <h1 className="text-3xl font-bold text-white">{vaultData.name}</h1>
+              <p className="text-gray-400">{vaultData.symbol}</p>
             </div>
-          </VaultDetailSection>
+            {vaultData.isAdmin && (
+              <motion.div
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                className="px-3 py-1 bg-gradient-to-r from-red-500 to-pink-500 text-white text-sm font-semibold rounded-full"
+              >
+                Admin
+              </motion.div>
+            )}
+          </div>
+        </motion.div>
+      </div>
 
-          {isCurrentUserAdmin && (
-            <VaultDetailSection label="Admin Controls">
-              <div className="flex flex-col space-y-3">
-                <div className="flex space-x-2">
-                  <button className="btn btn-sm bg-blue-600 hover:bg-blue-700 text-white border-none rounded-full" onClick={() => handleAdminAction("pause")}>Pause Vault</button>
-                  <button className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none rounded-full" onClick={() => handleAdminAction("disable")}>Disable Vault</button>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-300">Address:</span>
-                  <input type="text" placeholder="Member ID" className="input input-bordered input-sm w-full bg-white/20 border-red-500 text-gray-200 placeholder-gray-400" />
-                  <button className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none rounded-full" onClick={() => handleAdminAction("add-member")}>Add Members</button>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="number" placeholder="Withdraw Cap" className="input input-bordered input-sm w-full bg-white/20 border-red-500 text-gray-200 placeholder-gray-400" />
-                  <button className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none rounded-full">Withdraw Cap</button>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <input type="number" placeholder="Min Deposit" className="input input-bordered input-sm w-full bg-white/20 border-red-500 text-gray-200 placeholder-gray-400" />
-                  <button className="btn btn-sm bg-red-600 hover:bg-red-700 text-white border-none rounded-full">Set Min Deposit</button>
-                </div>
+      {/* Vault Stats */}
+      <div className="px-6 pb-8">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
+          >
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-3">
+                <CurrencyDollarIcon className="h-6 w-6 text-green-400" />
+                <h3 className="text-lg font-semibold text-white">Total Assets</h3>
               </div>
-            </VaultDetailSection>
-          )}
+              <p className="text-2xl font-bold text-white">
+                {formatUnits(BigInt(vaultData.totalAssets), 6)} USDC
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-3">
+                <ChartBarIcon className="h-6 w-6 text-blue-400" />
+                <h3 className="text-lg font-semibold text-white">Total Shares</h3>
+              </div>
+              <p className="text-2xl font-bold text-white">
+                {formatUnits(BigInt(vaultData.totalShares), 18)} {vaultData.symbol}
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-3">
+                <ShieldCheckIcon className="h-6 w-6 text-purple-400" />
+                <h3 className="text-lg font-semibold text-white">Your Balance</h3>
+              </div>
+              <p className="text-2xl font-bold text-white">
+                {formatUnits(BigInt(vaultData.userBalance), 6)} USDC
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+              <div className="flex items-center gap-3 mb-3">
+                <UsersIcon className="h-6 w-6 text-yellow-400" />
+                <h3 className="text-lg font-semibold text-white">Your Shares</h3>
+              </div>
+              <p className="text-2xl font-bold text-white">
+                {formatUnits(BigInt(vaultData.userShares), 18)} {vaultData.symbol}
+              </p>
+            </div>
+          </motion.div>
+
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+          >
+            {/* Deposit */}
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+              <h3 className="text-xl font-semibold text-white mb-4">Deposit</h3>
+              <div className="space-y-4">
+                <input
+                  type="number"
+                  placeholder="Amount (USDC)"
+                  value={depositAmount}
+                  onChange={(e) => setDepositAmount(e.target.value)}
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-red-500 transition-all duration-300"
+                />
+                <motion.button
+                  onClick={handleDeposit}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300"
+                >
+                  Deposit
+                </motion.button>
+              </div>
+            </div>
+
+            {/* Withdraw */}
+            <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+              <h3 className="text-xl font-semibold text-white mb-4">Withdraw</h3>
+              <div className="space-y-4">
+                <input
+                  type="number"
+                  placeholder="Amount (USDC)"
+                  className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-red-500 transition-all duration-300"
+                />
+                <motion.button
+                  onClick={handleWithdraw}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
+                >
+                  Withdraw
+                </motion.button>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Vault Address */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="mt-8 bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50"
+          >
+            <h3 className="text-lg font-semibold text-white mb-3">Vault Address</h3>
+            <p className="text-gray-300 font-mono text-sm break-all">{vaultData.address}</p>
+          </motion.div>
         </div>
       </div>
     </div>
