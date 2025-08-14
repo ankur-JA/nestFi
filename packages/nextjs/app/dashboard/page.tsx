@@ -11,7 +11,7 @@ import {
   UserIcon
 } from "@heroicons/react/24/outline";
 import VaultCard from "./_components/VaultCard";
-import { useDeFiVaults } from "../../hooks/useDeFiVaults";
+import { useVaultFactory } from "../../hooks/useVaultFactory";
 
 interface DashboardStats {
   totalVaults: number;
@@ -22,25 +22,13 @@ interface DashboardStats {
 
 const DashboardPage: React.FC = () => {
   const { address: userAddress, isConnected } = useAccount();
-  const { userVaults, loading, error } = useDeFiVaults();
+  const { userVaults, loading, error } = useVaultFactory();
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalVaults: 0,
     totalValueLocked: "0",
     totalMembers: 0,
     averageAPY: "0",
   });
-
-  // Handle loading and error states gracefully
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black flex items-center justify-center">
-        <div className="text-center">
-          <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-300 text-lg">Loading your vaults...</p>
-        </div>
-      </div>
-    );
-  }
 
   // Calculate dashboard stats from user vaults
   useEffect(() => {
@@ -75,13 +63,14 @@ const DashboardPage: React.FC = () => {
     }
   }, [isConnected, userAddress]); // Removed refetchUserVaults from dependency array
 
-  if (!isConnected) {
-    return (
-      <div className="flex flex-col items-center justify-center flex-grow pt-10 px-4 md:px-8 bg-black text-white">
+  return (
+    <div className="flex flex-col items-center flex-grow pt-10 px-4 md:px-8 bg-black text-white">
+      {/* Not connected state */}
+      {!isConnected && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="text-center"
+          className="text-center mt-20"
         >
           <BanknotesIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold text-gray-300 mb-2">Connect Your Wallet</h2>
@@ -89,12 +78,20 @@ const DashboardPage: React.FC = () => {
             Connect your wallet to view your vaults and manage your investments
           </p>
         </motion.div>
-      </div>
-    );
-  }
+      )}
 
-  return (
-    <div className="flex flex-col items-center flex-grow pt-10 px-4 md:px-8 bg-black text-white">
+      {/* Loading state */}
+      {isConnected && loading && (
+        <div className="min-h-[40vh] w-full flex items-center justify-center">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-300 text-lg">Loading your vaults...</p>
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
+      {isConnected && !loading && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -248,6 +245,7 @@ const DashboardPage: React.FC = () => {
           </div>
         )}
       </motion.div>
+      )}
     </div>
   );
 };
