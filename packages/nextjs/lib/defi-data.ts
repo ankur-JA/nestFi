@@ -41,6 +41,12 @@ export class DeFiDataService {
   // Get user vaults with metadata
   static async getUserVaults(userAddress: string): Promise<VaultData[]> {
     try {
+      // Check if GraphQL client is available
+      if (!graphClient) {
+        console.warn('GraphQL client not available, returning empty vaults');
+        return [];
+      }
+
       const { data } = await graphClient.query({
         query: gql(VAULT_QUERIES.GET_USER_VAULTS),
         variables: { userAddress },
@@ -74,13 +80,19 @@ export class DeFiDataService {
       return enhancedVaults;
     } catch (error) {
       console.error('Error fetching user vaults:', error);
-      throw new Error('Failed to fetch user vaults');
+      // Return empty array instead of throwing for better UX
+      return [];
     }
   }
 
   // Get vault details with full data
   static async getVaultDetails(vaultAddress: string, userAddress?: string): Promise<VaultData> {
     try {
+      // Check if GraphQL client is available
+      if (!graphClient) {
+        throw new Error('GraphQL client not available');
+      }
+
       const { data } = await graphClient.query({
         query: gql(VAULT_QUERIES.GET_VAULT_DETAILS),
         variables: { vaultAddress },
@@ -130,6 +142,12 @@ export class DeFiDataService {
   // Get vault transactions
   static async getVaultTransactions(vaultAddress: string, first: number = 10, skip: number = 0): Promise<Transaction[]> {
     try {
+      // Check if GraphQL client is available
+      if (!graphClient) {
+        console.warn('GraphQL client not available, returning empty transactions');
+        return [];
+      }
+
       const { data } = await graphClient.query({
         query: gql(VAULT_QUERIES.GET_VAULT_TRANSACTIONS),
         variables: { vaultAddress, first, skip },
@@ -171,7 +189,8 @@ export class DeFiDataService {
       return transactions.sort((a, b) => parseInt(b.timestamp) - parseInt(a.timestamp));
     } catch (error) {
       console.error('Error fetching vault transactions:', error);
-      throw new Error('Failed to fetch vault transactions');
+      // Return empty array instead of throwing for better UX
+      return [];
     }
   }
 
@@ -207,6 +226,15 @@ export class DeFiDataService {
 
 // React hooks for DeFi data
 export const useUserVaults = (userAddress: string) => {
+  // Only use GraphQL if client is available
+  if (!graphClient) {
+    return {
+      data: { vaults: [] },
+      loading: false,
+      error: null,
+    };
+  }
+
   return useQuery(gql(VAULT_QUERIES.GET_USER_VAULTS), {
     variables: { userAddress },
     skip: !userAddress,
@@ -215,6 +243,15 @@ export const useUserVaults = (userAddress: string) => {
 };
 
 export const useVaultDetails = (vaultAddress: string) => {
+  // Only use GraphQL if client is available
+  if (!graphClient) {
+    return {
+      data: { vault: null },
+      loading: false,
+      error: null,
+    };
+  }
+
   return useQuery(gql(VAULT_QUERIES.GET_VAULT_DETAILS), {
     variables: { vaultAddress },
     skip: !vaultAddress,
@@ -223,6 +260,15 @@ export const useVaultDetails = (vaultAddress: string) => {
 };
 
 export const useVaultTransactions = (vaultAddress: string, first: number = 10, skip: number = 0) => {
+  // Only use GraphQL if client is available
+  if (!graphClient) {
+    return {
+      data: { deposits: [], withdrawals: [] },
+      loading: false,
+      error: null,
+    };
+  }
+
   return useQuery(gql(VAULT_QUERIES.GET_VAULT_TRANSACTIONS), {
     variables: { vaultAddress, first, skip },
     skip: !vaultAddress,

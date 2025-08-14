@@ -17,18 +17,25 @@ const authLink = setContext((_, { headers }) => {
   }
 });
 
-export const graphClient = new ApolloClient({
-  link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
-  defaultOptions: {
-    watchQuery: {
-      errorPolicy: 'all',
+// Create Apollo Client only on the client side
+let graphClient: ApolloClient<any> | null = null;
+
+if (typeof window !== 'undefined') {
+  graphClient = new ApolloClient({
+    link: authLink.concat(httpLink),
+    cache: new InMemoryCache(),
+    defaultOptions: {
+      watchQuery: {
+        errorPolicy: 'all',
+      },
+      query: {
+        errorPolicy: 'all',
+      },
     },
-    query: {
-      errorPolicy: 'all',
-    },
-  },
-});
+  });
+}
+
+export { graphClient };
 
 // GraphQL queries for vault data
 export const VAULT_QUERIES = {
