@@ -100,7 +100,7 @@ export const Header = () => {
       initial={{ y: -100, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
-      className="sticky top-0 z-40 navbar h-20 shrink-0 justify-between bg-gradient-to-r from-black/95 via-gray-900/95 to-black/95 backdrop-blur-xl shadow-2xl shadow-red-500/20 border-b border-red-500/20 px-4"
+      className="sticky top-0 z-40 navbar h-24 shrink-0 justify-between bg-gradient-to-r from-black/95 via-gray-900/95 to-black/95 backdrop-blur-xl shadow-2xl shadow-red-500/20 border-b border-red-500/20 px-6"
     >
       {/* Animated background elements */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -131,12 +131,12 @@ export const Header = () => {
         </div>
 
         {/* Mobile Logo */}
-        <Link href="/" passHref className="lg:hidden flex items-center gap-2 ml-2 mr-4 shrink-0 group">
+        <Link href="/" passHref className="lg:hidden flex items-center gap-2 ml-2 mr-6 shrink-0 group">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative w-40 h-12"
+            className="relative w-32 h-10"
             whileHover={{ scale: 1.05 }}
           >
             {/* Glow effect */}
@@ -164,12 +164,12 @@ export const Header = () => {
         </Link>
 
         {/* Logo */}
-        <Link href="/" passHref className="hidden lg:flex items-center gap-3 ml-4 mr-8 shrink-0 group">
+        <Link href="/" passHref className="hidden lg:flex items-center gap-3 ml-2 mr-12 shrink-0 group">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
-            className="relative w-56 h-16"
+            className="relative w-48 h-14"
             whileHover={{ scale: 1.05 }}
           >
             {/* Glow effect */}
@@ -218,49 +218,35 @@ export const Header = () => {
           </motion.div>
         </Link>
 
-        {/* Desktop menu */}
-        <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">
-          <HeaderMenuLinks />
-        </ul>
+        {/* Navigation Menu */}
+        <div className="hidden lg:flex items-center gap-6 mr-8">
+          {menuLinks.map(({ label, href, icon }) => (
+            <motion.div
+              key={label}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link
+                href={href}
+                className="flex items-center gap-2 px-4 py-2.5 text-gray-300 hover:text-white transition-all duration-300 rounded-lg hover:bg-red-500/10 hover:shadow-lg hover:shadow-red-500/20"
+              >
+                {icon}
+                <span className="font-medium">{label}</span>
+              </Link>
+            </motion.div>
+          ))}
+        </div>
       </div>
 
       {/* Right side */}
       <div className="navbar-end grow relative z-10">
-        <div className="flex items-center gap-2">
-          {/* Network indicator */}
-          {isLocalNetwork && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-              className="hidden sm:flex items-center gap-1.5 px-2.5 py-1.5 bg-gradient-to-r from-yellow-500/20 to-orange-500/20 rounded-lg border border-yellow-500/30"
-            >
-              <div className="w-1.5 h-1.5 bg-yellow-400 rounded-full animate-pulse" />
-              <span className="text-xs font-medium text-yellow-300">Local</span>
-            </motion.div>
-          )}
-
-          {/* Faucet button */}
-          {isLocalNetwork && (
-            <motion.div
-              initial={{ opacity: 0, scale: 0.8 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.4 }}
-            >
-              <FaucetButton />
-            </motion.div>
-          )}
-
-          {/* Connect button */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.5, delay: 0.5 }}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
-          >
-            <RainbowKitCustomConnectButton />
-          </motion.div>
+        {/* Right side elements */}
+        <div className="flex items-center gap-4 ml-auto">
+          <FaucetButton />
+          <RainbowKitCustomConnectButton />
         </div>
       </div>
     </motion.div>

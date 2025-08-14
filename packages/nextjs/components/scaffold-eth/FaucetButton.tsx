@@ -64,40 +64,15 @@ export const FaucetButton = () => {
       whileHover={{ scale: 1.05 }}
       whileTap={{ scale: 0.95 }}
     >
-      <motion.button 
-        className={`relative px-3 py-2 rounded-lg font-semibold transition-all duration-300 overflow-hidden text-sm ${
-          isBalanceZero 
-            ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40" 
-            : "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-300 hover:text-white hover:from-gray-600 hover:to-gray-700"
-        }`}
-        onClick={sendETH} 
+      <motion.button
+        className="btn btn-primary btn-sm px-3 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl hover:shadow-yellow-500/25 transition-all duration-300 border-0"
         disabled={loading}
+        onClick={sendETH}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
       >
-        <motion.div
-          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
-            isBalanceZero 
-              ? "bg-gradient-to-r from-yellow-600 to-orange-600" 
-              : "bg-gradient-to-r from-gray-600 to-gray-700"
-          }`}
-          style={{ zIndex: -1 }}
-        />
-        <span className="relative z-10 flex items-center gap-1.5">
-          {!loading ? (
-            <motion.div
-              animate={{ rotate: isBalanceZero ? 360 : 0 }}
-              transition={{ duration: 0.5, ease: "easeInOut" }}
-            >
-              <BanknotesIcon className="h-3.5 w-3.5" />
-            </motion.div>
-          ) : (
-            <span className="loading loading-spinner loading-xs"></span>
-          )}
-          {isBalanceZero && <span className="text-xs">Faucet</span>}
-        </span>
-        <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-          style={{ zIndex: -1 }}
-        />
+        <BanknotesIcon className="h-3.5 w-3.5" />
+        {balance === 0n && <span className="ml-1">Faucet</span>}
       </motion.button>
     </motion.div>
   );
