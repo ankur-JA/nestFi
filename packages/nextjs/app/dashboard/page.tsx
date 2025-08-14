@@ -11,7 +11,7 @@ import {
   UserIcon
 } from "@heroicons/react/24/outline";
 import VaultCard from "./_components/VaultCard";
-import { useVaultFactory } from "../../hooks/useVaultFactory";
+import { useDeFiVaults } from "../../hooks/useDeFiVaults";
 
 interface DashboardStats {
   totalVaults: number;
@@ -22,7 +22,7 @@ interface DashboardStats {
 
 const DashboardPage: React.FC = () => {
   const { address: userAddress, isConnected } = useAccount();
-  const { userVaults, loading, error } = useVaultFactory();
+  const { userVaults, loading, error } = useDeFiVaults();
   const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
     totalVaults: 0,
     totalValueLocked: "0",

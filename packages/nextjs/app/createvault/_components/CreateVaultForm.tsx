@@ -12,10 +12,10 @@ import {
   ChartBarIcon,
   ShieldCheckIcon
 } from "@heroicons/react/24/outline";
-import { useVaultFactory } from "~~/hooks/useVaultFactory";
+import { useDeFiVaults } from "~~/hooks/useDeFiVaults";
 
 export const CreateVaultForm = () => {
-  const { createVault, loading, error } = useVaultFactory();
+  const { createVault, loading, error } = useDeFiVaults();
   
   const [formData, setFormData] = useState({
     name: "",
