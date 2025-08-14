@@ -15,6 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useAccount } from "wagmi";
 import { formatUnits } from "viem";
+import { useVaultContract } from "~~/hooks/useVaultContract";
 
 interface VaultData {
   address: string;
@@ -37,6 +38,21 @@ const VaultDetailsPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [depositAmount, setDepositAmount] = useState<string>("");
+  const [memberToAllow, setMemberToAllow] = useState<string>("");
+  const [newDepositCap, setNewDepositCap] = useState<string>("");
+  const [newMinDeposit, setNewMinDeposit] = useState<string>("");
+
+  // On-chain vault hook
+  const {
+    vaultData: chainVault,
+    loading: chainLoading,
+    pause,
+    unpause,
+    setAllowlist,
+    setDepositCap,
+    setMinDeposit,
+    deposit,
+  } = useVaultContract((vaultId as string) || undefined);
 
   useEffect(() => {
     if (!vaultId || !isConnected) {
@@ -82,9 +98,25 @@ const VaultDetailsPage: React.FC = () => {
     fetchVaultData();
   }, [vaultId, userAddress, isConnected]);
 
+  // When on-chain data is available, hydrate UI values
+  useEffect(() => {
+    if (!vaultId || !chainVault) return;
+    setVaultData(prev => ({
+      address: (vaultId as string) || prev?.address || "",
+      asset: (prev?.asset ?? chainVault.asset) as string,
+      name: chainVault.name || prev?.name || "Vault",
+      symbol: chainVault.symbol || prev?.symbol || "vTKN",
+      totalAssets: (chainVault.totalAssets?.toString?.() as string) || prev?.totalAssets || "0",
+      totalShares: (chainVault.totalSupply?.toString?.() as string) || prev?.totalShares || "0",
+      userBalance: (chainVault.userBalance?.toString?.() as string) || prev?.userBalance || "0",
+      userShares: (chainVault.userShares?.toString?.() as string) || prev?.userShares || "0",
+      isAdmin: prev?.isAdmin ?? false,
+    }));
+  }, [vaultId, chainVault]);
+
   const handleDeposit = () => {
-    // This would interact with the actual smart contract
-    alert("Deposit functionality would interact with the smart contract");
+    if (!depositAmount) return;
+    deposit(depositAmount);
   };
 
   const handleWithdraw = () => {
@@ -170,6 +202,16 @@ const VaultDetailsPage: React.FC = () => {
                 Admin
               </motion.div>
             )}
+          </div>
+
+          {/* Sub header pills */}
+          <div className="flex flex-wrap gap-3">
+            <div className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 text-sm font-mono">
+              Vault Address: <span className="text-white">{vaultData.address}</span>
+            </div>
+            <div className="px-3 py-2 bg-white/5 border border-white/10 rounded-xl text-gray-300 text-sm">
+              {chainVault?.isPaused ? "Paused" : "Active"} | Total Value Locked: {formatUnits(BigInt(vaultData.totalAssets || "0"), 6)} USDC
+            </div>
           </div>
         </motion.div>
       </div>
@@ -274,6 +316,60 @@ const VaultDetailsPage: React.FC = () => {
             </div>
           </motion.div>
 
+          {/* Admin Controls */}
+          {vaultData.isAdmin && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.5 }}
+              className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6"
+            >
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4">Admin Controls</h3>
+                <div className="flex flex-wrap gap-3">
+                  <button onClick={pause} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition">Pause Vault</button>
+                  <button onClick={unpause} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition">Unpause Vault</button>
+                </div>
+                <div className="mt-4 space-y-3">
+                  <div>
+                    <label className="text-sm text-gray-400">Allowlist Address</label>
+                    <div className="mt-1 flex gap-2">
+                      <input value={memberToAllow} onChange={e=>setMemberToAllow(e.target.value)} placeholder="0x..." className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
+                      <button onClick={() => setAllowlist(memberToAllow, true)} className="px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-500 text-white">Add</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Withdraw Cap</label>
+                    <div className="mt-1 flex gap-2">
+                      <input value={newDepositCap} onChange={e=>setNewDepositCap(e.target.value)} placeholder="10000" className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
+                      <button onClick={() => setDepositCap(newDepositCap)} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Set</button>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-sm text-gray-400">Set Min Deposit</label>
+                    <div className="mt-1 flex gap-2">
+                      <input value={newMinDeposit} onChange={e=>setNewMinDeposit(e.target.value)} placeholder="10" className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
+                      <button onClick={() => setMinDeposit(newMinDeposit)} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Set</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4">Yield Strategies</h3>
+                <p className="text-gray-400 text-sm">Aave / UniSwap LP (placeholder)</p>
+                <div className="mt-4 h-40 rounded-lg bg-black/20 border border-white/10" />
+              </div>
+
+              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
+                <ul className="space-y-2 text-gray-300 text-sm">
+                  <li>Deposited 10,000 USDC</li>
+                  <li>Deposited 1,000 USDC</li>
+                </ul>
+              </div>
+            </motion.div>
+          )}
           {/* Vault Address */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

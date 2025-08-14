@@ -95,42 +95,48 @@ export const useVaultFactory = (factoryAddress?: string) => {
     }
 
     setLoading(true);
-    const vaultDetails: VaultInfo[] = [];
-
     try {
-      for (const vaultAddress of vaultAddresses) {
-        try {
-          // Get vault owner
-          const owner = await fetchVaultOwner(vaultAddress);
-          const isAdmin = owner === userAddress;
+      const results = await Promise.all(
+        vaultAddresses.map(async (vaultAddress) => {
+          try {
+            const [ownerResp, infoResp] = await Promise.all([
+              fetch(`/api/vault/owner?address=${vaultAddress}`, { cache: "no-store" }).then(r => r.json()),
+              fetch(`/api/vault/info?address=${vaultAddress}`, { cache: "no-store" }).then(r => r.json()),
+            ]);
 
-          // Get vault info from contract
-          const vaultInfo = await fetchVaultInfo(vaultAddress);
-          
-          vaultDetails.push({
-            address: vaultAddress,
-            owner,
-            asset: vaultInfo.asset,
-            name: vaultInfo.name,
-            symbol: vaultInfo.symbol,
-            allowlistEnabled: vaultInfo.allowlistEnabled,
-            depositCap: vaultInfo.depositCap,
-            minDeposit: vaultInfo.minDeposit,
-            isAdmin,
-          });
-        } catch (err) {
-          console.error(`Error fetching vault details for ${vaultAddress}:`, err);
-          // Continue with other vaults even if one fails
-        }
-      }
+            const owner: string = ownerResp?.owner || "0x0000000000000000000000000000000000000000";
+            const isAdmin = owner.toLowerCase() === (userAddress || "").toLowerCase();
+
+            const vaultInfo = infoResp || {};
+
+            const item: VaultInfo = {
+              address: vaultAddress,
+              owner,
+              asset: vaultInfo.asset || "0x0000000000000000000000000000000000000000",
+              name: vaultInfo.name || "Vault",
+              symbol: vaultInfo.symbol || "vTKN",
+              allowlistEnabled: Boolean(vaultInfo.allowlistEnabled),
+              depositCap: vaultInfo.depositCap || "0",
+              minDeposit: vaultInfo.minDeposit || "0",
+              isAdmin,
+            };
+
+            return item;
+          } catch (err) {
+            console.error(`Error fetching vault details for ${vaultAddress}:`, err);
+            return null;
+          }
+        })
+      );
+
+      setUserVaults(results.filter(Boolean) as VaultInfo[]);
     } catch (err) {
       console.error("Error in fetchVaultDetails:", err);
       // Don't set error state for read errors as they're expected when contracts aren't deployed
+    } finally {
+      setLoading(false);
     }
-
-    setUserVaults(vaultDetails);
-    setLoading(false);
-  }, [userAddress, fetchVaultInfo, fetchVaultOwner]);
+  }, [userAddress]);
 
   useEffect(() => {
     if (userAddress && userVaultAddresses) {

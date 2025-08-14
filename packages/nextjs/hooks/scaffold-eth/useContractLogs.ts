@@ -26,12 +26,17 @@ export const useContractLogs = (address: Address) => {
 
     return client?.watchBlockNumber({
       onBlockNumber: async (_blockNumber, prevBlockNumber) => {
-        const newLogs = await client.getLogs({
-          address: address,
-          fromBlock: prevBlockNumber,
-          toBlock: "latest",
-        });
-        setLogs(prevLogs => [...prevLogs, ...newLogs]);
+        try {
+          const from = prevBlockNumber ?? 0n;
+          const newLogs = await client.getLogs({
+            address: address,
+            fromBlock: from,
+            toBlock: "latest",
+          });
+          setLogs(prevLogs => [...prevLogs, ...newLogs]);
+        } catch (error) {
+          console.error("Failed to fetch logs on new block:", error);
+        }
       },
     });
   }, [address, client]);
