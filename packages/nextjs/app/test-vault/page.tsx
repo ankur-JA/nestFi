@@ -42,7 +42,7 @@ export default function TestVaultPage() {
     }
     
     createVault({
-      asset: "0x9d4454B023096f34B160D6B654540c56A1F81688", // MockUSDC address
+      asset: "0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575", // MockUSDC address
       ...formData,
     });
   };
