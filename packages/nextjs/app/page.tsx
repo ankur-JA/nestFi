@@ -2,28 +2,24 @@
 
 import Link from "next/link";
 import type { NextPage } from "next";
-import { useAccount } from "wagmi";
-import { BugAntIcon, MagnifyingGlassIcon } from "@heroicons/react/24/outline";
-import { Address } from "~~/components/scaffold-eth";
 import Image from "next/image";
 import { motion } from "framer-motion";
 
-
-
 const Home: NextPage = () => {
-  const { address: connectedAddress } = useAccount();
-
   return (
-     // Added a subtle radial gradient to the background
+    // Added a subtle radial gradient to the background
     <div className="flex flex-col items-center justify-center flex-grow pt-10 bg-black text-white overflow-x-hidden">
       <div className="relative isolate px-4 text-center">
         {/* Decorative background glow */}
-        <div className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80" aria-hidden="true">
+        <div
+          className="absolute inset-x-0 -top-40 -z-10 transform-gpu overflow-hidden blur-3xl sm:-top-80"
+          aria-hidden="true"
+        >
           <div
             className="relative left-[calc(50%-11rem)] aspect-[1155/678] w-[36.125rem] -translate-x-1/2 rotate-[30deg] bg-gradient-to-tr from-[#ff80b5] to-[#9089fc] opacity-30 sm:left-[calc(50%-30rem)] sm:w-[72.1875rem]"
             style={{
               clipPath:
-                'polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)',
+                "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)",
             }}
           />
         </div>
@@ -57,13 +53,13 @@ const Home: NextPage = () => {
         transition={{ duration: 0.5, delay: 0.4 }}
         className="my-8"
       >
-        <Image
-          src="/removed_button.png" // IMPORTANT: Replace this with the actual path to your image
-          width={400}
-          height={300}
-          alt="Two people discussing investments at a table"
-          className="rounded-lg shadow-2xl shadow-red-500/20"
-        />
+        <div className="w-[400px] h-[300px] bg-gradient-to-br from-red-500/20 to-pink-500/20 rounded-lg shadow-2xl shadow-red-500/20 flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-6xl mb-4">
+              <Image src="/removed_button.png" alt="Investment Vault" width={400} height={300} />
+            </div>
+          </div>
+        </div>
       </motion.div>
 
       {/* Get Started Button with Animation */}

@@ -56,5 +56,9 @@
   "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=20.18.3"
+  },
+  "dependencies": {
+    "@headlessui/react": "^2.2.7",
+    "firebase": "^12.1.0"
   }
 }

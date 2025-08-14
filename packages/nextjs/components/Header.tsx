@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
-import { Bars3Icon, BugAntIcon ,HomeIcon, ChartBarIcon, PlusCircleIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon, BugAntIcon, HomeIcon, ChartBarIcon, PlusCircleIcon, InformationCircleIcon } from "@heroicons/react/24/outline";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 import { motion } from "framer-motion";
@@ -20,22 +20,27 @@ export const menuLinks: HeaderMenuLink[] = [
   {
     label: "Home",
     href: "/",
-    icon: <HomeIcon className="h-5 w-5" /> // Increased icon size
+    icon: <HomeIcon className="h-5 w-5" />
   },
   {
     label: "Dashboard",
     href: "/dashboard",
-    icon: <ChartBarIcon className="h-5 w-5" /> // Increased icon size
+    icon: <ChartBarIcon className="h-5 w-5" />
   },
   {
     label: "CreateVault",
     href: "/createvault",
-    icon: <PlusCircleIcon className="h-5 w-5" /> // Increased icon size
+    icon: <PlusCircleIcon className="h-5 w-5" />
+  },
+  {
+    label: "About",
+    href: "/about",
+    icon: <InformationCircleIcon className="h-5 w-5" />
   },
   {
     label: "Debug Contracts",
     href: "/debug",
-    icon: <BugAntIcon className="h-5 w-5" />, // Increased icon size
+    icon: <BugAntIcon className="h-5 w-5" />,
   },
 ];
 
@@ -51,7 +56,6 @@ export const HeaderMenuLinks = () => {
             <Link
               href={href}
               passHref
-              // Changed text-sm to text-base and updated padding
               className={`${
                 isActive ? "bg-red-500/20 text-red-400" : "hover:bg-red-500/10"
               } py-2.5 px-5 text-base font-medium rounded-full gap-2 flex items-center transition-colors duration-300`}
@@ -79,7 +83,8 @@ export const Header = () => {
   });
 
   return (
-    <div className="sticky top-0 z-20 navbar min-h-0 shrink-0 justify-between bg-black/50 backdrop-blur-md shadow-lg shadow-red-500/10 px-0 sm:px-4">
+    // Fixed height for the navbar
+    <div className="sticky top-0 z-20 navbar h-24 shrink-0 justify-between bg-black/50 backdrop-blur-md shadow-lg shadow-red-500/10 px-0 sm:px-4">
       <div className="navbar-start w-auto lg:w-1/2">
         <div className="lg:hidden dropdown">
           <label tabIndex={0} className="ml-1 btn btn-ghost hover:bg-transparent">
@@ -100,8 +105,9 @@ export const Header = () => {
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            // Increased logo size from w-16 h-16 to w-20 h-20
-            className="flex relative w-20 h-20"
+            // We can increase the logo size, and the fixed height of the navbar
+            // will contain it. The Tailwind `h-*` and `w-*` classes are now more for the logo container
+            className="flex relative w-60 h-100" 
           >
             <Image alt="NestFi logo" className="cursor-pointer" fill src="/logo.svg" />
           </motion.div>
