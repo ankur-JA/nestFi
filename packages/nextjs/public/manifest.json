@@ -1,5 +1,15 @@
 {
-  "name": "Scaffold-ETH 2 DApp",
-  "description": "A DApp built with Scaffold-ETH",
-  "iconPath": "logo.svg"
+  "name": "NestFi - DeFi Investment Vaults",
+  "short_name": "NestFi",
+  "description": "Professional DeFi investment vaults for secure and efficient asset management",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#FF6B6B",
+  "background_color": "#000000",
+  "display": "standalone"
 }
