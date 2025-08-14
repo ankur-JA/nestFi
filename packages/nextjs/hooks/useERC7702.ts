@@ -3,13 +3,7 @@ import { useAccount, useWriteContract, useTransaction } from "wagmi";
 import { parseUnits } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
 
-interface GasPaymentData {
-  user: string;
-  token: string;
-  amount: string;
-  deadline: number;
-  signature: string;
-}
+
 
 
 

@@ -11,6 +11,7 @@ import { Address } from "viem";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
+import { motion } from "framer-motion";
 
 /**
  * Custom Wagmi Connect Button (watch balance + custom design)
@@ -32,9 +33,23 @@ export const RainbowKitCustomConnectButton = () => {
             {(() => {
               if (!connected) {
                 return (
-                  <button className="btn btn-primary btn-sm" onClick={openConnectModal} type="button">
-                    Connect Wallet
-                  </button>
+                  <motion.button 
+                    className="relative group px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg shadow-red-500/25 hover:shadow-xl hover:shadow-red-500/40 transition-all duration-300 overflow-hidden" 
+                    onClick={openConnectModal} 
+                    type="button"
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                  >
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-red-600 to-pink-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ zIndex: -1 }}
+                    />
+                    <span className="relative z-10">Connect Wallet</span>
+                    <motion.div
+                      className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                      style={{ zIndex: -1 }}
+                    />
+                  </motion.button>
                 );
               }
 
@@ -44,12 +59,17 @@ export const RainbowKitCustomConnectButton = () => {
 
               return (
                 <>
-                  <div className="flex flex-col items-center mr-1">
-                    <Balance address={account.address as Address} className="min-h-0 h-auto" />
-                    <span className="text-xs" style={{ color: networkColor }}>
+                  <motion.div 
+                    className="flex flex-col items-center mr-3 p-3 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/50 backdrop-blur-sm"
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <Balance address={account.address as Address} className="min-h-0 h-auto text-white font-semibold" />
+                    <span className="text-xs text-gray-300 mt-1" style={{ color: networkColor }}>
                       {chain.name}
                     </span>
-                  </div>
+                  </motion.div>
                   <AddressInfoDropdown
                     address={account.address as Address}
                     displayName={account.displayName}

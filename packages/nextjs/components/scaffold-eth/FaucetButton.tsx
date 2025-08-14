@@ -7,6 +7,7 @@ import { useAccount } from "wagmi";
 import { BanknotesIcon } from "@heroicons/react/24/outline";
 import { useTransactor } from "~~/hooks/scaffold-eth";
 import { useWatchBalance } from "~~/hooks/scaffold-eth/useWatchBalance";
+import { motion } from "framer-motion";
 
 // Number of ETH faucet sends to an address
 const NUM_OF_ETH = "1";
@@ -53,21 +54,51 @@ export const FaucetButton = () => {
   const isBalanceZero = balance && balance.value === 0n;
 
   return (
-    <div
+    <motion.div
       className={
         !isBalanceZero
-          ? "ml-1"
-          : "ml-1 tooltip tooltip-bottom tooltip-primary tooltip-open font-bold before:left-auto before:transform-none before:content-[attr(data-tip)] before:-translate-x-2/5"
+          ? "relative group"
+          : "relative group tooltip tooltip-bottom tooltip-primary tooltip-open font-bold before:left-auto before:transform-none before:content-[attr(data-tip)] before:-translate-x-2/5"
       }
       data-tip="Grab funds from faucet"
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
     >
-      <button className="btn btn-secondary btn-sm px-2 rounded-full" onClick={sendETH} disabled={loading}>
-        {!loading ? (
-          <BanknotesIcon className="h-4 w-4" />
-        ) : (
-          <span className="loading loading-spinner loading-xs"></span>
-        )}
-      </button>
-    </div>
+      <motion.button 
+        className={`relative px-4 py-3 rounded-xl font-semibold transition-all duration-300 overflow-hidden ${
+          isBalanceZero 
+            ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40" 
+            : "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-300 hover:text-white hover:from-gray-600 hover:to-gray-700"
+        }`}
+        onClick={sendETH} 
+        disabled={loading}
+      >
+        <motion.div
+          className={`absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ${
+            isBalanceZero 
+              ? "bg-gradient-to-r from-yellow-600 to-orange-600" 
+              : "bg-gradient-to-r from-gray-600 to-gray-700"
+          }`}
+          style={{ zIndex: -1 }}
+        />
+        <span className="relative z-10 flex items-center gap-2">
+          {!loading ? (
+            <motion.div
+              animate={{ rotate: isBalanceZero ? 360 : 0 }}
+              transition={{ duration: 0.5, ease: "easeInOut" }}
+            >
+              <BanknotesIcon className="h-4 w-4" />
+            </motion.div>
+          ) : (
+            <span className="loading loading-spinner loading-xs"></span>
+          )}
+          {isBalanceZero && <span className="text-xs">Faucet</span>}
+        </span>
+        <motion.div
+          className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+          style={{ zIndex: -1 }}
+        />
+      </motion.button>
+    </motion.div>
   );
 };

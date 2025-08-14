@@ -74,7 +74,7 @@ export const useGaslessVault = () => {
     } finally {
       setLoading(false);
     }
-  }, [userAddress, executeWithGasPayment, executePermit2]);
+  }, [userAddress, executeWithGasPayment]);
 
   /**
    * Create Permit2 signature for token approval
