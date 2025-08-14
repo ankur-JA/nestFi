@@ -2,15 +2,19 @@
 
 A modern, gasless DeFi platform for creating and managing investment vaults with ERC-4626 standard and ERC-7702 gasless transactions.
 
+Made with ❤️ by Gearhead (solo builder)
+
 ## ✨ Features
 
 - **🪺 ERC-4626 Vaults**: Standard-compliant investment vaults
 - **⚡ Gasless Transactions**: ERC-7702 integration for gasless deposits
 - **🔐 Permit2 Support**: Off-chain approvals for seamless UX
 - **🎯 Allowlist Management**: Control who can join your vaults
-- **📊 Real-time Dashboard**: Track vault performance and user positions
+- **📊 Live Dashboard**: On‑chain reads with Wagmi/Viem (no centralized DB)
 - **🎨 Modern UI**: Beautiful, responsive interface with animations
 - **🔧 Factory Pattern**: Easy vault creation and management
+- **🗂️ Firebase‑free**: Pure Web3 data model (no Firebase)
+- **📈 Optional Indexing**: The Graph support is available but disabled by default
 
 ## 🏗️ Architecture
 
@@ -23,6 +27,23 @@ A modern, gasless DeFi platform for creating and managing investment vaults with
 │ • Vault Creation│    │ • GroupVault    │    │ • Permit2       │
 │ • User Mgmt     │    │ • MockUSDC      │    │ • Relayer       │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
+
+Optional: The Graph subgraph → consumed via Apollo Client on the client‑side only.
+
+No Firebase. No centralized DB.
+
+---
+
+## 🧠 Data & Indexing
+
+- Default setup reads directly from the blockchain using Wagmi/Viem and simple API routes.
+- The Graph is supported for richer lists/analytics, but is off by default to simplify local development.
+- To enable The Graph in the frontend, set an endpoint:
+  - `packages/nextjs/.env.local`
+    ```env
+    NEXT_PUBLIC_GRAPH_ENDPOINT=https://api.thegraph.com/subgraphs/name/<owner>/<subgraph>
+    ```
+  If not provided, the app gracefully falls back to on‑chain reads only.
 ```
 
 ## 🚀 Quick Start
@@ -53,7 +74,7 @@ A modern, gasless DeFi platform for creating and managing investment vaults with
    # Edit .env with your private key
    ```
 
-4. **Deploy contracts**
+4. **Deploy contracts (local Anvil)**
    ```bash
    cd packages/foundry
    yarn deploy --reset
@@ -139,7 +160,7 @@ nestfi/
 ### Key Technologies
 
 - **Smart Contracts**: Solidity, OpenZeppelin, Foundry
-- **Frontend**: Next.js 14, React, TypeScript, Tailwind CSS
+- **Frontend**: Next.js App Router, React, TypeScript, Tailwind CSS
 - **Web3**: Wagmi v2, Viem, RainbowKit
 - **UI/UX**: Framer Motion, Headless UI
 - **Gasless**: ERC-7702, Permit2
@@ -184,9 +205,11 @@ yarn test
 PRIVATE_KEY=your_private_key
 RPC_URL=your_rpc_url
 
-# Frontend
+# Frontend (App)
 NEXT_PUBLIC_CHAIN_ID=10
 NEXT_PUBLIC_RPC_URL=your_optimism_rpc
+# Optional (enable Graph indexing)
+NEXT_PUBLIC_GRAPH_ENDPOINT=
 ```
 
 ## 🔒 Security
@@ -220,10 +243,9 @@ MIT License - see [LICENSE](LICENSE) for details
 
 ## 🆘 Support
 
-- **Documentation**: [docs.nestfi.com](https://docs.nestfi.com)
-- **Discord**: [discord.gg/nestfi](https://discord.gg/nestfi)
-- **Twitter**: [@nestfi](https://twitter.com/nestfi)
+- **Repository**: https://github.com/ankur-JA/nestFi
+- **Issues**: Open a GitHub issue in the repo
 
 ---
 
-**Built with ❤️ by the NestFi team**
+**Made with ❤️ by Gearhead**

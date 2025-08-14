@@ -79,7 +79,7 @@ export default function AboutHeader() {
 
         {/* Title */}
         <div className="flex flex-col items-start">
-          <h1 className="text-5xl md:text-7xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-pink-400 to-purple-400">
+          <h1 className="text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-red-400 via-pink-400 to-purple-400 drop-shadow-[0_10px_30px_rgba(236,72,153,0.25)]">
             About
           </h1>
           <motion.div
@@ -109,15 +109,15 @@ export default function AboutHeader() {
         transition={{ duration: 0.8, delay: 0.6 }}
         className="flex flex-wrap items-center justify-center gap-6 mb-8"
       >
-        <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-red-500/30">
+        <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-red-500/30 shadow shadow-red-500/10">
           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
           <span className="text-sm text-gray-300">ERC-4626 Standard</span>
         </div>
-        <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-red-500/30">
+        <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-red-500/30 shadow shadow-red-500/10">
           <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse delay-300"></div>
           <span className="text-sm text-gray-300">Gasless Transactions</span>
         </div>
-        <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-red-500/30">
+        <div className="flex items-center space-x-2 px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full border border-red-500/30 shadow shadow-red-500/10">
           <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse delay-600"></div>
           <span className="text-sm text-gray-300">Multi-Sig Security</span>
         </div>

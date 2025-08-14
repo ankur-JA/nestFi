@@ -1,10 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
 import { BanknotesIcon, StarIcon, UserIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { useVaultContract } from "../../../hooks/useVaultContract";
 import { formatUnits } from "viem";
+import { useRouter } from "next/navigation";
 
 interface VaultInfo {
   address: string;
@@ -31,6 +32,7 @@ const VaultCard: React.FC<VaultCardProps> = ({
 }) => {
   const { vaultData, loading } = useVaultContract(vaultAddress);
   const [isHovered, setIsHovered] = useState(false);
+  const router = useRouter();
 
   // Use vaultInfo if provided, otherwise use vaultData
   const displayName = vaultInfo?.name || vaultData?.name || "Vault";
@@ -62,6 +64,15 @@ const VaultCard: React.FC<VaultCardProps> = ({
       return "0.00";
     }
   };
+
+  const handleView = useCallback(() => {
+    router.push(`/dashboard/${vaultAddress}`);
+  }, [router, vaultAddress]);
+
+  const handlePrimary = useCallback(() => {
+    // For now, both Manage (admin) and Deposit (member) go to the same detail page
+    router.push(`/dashboard/${vaultAddress}`);
+  }, [router, vaultAddress]);
 
   return (
     <motion.div
@@ -165,10 +176,10 @@ const VaultCard: React.FC<VaultCardProps> = ({
 
       {/* Action Buttons */}
       <div className="flex space-x-2">
-        <button className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-red-600 hover:to-pink-600 transition-all duration-200">
+        <button onClick={handlePrimary} className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-red-600 hover:to-pink-600 transition-all duration-200">
           {isCurrentUserAdmin ? "Manage" : "Deposit"}
         </button>
-        <button className="flex-1 bg-white/10 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-white/20 transition-all duration-200">
+        <button onClick={handleView} className="flex-1 bg-white/10 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-white/20 transition-all duration-200">
           View
         </button>
       </div>

@@ -2,25 +2,27 @@ import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
 // The Graph endpoint for indexing blockchain data
-const GRAPH_ENDPOINT = process.env.NEXT_PUBLIC_GRAPH_ENDPOINT || 'https://api.thegraph.com/subgraphs/name/your-subgraph';
+const GRAPH_ENDPOINT = process.env.NEXT_PUBLIC_GRAPH_ENDPOINT;
 
-const httpLink = createHttpLink({
-  uri: GRAPH_ENDPOINT,
-});
+// Determine if endpoint looks valid (avoid placeholder/defaults)
+const isGraphEndpointValid = !!GRAPH_ENDPOINT && /^https?:\/\//.test(GRAPH_ENDPOINT) && !GRAPH_ENDPOINT.includes('your-subgraph');
 
-const authLink = setContext((_, { headers }) => {
-  return {
-    headers: {
-      ...headers,
-      // Add any API keys if needed
-    }
-  }
-});
-
-// Create Apollo Client only on the client side
 let graphClient: ApolloClient<any> | null = null;
 
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && isGraphEndpointValid) {
+  const httpLink = createHttpLink({
+    uri: GRAPH_ENDPOINT as string,
+    fetchOptions: { mode: 'cors' },
+  });
+
+  const authLink = setContext((_, { headers }) => {
+    return {
+      headers: {
+        ...headers,
+      },
+    };
+  });
+
   graphClient = new ApolloClient({
     link: authLink.concat(httpLink),
     cache: new InMemoryCache(),
@@ -33,9 +35,12 @@ if (typeof window !== 'undefined') {
       },
     },
   });
+} else if (typeof window !== 'undefined') {
+  console.warn('GraphQL disabled: set NEXT_PUBLIC_GRAPH_ENDPOINT to a valid The Graph subgraph URL.');
 }
 
 export { graphClient };
+export const isGraphEnabled = !!graphClient;
 
 // GraphQL queries for vault data
 export const VAULT_QUERIES = {
