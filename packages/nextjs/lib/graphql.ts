@@ -1,46 +1,11 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
-import { setContext } from '@apollo/client/link/context';
+// Graph functionality disabled in production build to avoid dependency bloat.
 
 // The Graph endpoint for indexing blockchain data
 const GRAPH_ENDPOINT = process.env.NEXT_PUBLIC_GRAPH_ENDPOINT;
 
 // Determine if endpoint looks valid (avoid placeholder/defaults)
-const isGraphEndpointValid = !!GRAPH_ENDPOINT && /^https?:\/\//.test(GRAPH_ENDPOINT) && !GRAPH_ENDPOINT.includes('your-subgraph');
-
-let graphClient: ApolloClient<any> | null = null;
-
-if (typeof window !== 'undefined' && isGraphEndpointValid) {
-  const httpLink = createHttpLink({
-    uri: GRAPH_ENDPOINT as string,
-    fetchOptions: { mode: 'cors' },
-  });
-
-  const authLink = setContext((_, { headers }) => {
-    return {
-      headers: {
-        ...headers,
-      },
-    };
-  });
-
-  graphClient = new ApolloClient({
-    link: authLink.concat(httpLink),
-    cache: new InMemoryCache(),
-    defaultOptions: {
-      watchQuery: {
-        errorPolicy: 'all',
-      },
-      query: {
-        errorPolicy: 'all',
-      },
-    },
-  });
-} else if (typeof window !== 'undefined') {
-  console.warn('GraphQL disabled: set NEXT_PUBLIC_GRAPH_ENDPOINT to a valid The Graph subgraph URL.');
-}
-
-export { graphClient };
-export const isGraphEnabled = !!graphClient;
+export const graphClient = null as any;
+export const isGraphEnabled = false;
 
 // GraphQL queries for vault data
 export const VAULT_QUERIES = {
