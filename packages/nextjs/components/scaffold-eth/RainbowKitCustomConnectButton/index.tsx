@@ -60,13 +60,13 @@ export const RainbowKitCustomConnectButton = () => {
               return (
                 <>
                   <motion.div 
-                    className="flex flex-col items-center mr-3 p-3 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-xl border border-gray-700/50 backdrop-blur-sm"
+                    className="flex flex-col items-center mr-2 p-2 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg border border-gray-700/50 backdrop-blur-sm"
                     initial={{ opacity: 0, scale: 0.8 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <Balance address={account.address as Address} className="min-h-0 h-auto text-white font-semibold" />
-                    <span className="text-xs text-gray-300 mt-1" style={{ color: networkColor }}>
+                    <Balance address={account.address as Address} className="min-h-0 h-auto text-white font-semibold text-sm" />
+                    <span className="text-xs text-gray-300 mt-0.5" style={{ color: networkColor }}>
                       {chain.name}
                     </span>
                   </motion.div>

@@ -65,7 +65,7 @@ export const FaucetButton = () => {
       whileTap={{ scale: 0.95 }}
     >
       <motion.button 
-        className={`relative px-4 py-3 rounded-xl font-semibold transition-all duration-300 overflow-hidden ${
+        className={`relative px-3 py-2 rounded-lg font-semibold transition-all duration-300 overflow-hidden text-sm ${
           isBalanceZero 
             ? "bg-gradient-to-r from-yellow-500 to-orange-500 text-white shadow-lg shadow-yellow-500/25 hover:shadow-xl hover:shadow-yellow-500/40" 
             : "bg-gradient-to-r from-gray-700 to-gray-800 text-gray-300 hover:text-white hover:from-gray-600 hover:to-gray-700"
@@ -81,13 +81,13 @@ export const FaucetButton = () => {
           }`}
           style={{ zIndex: -1 }}
         />
-        <span className="relative z-10 flex items-center gap-2">
+        <span className="relative z-10 flex items-center gap-1.5">
           {!loading ? (
             <motion.div
               animate={{ rotate: isBalanceZero ? 360 : 0 }}
               transition={{ duration: 0.5, ease: "easeInOut" }}
             >
-              <BanknotesIcon className="h-4 w-4" />
+              <BanknotesIcon className="h-3.5 w-3.5" />
             </motion.div>
           ) : (
             <span className="loading loading-spinner loading-xs"></span>
