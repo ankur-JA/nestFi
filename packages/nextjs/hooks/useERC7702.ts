@@ -64,10 +64,22 @@ export const useERC7702 = () => {
         throw new Error("No wallet connected");
       }
 
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      // Use viem for signing instead of ethers
+      const { createWalletClient, custom } = await import('viem');
+      const { mainnet } = await import('viem/chains');
+      
+      const client = createWalletClient({
+        chain: mainnet,
+        transport: custom(window.ethereum)
+      });
 
-      const signature = await signer._signTypedData(domain, types, message);
+      const signature = await client.signTypedData({
+        account: userAddress as `0x${string}`,
+        domain,
+        types,
+        primaryType: 'GasPayment',
+        message
+      });
       return signature;
     } catch (err) {
       console.error("Error creating gas payment signature:", err);
@@ -108,11 +120,11 @@ export const useERC7702 = () => {
         nonce
       );
 
-      const gasPayment: GasPaymentData = {
+      const gasPayment = {
         user: userAddress,
         token,
-        amount,
-        deadline,
+        amount: BigInt(amount),
+        deadline: BigInt(deadline),
         signature,
       };
 
