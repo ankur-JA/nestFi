@@ -40,15 +40,23 @@ export const useVaultFactory = (factoryAddress?: string) => {
   const factoryContractAddress = factoryAddress || deployedContracts[31337]?.VaultFactory?.address;
 
   // Read user's vaults from factory
-  const { data: userVaultAddresses, refetch: refetchUserVaults } = useReadContract({
+  const { data: userVaultAddresses, refetch: refetchUserVaults, error: readError } = useReadContract({
     address: factoryContractAddress as `0x${string}`,
     abi: deployedContracts[31337]?.VaultFactory?.abi || [],
     functionName: "getVaultsByUser" as any,
     args: [userAddress || "0x0000000000000000000000000000000000000000"] as any,
     query: {
-      enabled: !!userAddress && !!factoryContractAddress,
+      enabled: !!userAddress && !!factoryContractAddress && !!deployedContracts[31337]?.VaultFactory?.address,
     },
   });
+
+  // Handle read contract errors
+  useEffect(() => {
+    if (readError) {
+      console.error("Read contract error:", readError);
+      // Don't set error state for read errors as they're expected when contract isn't deployed
+    }
+  }, [readError]);
 
   // Fetch vault owner
   const fetchVaultOwner = useCallback(async (vaultAddress: string): Promise<string> => {
@@ -89,29 +97,35 @@ export const useVaultFactory = (factoryAddress?: string) => {
     setLoading(true);
     const vaultDetails: VaultInfo[] = [];
 
-    for (const vaultAddress of vaultAddresses) {
-      try {
-        // Get vault owner
-        const owner = await fetchVaultOwner(vaultAddress);
-        const isAdmin = owner === userAddress;
+    try {
+      for (const vaultAddress of vaultAddresses) {
+        try {
+          // Get vault owner
+          const owner = await fetchVaultOwner(vaultAddress);
+          const isAdmin = owner === userAddress;
 
-        // Get vault info from contract
-        const vaultInfo = await fetchVaultInfo(vaultAddress);
-        
-        vaultDetails.push({
-          address: vaultAddress,
-          owner,
-          asset: vaultInfo.asset,
-          name: vaultInfo.name,
-          symbol: vaultInfo.symbol,
-          allowlistEnabled: vaultInfo.allowlistEnabled,
-          depositCap: vaultInfo.depositCap,
-          minDeposit: vaultInfo.minDeposit,
-          isAdmin,
-        });
-      } catch (err) {
-        console.error(`Error fetching vault details for ${vaultAddress}:`, err);
+          // Get vault info from contract
+          const vaultInfo = await fetchVaultInfo(vaultAddress);
+          
+          vaultDetails.push({
+            address: vaultAddress,
+            owner,
+            asset: vaultInfo.asset,
+            name: vaultInfo.name,
+            symbol: vaultInfo.symbol,
+            allowlistEnabled: vaultInfo.allowlistEnabled,
+            depositCap: vaultInfo.depositCap,
+            minDeposit: vaultInfo.minDeposit,
+            isAdmin,
+          });
+        } catch (err) {
+          console.error(`Error fetching vault details for ${vaultAddress}:`, err);
+          // Continue with other vaults even if one fails
+        }
       }
+    } catch (err) {
+      console.error("Error in fetchVaultDetails:", err);
+      // Don't set error state for read errors as they're expected when contracts aren't deployed
     }
 
     setUserVaults(vaultDetails);
