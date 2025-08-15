@@ -25,7 +25,7 @@ Made with ❤️ by Gearhead (solo builder)
 │                 │    │                 │    │                 │
 │ • Dashboard     │    │ • VaultFactory  │    │ • ERC-7702      │
 │ • Vault Creation│    │ • GroupVault    │    │ • Permit2       │
-│ • User Mgmt     │    │ • MockUSDC      │    │ • Relayer       │
+│ • User Mgmt     │    │ • USDC (real)   │    │ • Relayer       │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
 
 Optional: The Graph subgraph → consumed via Apollo Client on the client‑side only.
@@ -97,14 +97,14 @@ No Firebase. No centralized DB.
 
 - **`VaultFactory`**: Creates and manages vault instances
 - **`GroupVault`**: ERC-4626 compliant vault implementation
-- **`MockUSDC`**: Test USDC token (6 decimals)
-- **`MockPermit2`**: Test Permit2 contract
+  (Mocks removed for production)
 - **`ERC7702Relayer`**: Gasless transaction relayer
 
 ### Key Features
 
 - **ERC-4626 Standard**: Full compliance with vault standard
-- **Gasless Deposits**: ERC-7702 integration for gasless transactions
+- **Gasless Deposits**: ERC-7702 + Permit2 integration for gasless transactions
+- **Real Strategies**: Pluggable adapters (Aave v3, Compound v3 Comet, Uniswap V3 LP)
 - **Allowlist Control**: Restrict vault access to approved addresses
 - **Deposit Caps**: Set maximum vault capacity
 - **Minimum Deposits**: Enforce minimum investment amounts
@@ -189,7 +189,7 @@ yarn test
    ```
 
 2. **Update USDC Address**
-   - Replace MockUSDC with real USDC address
+   - Set real USDC address
    - Update Permit2 address for Optimism
 
 3. **Deploy Frontend**
@@ -210,6 +210,11 @@ NEXT_PUBLIC_CHAIN_ID=10
 NEXT_PUBLIC_RPC_URL=your_optimism_rpc
 # Optional (enable Graph indexing)
 NEXT_PUBLIC_GRAPH_ENDPOINT=
+
+# Strategy addresses (after adapter deploy)
+NEXT_PUBLIC_AAVE_STRATEGY=
+NEXT_PUBLIC_COMET_STRATEGY=
+NEXT_PUBLIC_UNIV3_STRATEGY=
 ```
 
 ## 🔒 Security

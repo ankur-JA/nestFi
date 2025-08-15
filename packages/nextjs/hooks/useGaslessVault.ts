@@ -89,8 +89,8 @@ export const useGaslessVault = () => {
       const domain = {
         name: "Permit2",
         version: "1",
-        chainId: 31337,
-        verifyingContract: deployedContracts[31337]?.MockPermit2?.address,
+        chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337),
+        verifyingContract: (process.env.NEXT_PUBLIC_PERMIT2_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`,
       };
 
       const types = {

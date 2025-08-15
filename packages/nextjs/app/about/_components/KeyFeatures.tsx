@@ -27,6 +27,21 @@ export default function KeyFeatures() {
           <h3 className="text-lg font-semibold text-red-400 mb-2">Transparent</h3>
           <p className="text-gray-300 text-sm">All transactions and yields are visible on-chain</p>
         </div>
+        <div className="text-center">
+          <div className="text-3xl mb-2">⚡</div>
+          <h3 className="text-lg font-semibold text-red-400 mb-2">Gasless UX</h3>
+          <p className="text-gray-300 text-sm">ERC-7702 + Permit2 for sponsored deposits and smooth approvals</p>
+        </div>
+        <div className="text-center">
+          <div className="text-3xl mb-2">🧩</div>
+          <h3 className="text-lg font-semibold text-red-400 mb-2">Real Strategies</h3>
+          <p className="text-gray-300 text-sm">Aave v3, Compound v3 (Comet), Uniswap V3 LP adapters on Optimism</p>
+        </div>
+        <div className="text-center">
+          <div className="text-3xl mb-2">🛠️</div>
+          <h3 className="text-lg font-semibold text-red-400 mb-2">Admin Controls</h3>
+          <p className="text-gray-300 text-sm">Allowlist, caps, pause; invest/divest into strategies from the UI</p>
+        </div>
       </div>
     </motion.div>
   );

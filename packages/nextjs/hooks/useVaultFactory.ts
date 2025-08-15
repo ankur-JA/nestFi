@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { useAccount, useWriteContract, useTransaction, useReadContract } from "wagmi";
-import { parseUnits } from "viem";
+import { useAccount, useWriteContract, useTransaction, useReadContract, usePublicClient } from "wagmi";
+import { parseUnits, parseAbi } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
 
 interface CreateVaultParams {
@@ -24,10 +24,12 @@ interface VaultInfo {
   depositCap: string;
   minDeposit: string;
   isAdmin: boolean;
+  isMember: boolean;
 }
 
 export const useVaultFactory = (factoryAddress?: string) => {
   const { address: userAddress } = useAccount();
+  const publicClient = usePublicClient();
   const [error, setError] = useState<string | null>(null);
   const [userVaults, setUserVaults] = useState<VaultInfo[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,7 +41,7 @@ export const useVaultFactory = (factoryAddress?: string) => {
 
   const factoryContractAddress = factoryAddress || deployedContracts[31337]?.VaultFactory?.address;
 
-  // Read user's vaults from factory
+  // Read user's own created vaults (fast path) to keep existing behavior
   const { data: userVaultAddresses, refetch: refetchUserVaults, error: readError } = useReadContract({
     address: factoryContractAddress as `0x${string}`,
     abi: deployedContracts[31337]?.VaultFactory?.abi || [],
@@ -96,8 +98,28 @@ export const useVaultFactory = (factoryAddress?: string) => {
 
     setLoading(true);
     try {
+      // Augment list with all created vaults discovered via events so other users can see them
+      let combined = [...vaultAddresses];
+      try {
+        if (publicClient && factoryContractAddress) {
+          const eventAbi = parseAbi([
+            "event VaultCreated(address indexed vault, address indexed owner, address indexed asset, string name, string symbol, bool allowlistEnabled, uint256 depositCap, uint256 minDeposit)"
+          ]);
+          const logs = await publicClient.getLogs({
+            address: factoryContractAddress as `0x${string}`,
+            event: eventAbi[0] as any,
+            fromBlock: 0n,
+            toBlock: "latest",
+          });
+          const fromEvents = (logs || []).map(l => (l as any).args?.vault as string).filter(Boolean);
+          combined = Array.from(new Set([...combined, ...fromEvents]));
+        }
+      } catch (e) {
+        console.warn("Failed to read VaultCreated logs; falling back to user-only vaults.", e);
+      }
+
       const results = await Promise.all(
-        vaultAddresses.map(async (vaultAddress) => {
+        combined.map(async (vaultAddress) => {
           try {
             const [ownerResp, infoResp] = await Promise.all([
               fetch(`/api/vault/owner?address=${vaultAddress}`, { cache: "no-store" }).then(r => r.json()),
@@ -109,6 +131,34 @@ export const useVaultFactory = (factoryAddress?: string) => {
 
             const vaultInfo = infoResp || {};
 
+            // Determine membership: admin OR allowlisted OR has shares
+            let isMember = isAdmin;
+            try {
+              if (publicClient && userAddress) {
+                const erc20Abi = parseAbi([
+                  "function balanceOf(address) view returns (uint256)",
+                  "function isAllowed(address) view returns (bool)"
+                ]);
+                const [bal, allowed] = await Promise.all([
+                  publicClient.readContract({
+                    address: vaultAddress as `0x${string}`,
+                    abi: erc20Abi,
+                    functionName: "balanceOf",
+                    args: [userAddress],
+                  }) as Promise<bigint>,
+                  publicClient.readContract({
+                    address: vaultAddress as `0x${string}`,
+                    abi: erc20Abi,
+                    functionName: "isAllowed",
+                    args: [userAddress],
+                  }) as Promise<boolean>,
+                ]);
+                isMember = isMember || allowed || (bal as bigint) > 0n;
+              }
+            } catch (e) {
+              // ignore membership errors
+            }
+
             const item: VaultInfo = {
               address: vaultAddress,
               owner,
@@ -119,6 +169,7 @@ export const useVaultFactory = (factoryAddress?: string) => {
               depositCap: vaultInfo.depositCap || "0",
               minDeposit: vaultInfo.minDeposit || "0",
               isAdmin,
+              isMember,
             };
 
             return item;
@@ -129,14 +180,16 @@ export const useVaultFactory = (factoryAddress?: string) => {
         })
       );
 
-      setUserVaults(results.filter(Boolean) as VaultInfo[]);
+      const finalVaults = (results.filter(Boolean) as VaultInfo[])
+        .filter(v => v.isAdmin || v.isMember);
+      setUserVaults(finalVaults);
     } catch (err) {
       console.error("Error in fetchVaultDetails:", err);
       // Don't set error state for read errors as they're expected when contracts aren't deployed
     } finally {
       setLoading(false);
     }
-  }, [userAddress]);
+  }, [userAddress, publicClient, factoryContractAddress]);
 
   useEffect(() => {
     if (userAddress && userVaultAddresses) {

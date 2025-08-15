@@ -2,7 +2,7 @@
 
 import React, { useState, useCallback } from "react";
 import { motion } from "framer-motion";
-import { BanknotesIcon, StarIcon, UserIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import { BanknotesIcon, StarIcon, UserIcon } from "@heroicons/react/24/outline";
 import { useVaultContract } from "../../../hooks/useVaultContract";
 import { formatUnits } from "viem";
 import { useRouter } from "next/navigation";
@@ -175,23 +175,11 @@ const VaultCard: React.FC<VaultCardProps> = ({
       </div>
 
       {/* Action Buttons */}
-      <div className="flex space-x-2">
-        <button onClick={handlePrimary} className="flex-1 bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-red-600 hover:to-pink-600 transition-all duration-200">
-          {isCurrentUserAdmin ? "Manage" : "Deposit"}
-        </button>
-        <button onClick={handleView} className="flex-1 bg-white/10 text-white py-2 px-4 rounded-lg text-sm font-medium hover:bg-white/20 transition-all duration-200">
-          View
+      <div className="flex">
+        <button onClick={handleView} className="w-full bg-gradient-to-r from-red-500 to-pink-500 text-white py-2 px-4 rounded-lg text-sm font-medium hover:from-red-600 hover:to-pink-600 transition-all duration-200">
+          View Details
         </button>
       </div>
-
-      {/* Hover Arrow */}
-      <motion.div
-        initial={{ opacity: 0, x: -10 }}
-        animate={{ opacity: isHovered ? 1 : 0, x: isHovered ? 0 : -10 }}
-        className="absolute top-4 right-4 text-red-400"
-      >
-        <ArrowRightIcon className="h-4 w-4" />
-      </motion.div>
     </motion.div>
   );
 };

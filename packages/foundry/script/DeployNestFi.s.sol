@@ -5,8 +5,13 @@ import "./DeployHelpers.s.sol";
 import {GroupVault} from "../contracts/GroupVault.sol";
 import {VaultFactory} from "../contracts/VaultFactory.sol";
 import {ERC7702Relayer} from "../contracts/ERC7702Relayer.sol";
-import {MockUSDC} from "../contracts/MockUSDC.sol";
-import {MockPermit2} from "../contracts/MockPermit2.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {AaveV3Strategy} from "../contracts/strategies/AaveV3Strategy.sol";
+import {IPool} from "../contracts/interfaces/aave/IPool.sol";
+import {CometUSDCStrategy} from "../contracts/strategies/CometUSDCStrategy.sol";
+import {IComet} from "../contracts/interfaces/compound/IComet.sol";
+import {UniswapV3LPStrategy} from "../contracts/strategies/UniswapV3LPStrategy.sol";
+import {INonfungiblePositionManager} from "../contracts/interfaces/uniswap/INonfungiblePositionManager.sol";
 
 /**
  * @notice Deploy script for NestFi contracts
@@ -19,16 +24,12 @@ contract DeployNestFi is ScaffoldETHDeploy {
         uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
         vm.startBroadcast(deployerPrivateKey);
 
-        // Deploy Mock USDC for testing
-        MockUSDC mockUSDC = new MockUSDC();
-        console.log("MockUSDC deployed at:", address(mockUSDC));
-
-        // Deploy Mock Permit2 for testing
-        MockPermit2 mockPermit2 = new MockPermit2();
-        console.log("MockPermit2 deployed at:", address(mockPermit2));
+        // Use real USDC & Permit2 from env
+        address usdc = vm.envAddress("USDC");
+        address permit2Address = vm.envAddress("PERMIT2");
 
         // Deploy ERC-7702 Relayer first
-        address gasToken = address(mockUSDC); // Using Mock USDC as gas token
+        address gasToken = usdc; // Gas token in production (e.g., USDC)
         uint256 gasPriceInToken = 1e6; // 1 USDC per 100k gas (6 decimals for USDC)
 
         ERC7702Relayer erc7702Relayer = new ERC7702Relayer(gasToken, gasPriceInToken);
@@ -39,8 +40,6 @@ contract DeployNestFi is ScaffoldETHDeploy {
         console.log("GroupVault implementation deployed at:", address(implementation));
 
         // Deploy VaultFactory with implementation and Permit2
-        address permit2Address = address(mockPermit2);
-        
         VaultFactory factory = new VaultFactory(implementation, permit2Address);
         console.log("VaultFactory deployed at:", address(factory));
 
@@ -48,9 +47,38 @@ contract DeployNestFi is ScaffoldETHDeploy {
         erc7702Relayer.setRelayerAuthorization(address(factory), true);
         console.log("VaultFactory authorized as ERC-7702 relayer");
 
-        // Mint some USDC to the deployer for testing
-        mockUSDC.mint(vm.addr(deployerPrivateKey), 100000 * 10**6); // 100k USDC
-        console.log("Minted 100k USDC to deployer for testing");
+        // Optionally, for local dev you may mint externally; in prod we skip minting
+
+        // Optionally deploy AaveV3Strategy (requires AAVE_V3_POOL env var)
+        address poolAddr = vm.envOr("AAVE_V3_POOL", address(0));
+        if (poolAddr != address(0)) {
+            AaveV3Strategy strategy = new AaveV3Strategy(IERC20(usdc), IPool(poolAddr));
+            console.log("AaveV3Strategy deployed at:", address(strategy));
+        }
+
+        address cometAddr = vm.envOr("COMET_USDC", address(0));
+        if (cometAddr != address(0)) {
+            CometUSDCStrategy cstrategy = new CometUSDCStrategy(IERC20(usdc), IComet(cometAddr));
+            console.log("CometUSDCStrategy deployed at:", address(cstrategy));
+        }
+
+        // Optional Uniswap V3 LP strategy (requires NFPM, TOKEN1, FEE, TICKS)
+        address nfpmAddr = vm.envOr("UNIV3_NFPM", address(0));
+        address token1 = vm.envOr("UNIV3_TOKEN1", address(0));
+        uint24 fee = uint24(vm.envOr("UNIV3_FEE", uint256(500))); // default 0.05%
+        int24 tickLower = int24(uint24(vm.envOr("UNIV3_TICK_LOWER", uint256(-887220))));
+        int24 tickUpper = int24(uint24(vm.envOr("UNIV3_TICK_UPPER", uint256(887220))));
+        if (nfpmAddr != address(0) && token1 != address(0)) {
+            UniswapV3LPStrategy u3 = new UniswapV3LPStrategy(
+                IERC20(usdc),
+                IERC20(token1),
+                INonfungiblePositionManager(nfpmAddr),
+                fee,
+                tickLower,
+                tickUpper
+            );
+            console.log("UniswapV3LPStrategy deployed at:", address(u3));
+        }
 
         vm.stopBroadcast();
     }

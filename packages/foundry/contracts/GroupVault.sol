@@ -10,6 +10,7 @@ import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/Pau
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IPermit2} from "./interfaces/IPermit2.sol";
 import {IERC7702} from "./interfaces/IERC7702.sol";
+import {IStrategy} from "./interfaces/IStrategy.sol";
 
 /**
  * @title GroupVault
@@ -42,6 +43,9 @@ contract GroupVault is
     mapping(address => bool) public authorizedRelayers;
     uint256 public relayerFee; // Basis points (e.g., 100 = 1%)
     
+    // Strategy
+    IStrategy public strategy; // optional external strategy that holds vault assets
+    
     // Events
     event AllowlistUpdated(address indexed user, bool allowed);
     event DepositCapSet(uint256 cap);
@@ -50,6 +54,10 @@ contract GroupVault is
     event RelayerFeeSet(uint256 fee);
     event GaslessDeposit(address indexed owner, address indexed receiver, uint256 assets, uint256 shares, address indexed relayer);
     event ERC7702RelayerSet(address indexed relayer);
+    event StrategySet(address indexed strategy);
+    event Invested(address indexed strategy, uint256 assets);
+    event Divested(address indexed strategy, uint256 assets);
+    event Harvested(address indexed strategy, uint256 yieldAssets);
 
     // Custom errors
     error NotAllowed();
@@ -116,6 +124,45 @@ contract GroupVault is
         }
         erc7702Relayer = IERC7702(_relayer);
         emit ERC7702RelayerSet(_relayer);
+    }
+
+    /**
+     * @dev Set an optional strategy address to deploy assets into
+     */
+    function setStrategy(address _strategy) external onlyOwner {
+        strategy = IStrategy(_strategy);
+        require(strategy.asset() == address(asset()), "Mismatched asset");
+        emit StrategySet(_strategy);
+    }
+
+    /**
+     * @dev Invest assets from the vault into the strategy (simple transfer)
+     */
+    function invest(uint256 assets) external onlyOwner whenNotPaused {
+        require(address(strategy) != address(0), "No strategy");
+        require(assets > 0, "Zero");
+        IERC20(asset()).approve(address(strategy), assets);
+        strategy.deposit(assets);
+        emit Invested(address(strategy), assets);
+    }
+
+    /**
+     * @dev Divest assets from the strategy back to the vault
+     * Strategy must implement a function to transfer assets back to the caller/vault. For mock strategy, it is a pull via transfer.
+     */
+    function divest(uint256 assets) external onlyOwner whenNotPaused {
+        require(address(strategy) != address(0), "No strategy");
+        require(assets > 0, "Zero");
+        strategy.withdraw(assets);
+        emit Divested(address(strategy), assets);
+    }
+
+    /**
+     * @dev Harvest strategy yield (mock event)
+     */
+    function harvest(uint256 yieldAssets) external onlyOwner whenNotPaused {
+        // In a real strategy, this would call the strategy's harvest and transfer proceeds
+        emit Harvested(address(strategy), yieldAssets);
     }
 
     /**
@@ -296,6 +343,8 @@ contract GroupVault is
      * @dev Returns the total amount of assets in the vault
      */
     function totalAssets() public view override returns (uint256) {
-        return IERC20(asset()).balanceOf(address(this));
+        uint256 inVault = IERC20(asset()).balanceOf(address(this));
+        uint256 inStrategy = address(strategy) == address(0) ? 0 : strategy.totalAssets();
+        return inVault + inStrategy;
     }
 }

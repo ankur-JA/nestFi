@@ -30,17 +30,18 @@ USDC_ADDRESS=0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85
 PERMIT2_ADDRESS=0x000000000022D473030F116dDEE9F6B43aC78BA3
 ```
 
-### 2. Update Contract Addresses
+### 2. Provide Production Addresses (no mocks)
 
-Replace the MockUSDC and MockPermit2 with real contracts:
+Add these to `packages/foundry/.env`:
 
-```solidity
-// In DeployNestFi.s.sol
-// Replace MockUSDC deployment with real USDC address
-address usdcAddress = 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85; // Optimism USDC
+```env
+# Core
+USDC=0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85
+PERMIT2=0x000000000022D473030F116dDEE9F6B43aC78BA3
 
-// Replace MockPermit2 deployment with real Permit2 address  
-address permit2Address = 0x000000000022D473030F116dDEE9F6B43aC78BA3; // Optimism Permit2
+# Optional strategies
+AAVE_V3_POOL=0x...  # Optimism Aave v3 IPool address
+COMET_USDC=0x...    # Optimism Comet USDC market
 ```
 
 ## 🏗️ Smart Contract Deployment

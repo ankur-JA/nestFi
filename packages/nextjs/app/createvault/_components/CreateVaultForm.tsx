@@ -21,14 +21,15 @@ export const CreateVaultForm = () => {
     name: "",
     symbol: "",
     depositCap: "",
-    minDeposit: ""
+    minDeposit: "",
+    allowlistEnabled: false
   });
 
   const [showPassword, setShowPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
 
-  const asset = "0xb7278A61aa25c888815aFC32Ad3cC52fF24fE575"; // MockUSDC address
+  const asset = process.env.NEXT_PUBLIC_USDC_ADDRESS || "";
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -76,7 +77,7 @@ export const CreateVaultForm = () => {
         asset,
         name: formData.name,
         symbol: formData.symbol,
-        allowlistEnabled: false,
+        allowlistEnabled: formData.allowlistEnabled,
         depositCap: formData.depositCap,
         minDeposit: formData.minDeposit,
       });
@@ -95,8 +96,8 @@ export const CreateVaultForm = () => {
     <div className="max-w-4xl mx-auto px-6 py-8">
       {/* Progress Steps */}
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
         className="mb-12"
       >
@@ -213,7 +214,7 @@ export const CreateVaultForm = () => {
                         {validationErrors.name}
                       </motion.p>
                     )}
-                  </motion.div>
+      </motion.div>
 
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
@@ -257,6 +258,18 @@ export const CreateVaultForm = () => {
                       </motion.p>
                     )}
                   </motion.div>
+                </div>
+
+                <div className="mt-4">
+                  <label className="inline-flex items-center gap-2 text-gray-300">
+                    <input
+                      type="checkbox"
+                      checked={formData.allowlistEnabled}
+                      onChange={(e) => handleInputChange("allowlistEnabled", e.target.checked as unknown as string)}
+                      className="h-4 w-4 rounded border-gray-600 bg-gray-800/50"
+                    />
+                    Enable allowlist (only approved addresses can deposit)
+                  </label>
                 </div>
 
                 <motion.div
@@ -312,7 +325,7 @@ export const CreateVaultForm = () => {
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
                         value={formData.depositCap}
                         onChange={(e) => handleInputChange("depositCap", e.target.value)}
                         className={`w-full px-4 py-3 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300 ${
@@ -321,8 +334,8 @@ export const CreateVaultForm = () => {
                             : "border-gray-600 focus:border-red-500 focus:ring-red-500/50"
                         }`}
                         placeholder="10000"
-                        min="0"
-                        step="0.01"
+                        inputMode="decimal"
+                        pattern="^[0-9]*[.,]?[0-9]*$"
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                         USDC
@@ -351,7 +364,7 @@ export const CreateVaultForm = () => {
                     </label>
                     <div className="relative">
                       <input
-                        type="number"
+                        type="text"
                         value={formData.minDeposit}
                         onChange={(e) => handleInputChange("minDeposit", e.target.value)}
                         className={`w-full px-4 py-3 bg-gray-800/50 border rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 transition-all duration-300 ${
@@ -360,8 +373,8 @@ export const CreateVaultForm = () => {
                             : "border-gray-600 focus:border-red-500 focus:ring-red-500/50"
                         }`}
                         placeholder="100"
-                        min="0"
-                        step="0.01"
+                        inputMode="decimal"
+                        pattern="^[0-9]*[.,]?[0-9]*$"
                       />
                       <div className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
                         USDC
@@ -451,8 +464,8 @@ export const CreateVaultForm = () => {
                         <span className="text-white font-medium">{formData.minDeposit} USDC</span>
                       </div>
                     </div>
-                  </div>
-                </motion.div>
+          </div>
+      </motion.div>
 
                 {error && (
                   <motion.div
@@ -468,7 +481,7 @@ export const CreateVaultForm = () => {
                 )}
 
                 <div className="flex justify-between">
-                  <button
+        <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
                     className="px-6 py-3 bg-gray-700 text-white font-semibold rounded-xl hover:bg-gray-600 transition-all duration-300"
@@ -476,7 +489,7 @@ export const CreateVaultForm = () => {
                     Previous
                   </button>
                   <motion.button
-                    type="submit"
+          type="submit"
                     disabled={loading}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}

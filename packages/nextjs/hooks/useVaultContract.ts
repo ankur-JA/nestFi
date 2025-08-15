@@ -19,6 +19,7 @@ export interface VaultData {
   userBalance: bigint;
   userShares: bigint;
   isPaused: boolean;
+  strategy?: string;
 }
 
 export const useVaultContract = (vaultAddress?: string) => {
@@ -94,6 +95,15 @@ export const useVaultContract = (vaultAddress?: string) => {
     },
   });
 
+  const { data: strategyAddr } = useReadContract({
+    address: vaultAddress as `0x${string}`,
+    abi: vaultABI,
+    functionName: "strategy" as any,
+    query: {
+      enabled: !!vaultAddress,
+    },
+  });
+
   const { data: allowlistEnabled, isLoading: allowlistLoading } = useReadContract({
     address: vaultAddress as `0x${string}`,
     abi: vaultABI,
@@ -147,6 +157,11 @@ export const useVaultContract = (vaultAddress?: string) => {
 
   const { writeContract: unpause, isPending: unpauseLoading } = useWriteContract();
 
+  const { writeContract: setStrategyWrite } = useWriteContract();
+  const { writeContract: investWrite } = useWriteContract();
+  const { writeContract: divestWrite } = useWriteContract();
+  const { writeContract: harvestWrite } = useWriteContract();
+
   // Wait for transactions
   const { isLoading: depositTxLoading, isSuccess: depositSuccess } = useTransaction({
     hash: depositData,
@@ -173,6 +188,7 @@ export const useVaultContract = (vaultAddress?: string) => {
         userBalance: userBalance as bigint || 0n,
         userShares: userBalance as bigint || 0n, // balanceOf returns shares
         isPaused: isPaused as boolean || false,
+        strategy: (strategyAddr as string) || undefined,
       });
     }
   }, [
@@ -188,6 +204,7 @@ export const useVaultContract = (vaultAddress?: string) => {
     isAllowed,
     userBalance,
     isPaused,
+    strategyAddr,
   ]);
 
   // Action functions
@@ -320,6 +337,69 @@ export const useVaultContract = (vaultAddress?: string) => {
     }
   }, [vaultAddress, unpause, vaultABI]);
 
+  const handleSetStrategy = useCallback((addr: string) => {
+    if (!vaultAddress || !addr) return;
+    try {
+      setStrategyWrite({
+        address: vaultAddress as `0x${string}`,
+        abi: vaultABI,
+        functionName: "setStrategy" as any,
+        args: [addr],
+      });
+    } catch (err) {
+      setError("Set strategy failed");
+      console.error("Set strategy error:", err);
+    }
+  }, [vaultAddress, setStrategyWrite, vaultABI]);
+
+  const handleInvest = useCallback((assets: string) => {
+    if (!vaultAddress || !assets) return;
+    try {
+      const amt = parseUnits(assets, 6);
+      investWrite({
+        address: vaultAddress as `0x${string}`,
+        abi: vaultABI,
+        functionName: "invest" as any,
+        args: [amt],
+      });
+    } catch (err) {
+      setError("Invest failed");
+      console.error("Invest error:", err);
+    }
+  }, [vaultAddress, investWrite, vaultABI]);
+
+  const handleDivest = useCallback((assets: string) => {
+    if (!vaultAddress || !assets) return;
+    try {
+      const amt = parseUnits(assets, 6);
+      divestWrite({
+        address: vaultAddress as `0x${string}`,
+        abi: vaultABI,
+        functionName: "divest" as any,
+        args: [amt],
+      });
+    } catch (err) {
+      setError("Divest failed");
+      console.error("Divest error:", err);
+    }
+  }, [vaultAddress, divestWrite, vaultABI]);
+
+  const handleHarvest = useCallback((yieldAssets: string) => {
+    if (!vaultAddress || !yieldAssets) return;
+    try {
+      const amt = parseUnits(yieldAssets, 6);
+      harvestWrite({
+        address: vaultAddress as `0x${string}`,
+        abi: vaultABI,
+        functionName: "harvest" as any,
+        args: [amt],
+      });
+    } catch (err) {
+      setError("Harvest failed");
+      console.error("Harvest error:", err);
+    }
+  }, [vaultAddress, harvestWrite, vaultABI]);
+
   // Loading states
   const isLoading =
     nameLoading ||
@@ -352,6 +432,10 @@ export const useVaultContract = (vaultAddress?: string) => {
     setMinDeposit: handleSetMinDeposit,
     pause: handlePause,
     unpause: handleUnpause,
+    setStrategy: handleSetStrategy,
+    invest: handleInvest,
+    divest: handleDivest,
+    harvest: handleHarvest,
     
     // Transaction states
     depositLoading: depositLoading || depositTxLoading,
