@@ -51,7 +51,7 @@ export const FaucetButton = () => {
     return null;
   }
 
-  const isBalanceZero = balance && balance.value === 0n;
+  const isBalanceZero = (balance?.value ?? 0n) === 0n;
 
   return (
     <motion.div
@@ -72,7 +72,7 @@ export const FaucetButton = () => {
         whileTap={{ scale: 0.98 }}
       >
         <BanknotesIcon className="h-3.5 w-3.5" />
-        {balance === 0n && <span className="ml-1">Faucet</span>}
+        {isBalanceZero && <span className="ml-1">Faucet</span>}
       </motion.button>
     </motion.div>
   );
