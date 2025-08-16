@@ -146,7 +146,7 @@ export const CreateVaultForm = () => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl border border-gray-700/50 overflow-hidden"
+        className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl border border-gray-700/50 overflow-hidden sticky top-28"
       >
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
           {/* Step 1: Basic Information */}
