@@ -1,9 +1,6 @@
 // Graph functionality disabled in production build to avoid dependency bloat.
 
-// The Graph endpoint for indexing blockchain data
-const GRAPH_ENDPOINT = process.env.NEXT_PUBLIC_GRAPH_ENDPOINT;
-
-// Determine if endpoint looks valid (avoid placeholder/defaults)
+// Stubs to satisfy imports in production build
 export const graphClient = null as any;
 export const isGraphEnabled = false;
 

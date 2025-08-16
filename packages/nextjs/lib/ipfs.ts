@@ -45,7 +45,7 @@ export class MetadataStorageService {
     }
   }
 
-  static async uploadImage(file: File): Promise<string> {
+  static async uploadImage(_file: File): Promise<string> {
     try {
       const id = `image_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       // In a real implementation, this would upload to IPFS
