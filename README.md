@@ -58,7 +58,7 @@ No Firebase. No centralized DB.
 
 1. **Clone the repository**
    ```bash
-   git clone [repository-url](https://github.com/ankur-JA/nestFi.git)
+   git clone https://github.com/ankur-JA/nestFi.git
    cd nestfi
    ```
 
