@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useAccount, useWriteContract, useTransaction } from "wagmi";
 import { parseUnits } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 import { useERC7702 } from "./useERC7702";
 
 interface Permit2Data {
@@ -89,8 +90,8 @@ export const useGaslessVault = () => {
       const domain = {
         name: "Permit2",
         version: "1",
-        chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337),
-        verifyingContract: (process.env.NEXT_PUBLIC_PERMIT2_ADDRESS || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+        chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111),
+        verifyingContract: (process.env.NEXT_PUBLIC_PERMIT2_ADDRESS || "0x000000000022D473030F116dDEE9F6B43aC78BA3") as `0x${string}`,
       };
 
       const types = {

@@ -6,6 +6,7 @@ import { parseUnits } from "viem";
 import { DeFiDataService, VaultData, VaultMetadata } from "~~/lib/defi-data";
 import { Web3StorageService } from "~~/lib/ipfs";
 import deployedContracts from "../contracts/deployedContracts";
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
 interface CreateVaultParams {
   asset: string;
@@ -27,9 +28,12 @@ export const useDeFiVaults = () => {
   const { writeContract: createVault, data: createVaultData, isPending: createVaultLoading, error: createVaultError } = useWriteContract();
   const { isLoading: createVaultTxLoading, isSuccess: createVaultSuccess, data: createVaultReceipt, error: createVaultTxError } = useTransaction({
     hash: createVaultData,
+    query: {
+      enabled: !!createVaultData,
+    },
   });
 
-  const factoryContractAddress = deployedContracts[31337]?.VaultFactory?.address;
+  const factoryContractAddress = (deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address;
 
   // Fetch user vaults
   const fetchUserVaults = useCallback(async () => {
@@ -103,7 +107,7 @@ export const useDeFiVaults = () => {
 
       createVault({
         address: factoryContractAddress as `0x${string}`,
-        abi: deployedContracts[31337]?.VaultFactory?.abi || [],
+        abi: ((deployedContracts as any)[CHAIN_ID]?.VaultFactory?.abi) || [],
         functionName: "createVault",
         args: [
           params.asset as `0x${string}`,

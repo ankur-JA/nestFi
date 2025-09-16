@@ -2,6 +2,7 @@ import { useState, useCallback } from "react";
 import { useAccount, useWriteContract, useTransaction } from "wagmi";
 import { parseUnits } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
 
 
@@ -31,8 +32,8 @@ export const useERC7702 = () => {
       const domain = {
         name: "ERC7702Relayer",
         version: "1",
-        chainId: 31337, // Anvil chain ID
-        verifyingContract: deployedContracts[31337]?.ERC7702Relayer?.address,
+        chainId: Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111),
+        verifyingContract: (deployedContracts as any)[CHAIN_ID]?.ERC7702Relayer?.address,
       };
 
       const types = {
@@ -125,7 +126,7 @@ export const useERC7702 = () => {
       // Execute the transaction
       executeERC7702({
         address: deployedContracts[31337]?.ERC7702Relayer?.address as `0x${string}`,
-        abi: deployedContracts[31337]?.ERC7702Relayer?.abi || [],
+        abi: ((deployedContracts as any)[CHAIN_ID]?.ERC7702Relayer?.abi) || [],
         functionName: "executeWithGasPayment",
         args: [target, data, gasPayment],
       });
@@ -152,7 +153,7 @@ export const useERC7702 = () => {
       // Encode the deposit function call
       const depositData = {
         address: vaultAddress as `0x${string}`,
-        abi: deployedContracts[31337]?.GroupVault?.abi || [],
+        abi: ((deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi) || [],
         functionName: "depositWithERC7702",
         args: [parseUnits(assets, 6), receiver], // Assuming 6 decimals for USDC
       };
@@ -186,7 +187,7 @@ export const useERC7702 = () => {
       // Encode the withdraw function call
       const withdrawData = {
         address: vaultAddress as `0x${string}`,
-        abi: deployedContracts[31337]?.GroupVault?.abi || [],
+        abi: ((deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi) || [],
         functionName: "withdrawWithERC7702",
         args: [parseUnits(shares, 18), receiver, owner], // Shares have 18 decimals
       };

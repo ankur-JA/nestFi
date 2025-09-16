@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.23;
 
 import "./DeployHelpers.s.sol";
 import {GroupVault} from "../contracts/GroupVault.sol";
@@ -21,8 +21,7 @@ import {INonfungiblePositionManager} from "../contracts/interfaces/uniswap/INonf
  */
 contract DeployNestFi is ScaffoldETHDeploy {
     function run() external {
-        uint256 deployerPrivateKey = vm.envUint("PRIVATE_KEY");
-        vm.startBroadcast(deployerPrivateKey);
+        vm.startBroadcast();
 
         // Use real USDC & Permit2 from env
         address usdc = vm.envAddress("USDC");
@@ -66,8 +65,8 @@ contract DeployNestFi is ScaffoldETHDeploy {
         address nfpmAddr = vm.envOr("UNIV3_NFPM", address(0));
         address token1 = vm.envOr("UNIV3_TOKEN1", address(0));
         uint24 fee = uint24(vm.envOr("UNIV3_FEE", uint256(500))); // default 0.05%
-        int24 tickLower = int24(uint24(vm.envOr("UNIV3_TICK_LOWER", uint256(-887220))));
-        int24 tickUpper = int24(uint24(vm.envOr("UNIV3_TICK_UPPER", uint256(887220))));
+        int24 tickLower = int24(vm.envOr("UNIV3_TICK_LOWER", int256(-887220)));
+        int24 tickUpper = int24(vm.envOr("UNIV3_TICK_UPPER", int256(887220)));
         if (nfpmAddr != address(0) && token1 != address(0)) {
             UniswapV3LPStrategy u3 = new UniswapV3LPStrategy(
                 IERC20(usdc),

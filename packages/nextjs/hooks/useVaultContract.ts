@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useAccount, useReadContract, useWriteContract, useTransaction } from "wagmi";
 import { parseUnits } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
 export interface VaultData {
   address: string;
@@ -29,7 +30,7 @@ export const useVaultContract = (vaultAddress?: string) => {
 
 
   // Use deployed vault ABI
-  const vaultABI = useMemo(() => deployedContracts[31337]?.GroupVault?.abi || [], []);
+  const vaultABI = useMemo(() => (deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi || [], []);
 
   // Read vault data
   const { data: name, isLoading: nameLoading } = useReadContract({

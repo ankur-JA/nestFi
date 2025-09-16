@@ -72,10 +72,7 @@ contract VaultFactory {
         vaultOwner[vault] = msg.sender;
         userVaults[msg.sender].push(vault);
         
-        // Add admin to allowlist if enabled
-        if (allowlistEnabled) {
-            GroupVault(vault).setAllowlist(admin, true);
-        }
+        // Admin is already added to allowlist during initialization if enabled
         
         emit VaultCreated(
             vault,

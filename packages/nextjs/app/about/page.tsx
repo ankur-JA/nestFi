@@ -5,6 +5,7 @@ import AboutHeader from "./_components/AboutHeader";
 import WhatIsNestFi from "./_components/WhatIsNestFi";
 import HowToUse from "./_components/HowToUse";
 import KeyFeatures from "./_components/KeyFeatures";
+import DeployedContracts from "./_components/DeployedContracts";
 import CreatorInfo from "./_components/CreatorInfo";
 import GetStartedCTA from "./_components/GetStartedCTA";
 
@@ -33,6 +34,7 @@ export default function About() {
             <WhatIsNestFi />
             <HowToUse />
             <KeyFeatures />
+            <DeployedContracts />
             <CreatorInfo />
             <GetStartedCTA />
           </motion.div>

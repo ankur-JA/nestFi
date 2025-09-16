@@ -24,19 +24,9 @@ export default function CreateVaultPage() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             transition={{ duration: 0.5 }}
+            className="min-h-screen"
           >
-            <PageHeader />
-            <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-              <div className="sticky top-20 z-10 mb-6 hidden md:block">
-                <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-2xl p-3">
-                  <SparklesIcon className="h-5 w-5 text-pink-400" />
-                  <p className="text-sm text-gray-300">
-                    Tip: You can enable allowlist for private vaults or leave it open for public deposits.
-                  </p>
-                </div>
-              </div>
-              <CreateVaultForm />
-            </div>
+            <CreateVaultForm />
           </motion.div>
         ) : (
           <motion.div

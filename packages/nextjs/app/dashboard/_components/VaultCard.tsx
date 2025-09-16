@@ -37,10 +37,10 @@ const VaultCard: React.FC<VaultCardProps> = ({
   // Use vaultInfo if provided, otherwise use vaultData
   const displayName = vaultInfo?.name || vaultData?.name || "Vault";
   const displaySymbol = vaultInfo?.symbol || vaultData?.symbol || "vTKN";
-  const totalAssets = vaultData?.totalAssets?.toString() || "0";
-  const totalShares = vaultData?.totalSupply?.toString() || "0";
-  const userBalance = vaultData?.userBalance?.toString() || "0";
-  const userShares = vaultData?.userShares?.toString() || "0";
+  const totalAssets = vaultInfo?.totalAssets || vaultData?.totalAssets?.toString() || "0";
+  const totalShares = vaultInfo?.totalSupply || vaultData?.totalSupply?.toString() || "0";
+  const userBalance = vaultInfo?.userBalance || vaultData?.userBalance?.toString() || "0";
+  const userShares = vaultInfo?.userBalance || vaultData?.userShares?.toString() || "0";
 
   // Format values for display
   const formatUSDC = (value: string) => {

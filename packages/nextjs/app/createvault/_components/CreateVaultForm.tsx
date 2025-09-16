@@ -93,14 +93,30 @@ export const CreateVaultForm = () => {
   ];
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8">
-      {/* Progress Steps */}
-      <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6 }}
-        className="mb-12"
-      >
+    <div className="min-h-screen flex items-center justify-center px-6 py-8">
+      <div className="max-w-4xl w-full">
+        {/* Page Title */}
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-8"
+        >
+          <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
+            Create Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-red-500 to-pink-500">Investment Vault</span>
+          </h1>
+          <p className="text-lg text-gray-300 max-w-2xl mx-auto">
+            Build a secure, decentralized investment vault with customizable parameters and yield strategies
+          </p>
+        </motion.div>
+
+        {/* Progress Steps */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="mb-12"
+        >
         <div className="flex items-center justify-center space-x-8">
           {steps.map((step, index) => (
             <motion.div
@@ -141,11 +157,11 @@ export const CreateVaultForm = () => {
         </div>
       </motion.div>
 
-      {/* Form Container */}
-      <motion.div
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.8, delay: 0.2 }}
+        {/* Form Container */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, delay: 0.4 }}
         className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl border border-gray-700/50 overflow-hidden sticky top-28"
       >
         <form onSubmit={handleSubmit} className="p-8 space-y-8">
@@ -423,64 +439,80 @@ export const CreateVaultForm = () => {
                 transition={{ duration: 0.5 }}
                 className="space-y-6"
               >
-                <div className="text-center mb-8">
+                <div className="text-center mb-10">
                   <motion.div
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ duration: 0.5, delay: 0.2 }}
-                    className="w-16 h-16 bg-gradient-to-r from-green-500 to-emerald-500 rounded-2xl flex items-center justify-center mx-auto mb-4"
+                    className="w-20 h-20 bg-gradient-to-r from-green-500 to-emerald-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-lg"
                   >
-                    <ShieldCheckIcon className="h-8 w-8 text-white" />
+                    <ShieldCheckIcon className="h-10 w-10 text-white" />
                   </motion.div>
-                  <h2 className="text-3xl font-bold text-white mb-2">Review & Create</h2>
-                  <p className="text-gray-300">Review your vault configuration and create it</p>
+                  <h2 className="text-4xl font-bold text-white mb-3">Review & Create</h2>
+                  <p className="text-gray-300 text-lg">Review your vault configuration and create it</p>
                 </div>
 
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5, delay: 0.3 }}
-                  className="bg-gray-800/30 rounded-2xl p-6 border border-gray-700/50"
-                >
-                  <h3 className="text-xl font-semibold text-white mb-4">Vault Summary</h3>
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Name:</span>
-                        <span className="text-white font-medium">{formData.name}</span>
+                <div className="max-w-2xl mx-auto">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.3 }}
+                    className="bg-gradient-to-br from-gray-800/40 to-gray-900/40 rounded-3xl p-10 border border-gray-600/30 backdrop-blur-lg shadow-2xl"
+                  >
+                    <h3 className="text-xl font-semibold text-white mb-6 text-center">Vault Summary</h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Name:</span>
+                          <span className="text-white font-medium">{formData.name}</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Symbol:</span>
+                          <span className="text-white font-medium">{formData.symbol}</span>
+                        </div>
                       </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Symbol:</span>
-                        <span className="text-white font-medium">{formData.symbol}</span>
+                      <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Deposit Cap:</span>
+                          <span className="text-white font-medium">{formData.depositCap} USDC</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Min Deposit:</span>
+                          <span className="text-white font-medium">{formData.minDeposit} USDC</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="space-y-3">
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Deposit Cap:</span>
-                        <span className="text-white font-medium">{formData.depositCap} USDC</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-400">Min Deposit:</span>
-                        <span className="text-white font-medium">{formData.minDeposit} USDC</span>
-                      </div>
-                    </div>
-          </div>
-      </motion.div>
+                  </motion.div>
+                </div>
 
                 {error && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="bg-red-500/20 border border-red-500/30 rounded-xl p-4"
-                  >
-                    <p className="text-red-400 text-sm flex items-center gap-2">
-                      <ExclamationTriangleIcon className="h-4 w-4" />
-                      {error}
-                    </p>
-                  </motion.div>
+                  <div className="max-w-2xl mx-auto">
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className={`rounded-xl p-4 ${
+                        error.includes("cancelled") 
+                          ? "bg-yellow-500/20 border border-yellow-500/30" 
+                          : "bg-red-500/20 border border-red-500/30"
+                      }`}
+                    >
+                      <p className={`text-sm flex items-center gap-2 ${
+                        error.includes("cancelled") ? "text-yellow-400" : "text-red-400"
+                      }`}>
+                        <ExclamationTriangleIcon className="h-4 w-4" />
+                        {error}
+                      </p>
+                      {error.includes("cancelled") && (
+                        <p className="text-xs text-gray-400 mt-2">
+                          You can try again when you're ready.
+                        </p>
+                      )}
+                    </motion.div>
+                  </div>
                 )}
 
-                <div className="flex justify-between">
+                <div className="max-w-2xl mx-auto">
+                  <div className="flex justify-between">
         <button
                     type="button"
                     onClick={() => setCurrentStep(2)}
@@ -507,12 +539,14 @@ export const CreateVaultForm = () => {
                       </>
                     )}
                   </motion.button>
+                  </div>
                 </div>
               </motion.div>
             )}
           </AnimatePresence>
         </form>
       </motion.div>
+      </div>
     </div>
   );
 };

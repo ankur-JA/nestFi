@@ -19,6 +19,7 @@ import {
 import { useAccount, usePublicClient } from "wagmi";
 import { formatUnits, parseAbi } from "viem";
 import { useVaultContract } from "~~/hooks/useVaultContract";
+import { VaultManagement } from "../_components/VaultManagement";
 
 interface VaultData {
   address: string;
@@ -45,7 +46,7 @@ const VaultDetailsPage: React.FC = () => {
   const [newDepositCap, setNewDepositCap] = useState<string>("");
   const [newMinDeposit, setNewMinDeposit] = useState<string>("");
   const [copied, setCopied] = useState(false);
-  const [activeTab, setActiveTab] = useState<"overview" | "actions" | "admin">("overview");
+  const [activeTab, setActiveTab] = useState<"overview" | "actions" | "management">("overview");
   const [members, setMembers] = useState<string[]>([]);
   const publicClient = usePublicClient();
   const [strategyAddr, setStrategyAddr] = useState<string>("");
@@ -304,12 +305,12 @@ const VaultDetailsPage: React.FC = () => {
             </button>
             {vaultData.isAdmin && (
               <button
-                onClick={() => setActiveTab("admin")}
+                onClick={() => setActiveTab("management")}
                 className={`px-4 py-2 rounded-lg text-sm border transition ${
-                  activeTab === "admin" ? "bg-white/10 border-white/20 text-white" : "bg-transparent border-white/10 text-gray-300 hover:bg-white/5"
+                  activeTab === "management" ? "bg-white/10 border-white/20 text-white" : "bg-transparent border-white/10 text-gray-300 hover:bg-white/5"
                 }`}
               >
-                <span className="inline-flex items-center gap-2"><Cog6ToothIcon className="h-4 w-4"/>Admin</span>
+                <span className="inline-flex items-center gap-2"><Cog6ToothIcon className="h-4 w-4"/>Management</span>
               </button>
             )}
           </div>
@@ -428,124 +429,17 @@ const VaultDetailsPage: React.FC = () => {
           )}
 
           {/* Admin tab content */}
-          {vaultData.isAdmin && activeTab === "admin" && (
+          {vaultData.isAdmin && activeTab === "management" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6"
+              className="mt-6"
             >
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-semibold text-white mb-4">Admin Controls</h3>
-                <div className="flex flex-wrap gap-3">
-                  <button onClick={pause} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition">Pause Vault</button>
-                  <button onClick={unpause} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 transition">Unpause Vault</button>
-                </div>
-                <div className="mt-4 space-y-3">
-                  <div>
-                    <label className="text-sm text-gray-400">Allowlist Address</label>
-                    <div className="mt-1 flex gap-2">
-                      <input value={memberToAllow} onChange={e=>setMemberToAllow(e.target.value)} placeholder="0x..." className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
-                      <button onClick={() => setAllowlist(memberToAllow, true)} className="px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-500 text-white">Add</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-400">Withdraw Cap</label>
-                    <div className="mt-1 flex gap-2">
-                      <input value={newDepositCap} onChange={e=>setNewDepositCap(e.target.value)} placeholder="10000" className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
-                      <button onClick={() => setDepositCap(newDepositCap)} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Set</button>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="text-sm text-gray-400">Set Min Deposit</label>
-                    <div className="mt-1 flex gap-2">
-                      <input value={newMinDeposit} onChange={e=>setNewMinDeposit(e.target.value)} placeholder="10" className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
-                      <button onClick={() => setMinDeposit(newMinDeposit)} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Set</button>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-semibold text-white mb-1">Yield Strategy</h3>
-                <p className="text-gray-400 text-xs mb-4">Current: {chainVault?.strategy || "none"}</p>
-                <div className="space-y-3">
-                  <div>
-                    <label className="text-sm text-gray-400">Select Strategy</label>
-                    <div className="mt-1 grid grid-cols-1 md:grid-cols-3 gap-2">
-                      <select
-                        value={selectedStrategyKey}
-                        onChange={(e)=>{
-                          const key = e.target.value;
-                          setSelectedStrategyKey(key);
-                          const map: Record<string, string> = {
-                            aave: process.env.NEXT_PUBLIC_AAVE_STRATEGY || "",
-                            comet: process.env.NEXT_PUBLIC_COMET_STRATEGY || "",
-                            univ3: process.env.NEXT_PUBLIC_UNIV3_STRATEGY || "",
-                            custom: "",
-                          };
-                          setStrategyAddr(map[key] || "");
-                        }}
-                        className="px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white"
-                      >
-                        <option value="" disabled>Select…</option>
-                        {process.env.NEXT_PUBLIC_AAVE_STRATEGY && <option value="aave">Aave v3</option>}
-                        {process.env.NEXT_PUBLIC_COMET_STRATEGY && <option value="comet">Compound v3 (Comet)</option>}
-                        {process.env.NEXT_PUBLIC_UNIV3_STRATEGY && <option value="univ3">Uniswap V3 LP</option>}
-                        <option value="custom">Custom</option>
-                      </select>
-                      <input
-                        value={strategyAddr}
-                        onChange={e=>setStrategyAddr(e.target.value)}
-                        placeholder="0x...strategy"
-                        className="px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500 col-span-1 md:col-span-2"
-                      />
-                      <button onClick={() => setStrategy(strategyAddr)} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20 md:col-span-3">Apply Strategy</button>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="space-y-2">
-                      <label className="text-sm text-gray-400">Invest (assets)</label>
-                      <div className="flex gap-2">
-                        <input value={investAmt} onChange={e=>setInvestAmt(e.target.value)} placeholder="1000" className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
-                        <button onClick={() => invest(investAmt)} className="px-4 py-2 rounded-lg bg-gradient-to-r from-red-500 to-pink-500 text-white">Invest</button>
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <label className="text-sm text-gray-400">Divest (assets)</label>
-                      <div className="flex gap-2">
-                        <input value={divestAmt} onChange={e=>setDivestAmt(e.target.value)} placeholder="500" className="flex-1 px-3 py-2 bg-gray-800/50 border border-gray-600 rounded-lg text-white placeholder-gray-500" />
-                        <button onClick={() => divest(divestAmt)} className="px-4 py-2 rounded-lg bg-white/10 text-white hover:bg-white/20">Divest</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
-                <h3 className="text-lg font-semibold text-white mb-4">Recent Activity</h3>
-                <ul className="space-y-2 text-gray-300 text-sm">
-                  <li>Deposited 10,000 USDC</li>
-                  <li>Deposited 1,000 USDC</li>
-                </ul>
-              </div>
-
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 lg:col-span-3">
-                <h3 className="text-lg font-semibold text-white mb-4">Members</h3>
-                {(!members || members.length === 0) && (
-                  <div className="text-gray-400 text-sm">No members added yet.</div>
-                )}
-                {members && members.length > 0 && (
-                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
-                    {members.map(addr => (
-                      <div key={addr} className="flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-3 py-2">
-                        <span className="font-mono text-xs text-gray-300">{addr}</span>
-                        <button onClick={() => setAllowlist(addr, false)} className="text-red-300 text-xs hover:text-red-400">Remove</button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <VaultManagement 
+                vaultAddress={vaultId as string}
+                isAdmin={vaultData.isAdmin}
+              />
             </motion.div>
           )}
           {/* Vault address section removed; copy available in header pill */}

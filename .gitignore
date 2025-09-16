@@ -35,3 +35,4 @@ build/
 # environment
 .env
 .env.*
+.vercel

@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect } from "react";
 import { useAccount, useWriteContract, useTransaction, useReadContract, usePublicClient } from "wagmi";
 import { parseUnits, parseAbi } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
 interface CreateVaultParams {
   asset: string;
@@ -23,6 +24,10 @@ interface VaultInfo {
   allowlistEnabled: boolean;
   depositCap: string;
   minDeposit: string;
+  totalAssets: string;
+  totalSupply: string;
+  userBalance: string;
+  isPaused: boolean;
   isAdmin: boolean;
   isMember: boolean;
 }
@@ -37,18 +42,21 @@ export const useVaultFactory = (factoryAddress?: string) => {
   const { writeContract: createVault, data: createVaultData, isPending: createVaultLoading, error: createVaultError } = useWriteContract();
   const { isLoading: createVaultTxLoading, isSuccess: createVaultSuccess, data: createVaultReceipt, error: createVaultTxError } = useTransaction({
     hash: createVaultData,
+    query: {
+      enabled: !!createVaultData,
+    },
   });
 
-  const factoryContractAddress = factoryAddress || deployedContracts[31337]?.VaultFactory?.address;
+  const factoryContractAddress = factoryAddress || (deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address;
 
   // Read user's own created vaults (fast path) to keep existing behavior
   const { data: userVaultAddresses, refetch: refetchUserVaults, error: readError } = useReadContract({
     address: factoryContractAddress as `0x${string}`,
-    abi: deployedContracts[31337]?.VaultFactory?.abi || [],
+    abi: ((deployedContracts as any)[CHAIN_ID]?.VaultFactory?.abi) || [],
     functionName: "getVaultsByUser" as any,
     args: [userAddress || "0x0000000000000000000000000000000000000000"] as any,
     query: {
-      enabled: !!userAddress && !!factoryContractAddress && !!deployedContracts[31337]?.VaultFactory?.address,
+      enabled: !!userAddress && !!factoryContractAddress && !!(deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address,
     },
   });
 
@@ -73,7 +81,10 @@ export const useVaultFactory = (factoryAddress?: string) => {
 
   const fetchVaultInfo = useCallback(async (vaultAddress: string) => {
     try {
-      const response = await fetch(`/api/vault/info?address=${vaultAddress}`);
+      const url = userAddress 
+        ? `/api/vault/info?address=${vaultAddress}&user=${userAddress}`
+        : `/api/vault/info?address=${vaultAddress}`;
+      const response = await fetch(url);
       const data = await response.json();
       return data;
     } catch (err) {
@@ -85,9 +96,13 @@ export const useVaultFactory = (factoryAddress?: string) => {
         allowlistEnabled: false,
         depositCap: "0",
         minDeposit: "0",
+        totalAssets: "0",
+        totalSupply: "0",
+        userBalance: "0",
+        isPaused: false,
       };
     }
-  }, []);
+  }, [userAddress]);
 
   // Fetch vault details for each vault address
   const fetchVaultDetails = useCallback(async (vaultAddresses: string[]) => {
@@ -168,6 +183,10 @@ export const useVaultFactory = (factoryAddress?: string) => {
               allowlistEnabled: Boolean(vaultInfo.allowlistEnabled),
               depositCap: vaultInfo.depositCap || "0",
               minDeposit: vaultInfo.minDeposit || "0",
+              totalAssets: vaultInfo.totalAssets || "0",
+              totalSupply: vaultInfo.totalSupply || "0",
+              userBalance: vaultInfo.userBalance || "0",
+              isPaused: Boolean(vaultInfo.isPaused),
               isAdmin,
               isMember,
             };
@@ -207,14 +226,56 @@ export const useVaultFactory = (factoryAddress?: string) => {
   useEffect(() => {
     if (createVaultError) {
       console.error("Create vault error:", createVaultError);
-      setError(createVaultError.message || "Failed to create vault");
+      
+      // Parse user-friendly error messages
+      let userFriendlyMessage = "Failed to create vault";
+      
+      if (createVaultError.message) {
+        const errorMsg = createVaultError.message.toLowerCase();
+        
+        if (errorMsg.includes("user rejected") || errorMsg.includes("user denied") || errorMsg.includes("rejected")) {
+          userFriendlyMessage = "Transaction cancelled by user";
+        } else if (errorMsg.includes("insufficient funds") || errorMsg.includes("insufficient balance")) {
+          userFriendlyMessage = "Insufficient funds for gas fees";
+        } else if (errorMsg.includes("network") || errorMsg.includes("connection")) {
+          userFriendlyMessage = "Network connection error. Please try again";
+        } else if (errorMsg.includes("gas")) {
+          userFriendlyMessage = "Gas estimation failed. Please try again";
+        } else if (errorMsg.includes("nonce")) {
+          userFriendlyMessage = "Transaction conflict. Please try again";
+        } else {
+          userFriendlyMessage = "Transaction failed. Please try again";
+        }
+      }
+      
+      setError(userFriendlyMessage);
     }
   }, [createVaultError]);
 
   useEffect(() => {
     if (createVaultTxError) {
       console.error("Transaction error:", createVaultTxError);
-      setError(createVaultTxError.message || "Transaction failed");
+      
+      // Parse user-friendly transaction error messages
+      let userFriendlyMessage = "Transaction failed";
+      
+      if (createVaultTxError.message) {
+        const errorMsg = createVaultTxError.message.toLowerCase();
+        
+        if (errorMsg.includes("user rejected") || errorMsg.includes("user denied") || errorMsg.includes("rejected")) {
+          userFriendlyMessage = "Transaction cancelled by user";
+        } else if (errorMsg.includes("insufficient funds")) {
+          userFriendlyMessage = "Insufficient funds for gas fees";
+        } else if (errorMsg.includes("gas")) {
+          userFriendlyMessage = "Gas limit exceeded or estimation failed";
+        } else if (errorMsg.includes("reverted")) {
+          userFriendlyMessage = "Transaction reverted. Please check your inputs";
+        } else {
+          userFriendlyMessage = "Transaction failed. Please try again";
+        }
+      }
+      
+      setError(userFriendlyMessage);
     }
   }, [createVaultTxError]);
 
@@ -257,7 +318,7 @@ export const useVaultFactory = (factoryAddress?: string) => {
         
         createVault({
           address: factoryContractAddress as `0x${string}`,
-          abi: deployedContracts[31337]?.VaultFactory?.abi || [],
+          abi: ((deployedContracts as any)[CHAIN_ID]?.VaultFactory?.abi) || [],
           functionName: "createVault",
           args: [
             params.asset as `0x${string}`,
@@ -268,10 +329,31 @@ export const useVaultFactory = (factoryAddress?: string) => {
             depositCapWei,
             minDepositWei,
           ],
+          gas: 3000000n, // Increase gas limit
         });
       } catch (err) {
         console.error("Create vault error:", err);
-        setError(err instanceof Error ? err.message : "Failed to create vault");
+        
+        // Parse user-friendly error messages for creation errors
+        let userFriendlyMessage = "Failed to create vault";
+        
+        if (err instanceof Error && err.message) {
+          const errorMsg = err.message.toLowerCase();
+          
+          if (errorMsg.includes("user rejected") || errorMsg.includes("user denied") || errorMsg.includes("rejected")) {
+            userFriendlyMessage = "Transaction cancelled by user";
+          } else if (errorMsg.includes("insufficient funds")) {
+            userFriendlyMessage = "Insufficient funds for gas fees";
+          } else if (errorMsg.includes("network")) {
+            userFriendlyMessage = "Network connection error. Please try again";
+          } else if (errorMsg.includes("invalid")) {
+            userFriendlyMessage = "Invalid input parameters. Please check your entries";
+          } else {
+            userFriendlyMessage = "Failed to create vault. Please try again";
+          }
+        }
+        
+        setError(userFriendlyMessage);
       }
     },
     [factoryContractAddress, userAddress, createVault]
