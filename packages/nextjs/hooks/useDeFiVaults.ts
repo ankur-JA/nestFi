@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAccount, useWriteContract, useTransaction } from "wagmi";
 import { parseUnits } from "viem";
-import { DeFiDataService, VaultData, VaultMetadata } from "~~/lib/defi-data";
+import { defiDataService, VaultData, VaultMetadata } from "~~/lib/defi-data";
 import { Web3StorageService } from "~~/lib/ipfs";
 import deployedContracts from "../contracts/deployedContracts";
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
@@ -44,7 +44,7 @@ export const useDeFiVaults = () => {
 
     try {
       setLoading(true);
-      const vaults = await DeFiDataService.getUserVaults(userAddress);
+      const vaults = await defiDataService.getUserVaults(userAddress);
       setUserVaults(vaults);
     } catch (err) {
       console.error("Error fetching user vaults:", err);
@@ -87,7 +87,7 @@ export const useDeFiVaults = () => {
           }
         }
 
-        metadataUri = await DeFiDataService.uploadVaultMetadata(metadata);
+        metadataUri = await defiDataService.uploadVaultMetadata(metadata);
       }
 
       // Create vault on blockchain
@@ -161,7 +161,7 @@ export const useDeFiVaults = () => {
   // Get vault details
   const getVaultDetails = useCallback(async (vaultAddress: string) => {
     try {
-      return await DeFiDataService.getVaultDetails(vaultAddress, userAddress);
+      return await defiDataService.getVaultData(vaultAddress);
     } catch (err) {
       console.error("Error fetching vault details:", err);
       throw err;
@@ -171,7 +171,8 @@ export const useDeFiVaults = () => {
   // Get vault transactions
   const getVaultTransactions = useCallback(async (vaultAddress: string, first: number = 10, skip: number = 0) => {
     try {
-      return await DeFiDataService.getVaultTransactions(vaultAddress, first, skip);
+      // Return empty array for now - could be extended with transaction history
+      return [];
     } catch (err) {
       console.error("Error fetching vault transactions:", err);
       throw err;
@@ -181,7 +182,8 @@ export const useDeFiVaults = () => {
   // Get vault analytics
   const getVaultAnalytics = useCallback(async (vaultAddress: string) => {
     try {
-      return await DeFiDataService.getVaultAnalytics(vaultAddress);
+      // Return empty object for now - could be extended with analytics
+      return {};
     } catch (err) {
       console.error("Error fetching vault analytics:", err);
       throw err;

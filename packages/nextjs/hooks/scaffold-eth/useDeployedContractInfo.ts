@@ -62,6 +62,7 @@ export function useDeployedContractInfo<TContractName extends ContractName>(
 
         const code = await publicClient.getBytecode({
           address: deployedContract.address,
+          blockTag: "latest",
         });
 
         // If contract code is `0x` => no contract deployed on that address

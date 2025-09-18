@@ -28,17 +28,29 @@ export const useVaultContract = (vaultAddress?: string) => {
   const [vaultData, setVaultData] = useState<VaultData | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Debug logging
+  console.log("useVaultContract called with:", vaultAddress);
+
+  // Early return if no valid address
+  if (!vaultAddress || vaultAddress === "0x0000000000000000000000000000000000000000") {
+    return {
+      vaultData: null,
+      loading: false,
+      error: "Invalid vault address",
+    };
+  }
 
   // Use deployed vault ABI
   const vaultABI = useMemo(() => (deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi || [], []);
 
-  // Read vault data
+  // Read vault data - only if we have a valid address and ABI
   const { data: name, isLoading: nameLoading } = useReadContract({
     address: vaultAddress as `0x${string}`,
     abi: vaultABI,
     functionName: "name",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1, // Reduce retries to avoid spam
     },
   });
 
@@ -47,7 +59,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "symbol",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -56,7 +69,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "asset",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -65,7 +79,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "totalAssets",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -74,7 +89,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "totalSupply",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -83,7 +99,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "depositCap",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -92,7 +109,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "minDeposit",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -101,7 +119,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "strategy" as any,
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -110,7 +129,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "allowlistEnabled",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -139,7 +159,8 @@ export const useVaultContract = (vaultAddress?: string) => {
     abi: vaultABI,
     functionName: "paused",
     query: {
-      enabled: !!vaultAddress,
+      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
+      retry: 1,
     },
   });
 
@@ -316,6 +337,7 @@ export const useVaultContract = (vaultAddress?: string) => {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "pause",
+        args: [],
       });
     } catch (err) {
       setError("Pause failed");
@@ -331,6 +353,7 @@ export const useVaultContract = (vaultAddress?: string) => {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "unpause",
+        args: [],
       });
     } catch (err) {
       setError("Unpause failed");

@@ -125,7 +125,7 @@ export const useERC7702 = () => {
 
       // Execute the transaction
       executeERC7702({
-        address: deployedContracts[31337]?.ERC7702Relayer?.address as `0x${string}`,
+        address: ((deployedContracts as any)[CHAIN_ID]?.ERC7702Relayer?.address) as `0x${string}`,
         abi: ((deployedContracts as any)[CHAIN_ID]?.ERC7702Relayer?.abi) || [],
         functionName: "executeWithGasPayment",
         args: [target, data, gasPayment],

@@ -1,0 +1,82 @@
+type Vault @entity {
+  id: ID! # vault address
+  address: Bytes!
+  owner: Bytes!
+  asset: Bytes!
+  name: String!
+  symbol: String!
+  allowlistEnabled: Boolean!
+  depositCap: BigInt!
+  minDeposit: BigInt!
+  totalAssets: BigInt!
+  totalSupply: BigInt!
+  isPaused: Boolean!
+  strategy: Bytes
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  
+  # Relationships
+  members: [VaultMember!]! @derivedFrom(field: "vault")
+  deposits: [Deposit!]! @derivedFrom(field: "vault")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "vault")
+  allowlistUpdates: [AllowlistUpdate!]! @derivedFrom(field: "vault")
+}
+
+type VaultMember @entity {
+  id: ID! # vaultAddress-userAddress
+  vault: Vault!
+  user: Bytes!
+  balance: BigInt!
+  shares: BigInt!
+  isAllowed: Boolean!
+  joinedAt: BigInt!
+  lastUpdated: BigInt!
+}
+
+type Deposit @entity {
+  id: ID! # transaction hash + log index
+  vault: Vault!
+  user: Bytes!
+  assets: BigInt!
+  shares: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type Withdrawal @entity {
+  id: ID! # transaction hash + log index
+  vault: Vault!
+  user: Bytes!
+  assets: BigInt!
+  shares: BigInt!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type AllowlistUpdate @entity {
+  id: ID! # transaction hash + log index
+  vault: Vault!
+  user: Bytes!
+  allowed: Boolean!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  transactionHash: Bytes!
+}
+
+type VaultFactory @entity {
+  id: ID! # factory address
+  address: Bytes!
+  totalVaults: BigInt!
+  vaults: [Vault!]! @derivedFrom(field: "factory")
+}
+
+type User @entity {
+  id: ID! # user address
+  address: Bytes!
+  vaultsCreated: [Vault!]! @derivedFrom(field: "owner")
+  memberships: [VaultMember!]! @derivedFrom(field: "user")
+  deposits: [Deposit!]! @derivedFrom(field: "user")
+  withdrawals: [Withdrawal!]! @derivedFrom(field: "user")
+}

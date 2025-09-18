@@ -1,91 +1,54 @@
-// Graph functionality disabled in production build to avoid dependency bloat.
+// Temporarily disabled GraphQL functionality to fix runtime errors
 
-// Stubs to satisfy imports in production build
-export const graphClient = null as any;
-export const isGraphEnabled = false;
+// GraphQL endpoint - replace with your deployed subgraph URL
+const GRAPHQL_ENDPOINT = process.env.NEXT_PUBLIC_GRAPH_ENDPOINT || 'https://api.thegraph.com/subgraphs/name/your-username/nestfi-sepolia';
 
-// GraphQL queries for vault data
-export const VAULT_QUERIES = {
-  GET_USER_VAULTS: `
-    query GetUserVaults($userAddress: String!) {
-      vaults(where: { owner: $userAddress }) {
-        id
-        address
-        name
-        symbol
-        asset
-        totalAssets
-        totalShares
-        owner
-        createdAt
-        depositCap
-        minDeposit
-        allowlistEnabled
-      }
-    }
-  `,
-  
-  GET_VAULT_DETAILS: `
-    query GetVaultDetails($vaultAddress: String!) {
-      vault(id: $vaultAddress) {
-        id
-        address
-        name
-        symbol
-        asset
-        totalAssets
-        totalShares
-        owner
-        createdAt
-        depositCap
-        minDeposit
-        allowlistEnabled
-        deposits {
-          id
-          user
-          amount
-          shares
-          timestamp
-        }
-        withdrawals {
-          id
-          user
-          amount
-          shares
-          timestamp
-        }
-      }
-    }
-  `,
-  
-  GET_VAULT_TRANSACTIONS: `
-    query GetVaultTransactions($vaultAddress: String!, $first: Int!, $skip: Int!) {
-      deposits(
-        where: { vault: $vaultAddress }
-        first: $first
-        skip: $skip
-        orderBy: timestamp
-        orderDirection: desc
-      ) {
-        id
-        user
-        amount
-        shares
-        timestamp
-      }
-      withdrawals(
-        where: { vault: $vaultAddress }
-        first: $first
-        skip: $skip
-        orderBy: timestamp
-        orderDirection: desc
-      ) {
-        id
-        user
-        amount
-        shares
-        timestamp
-      }
-    }
-  `
-};
+// Mock GraphQL queries for now
+export const GET_USER_VAULTS = '';
+export const GET_USER_MEMBERSHIPS = '';
+export const GET_USER_ALLOWLIST_MEMBERSHIPS = '';
+export const GET_VAULT_DETAILS = '';
+export const GET_USER_VAULT_MEMBERSHIP = '';
+export const GET_ALL_VAULTS = '';
+
+// Mock GraphQL client
+export class GraphQLClient {
+  private endpoint: string;
+
+  constructor(endpoint?: string) {
+    this.endpoint = endpoint || GRAPHQL_ENDPOINT;
+  }
+
+  async getUserVaults(userAddress: string): Promise<any> {
+    console.log('GraphQL getUserVaults called with:', userAddress);
+    return [];
+  }
+
+  async getUserMemberships(userAddress: string): Promise<any> {
+    console.log('GraphQL getUserMemberships called with:', userAddress);
+    return [];
+  }
+
+  async getUserAllowlistMemberships(userAddress: string): Promise<any> {
+    console.log('GraphQL getUserAllowlistMemberships called with:', userAddress);
+    return [];
+  }
+
+  async getVaultDetails(vaultAddress: string): Promise<any> {
+    console.log('GraphQL getVaultDetails called with:', vaultAddress);
+    return null;
+  }
+
+  async getUserVaultMembership(vaultAddress: string, userAddress: string): Promise<any> {
+    console.log('GraphQL getUserVaultMembership called with:', vaultAddress, userAddress);
+    return null;
+  }
+
+  async getAllVaults(first: number = 100, skip: number = 0): Promise<any> {
+    console.log('GraphQL getAllVaults called with:', first, skip);
+    return [];
+  }
+}
+
+// Export a default instance
+export const graphqlClient = new GraphQLClient();

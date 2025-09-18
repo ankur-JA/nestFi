@@ -12,10 +12,11 @@ export const useContractLogs = (address: Address) => {
     const fetchLogs = async () => {
       if (!client) return console.error("Client not found");
       try {
+        const currentBlock = await client.getBlockNumber();
         const existingLogs = await client.getLogs({
           address: address,
           fromBlock: 0n,
-          toBlock: "latest",
+          toBlock: currentBlock,
         });
         setLogs(existingLogs);
       } catch (error) {
@@ -28,10 +29,11 @@ export const useContractLogs = (address: Address) => {
       onBlockNumber: async (_blockNumber, prevBlockNumber) => {
         try {
           const from = prevBlockNumber ?? 0n;
+          const currentBlock = await client.getBlockNumber();
           const newLogs = await client.getLogs({
             address: address,
             fromBlock: from,
-            toBlock: "latest",
+            toBlock: currentBlock,
           });
           setLogs(prevLogs => [...prevLogs, ...newLogs]);
         } catch (error) {

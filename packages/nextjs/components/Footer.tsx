@@ -15,7 +15,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { SwitchTheme } from "~~/components/SwitchTheme";
 import { BuidlGuidlLogo } from "~~/components/assets/BuidlGuidlLogo";
-import { NestFiLogo } from "~~/components/NestFiLogo";
+import NestFiLogo from "~~/components/NestFiLogo";
 import { Faucet } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { useGlobalState } from "~~/services/store/store";

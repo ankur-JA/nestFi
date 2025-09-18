@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePublicClient } from "wagmi";
+import { parseAbi } from "viem";
 import {
   UserPlusIcon,
   UserMinusIcon,
+  UserIcon,
   PlayIcon,
   PauseIcon,
   CogIcon,
@@ -54,6 +57,53 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
   const [loading_action, setLoadingAction] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [members, setMembers] = useState<{ address: string; isActive: boolean }[]>([]);
+  const publicClient = usePublicClient();
+
+  // Fetch vault members using the API endpoint
+  const fetchVaultMembers = async () => {
+    if (!vaultAddress) return;
+
+    try {
+      console.log("Fetching vault members for:", vaultAddress);
+      
+      const response = await fetch(`/api/vault/members?vaultAddress=${vaultAddress}`);
+      
+      if (!response.ok) {
+        console.error("API response not ok:", response.status, response.statusText);
+        setMembers([]);
+        return;
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error("API error:", data.error);
+        setMembers([]);
+        return;
+      }
+      
+      console.log("API response:", data);
+      
+      // Convert API response to the expected format
+      const memberList = data.members.map((member: any) => ({
+        address: member.address,
+        isActive: member.isActive,
+      }));
+
+      console.log("Final member list:", memberList);
+      setMembers(memberList);
+    } catch (err) {
+      console.error("Error fetching vault members:", err);
+      // Fallback: show empty members list
+      setMembers([]);
+    }
+  };
+
+  // Load members when component mounts
+  useEffect(() => {
+    fetchVaultMembers();
+  }, [vaultAddress, publicClient]);
 
   // Helper function to show success message
   const showSuccess = (message: string) => {
@@ -87,11 +137,25 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
       return;
     }
 
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to add this member to the vault?\n\n` +
+      `Address: ${formData.memberAddress}\n\n` +
+      `This will require signing a transaction in your wallet.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setLoadingAction("add-member");
+      if (!setAllowlist) throw new Error("setAllowlist function not available");
       await setAllowlist(formData.memberAddress, true);
       showSuccess("Member added successfully!");
       setFormData({ ...formData, memberAddress: "" });
+      // Refresh member list
+      setTimeout(() => fetchVaultMembers(), 2000);
     } catch (err) {
       showError("Failed to add member");
     } finally {
@@ -105,11 +169,25 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
       return;
     }
 
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      `Are you sure you want to remove this member from the vault?\n\n` +
+      `Address: ${formData.memberAddress}\n\n` +
+      `This will require signing a transaction in your wallet.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setLoadingAction("remove-member");
+      if (!setAllowlist) throw new Error("setAllowlist function not available");
       await setAllowlist(formData.memberAddress, false);
       showSuccess("Member removed successfully!");
       setFormData({ ...formData, memberAddress: "" });
+      // Refresh member list
+      setTimeout(() => fetchVaultMembers(), 2000);
     } catch (err) {
       showError("Failed to remove member");
     } finally {
@@ -126,8 +204,8 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
     try {
       setLoadingAction("deposit-cap");
-      const capWei = parseUnits(formData.depositCap, 6);
-      await setDepositCap(capWei);
+      if (!setDepositCap) throw new Error("setDepositCap function not available");
+      await setDepositCap(formData.depositCap);
       showSuccess("Deposit cap updated successfully!");
       setFormData({ ...formData, depositCap: "" });
     } catch (err) {
@@ -145,8 +223,8 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
     try {
       setLoadingAction("min-deposit");
-      const minWei = parseUnits(formData.minDeposit, 6);
-      await setMinDeposit(minWei);
+      if (!setMinDeposit) throw new Error("setMinDeposit function not available");
+      await setMinDeposit(formData.minDeposit);
       showSuccess("Minimum deposit updated successfully!");
       setFormData({ ...formData, minDeposit: "" });
     } catch (err) {
@@ -158,8 +236,19 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
   // Handle pause/unpause
   const handlePause = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to pause this vault?\n\n` +
+      `This will stop all deposits and withdrawals.\n\n` +
+      `This will require signing a transaction in your wallet.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setLoadingAction("pause");
+      if (!pause) throw new Error("pause function not available");
       await pause();
       showSuccess("Vault paused successfully!");
     } catch (err) {
@@ -170,8 +259,19 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
   };
 
   const handleUnpause = async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to unpause this vault?\n\n` +
+      `This will resume all deposits and withdrawals.\n\n` +
+      `This will require signing a transaction in your wallet.`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
     try {
       setLoadingAction("unpause");
+      if (!unpause) throw new Error("unpause function not available");
       await unpause();
       showSuccess("Vault unpaused successfully!");
     } catch (err) {
@@ -190,6 +290,7 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
     try {
       setLoadingAction("set-strategy");
+      if (!setStrategy) throw new Error("setStrategy function not available");
       await setStrategy(formData.strategyAddress);
       showSuccess("Strategy set successfully!");
       setFormData({ ...formData, strategyAddress: "" });
@@ -208,8 +309,8 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
     try {
       setLoadingAction("invest");
-      const amountWei = parseUnits(formData.investAmount, 6);
-      await invest(amountWei);
+      if (!invest) throw new Error("invest function not available");
+      await invest(formData.investAmount);
       showSuccess("Investment successful!");
       setFormData({ ...formData, investAmount: "" });
     } catch (err) {
@@ -227,8 +328,8 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
     try {
       setLoadingAction("divest");
-      const amountWei = parseUnits(formData.divestAmount, 6);
-      await divest(amountWei);
+      if (!divest) throw new Error("divest function not available");
+      await divest(formData.divestAmount);
       showSuccess("Divestment successful!");
       setFormData({ ...formData, divestAmount: "" });
     } catch (err) {
@@ -246,8 +347,8 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
 
     try {
       setLoadingAction("harvest");
-      const amountWei = parseUnits(formData.harvestAmount, 6);
-      await harvest(amountWei);
+      if (!harvest) throw new Error("harvest function not available");
+      await harvest(formData.harvestAmount);
       showSuccess("Harvest successful!");
       setFormData({ ...formData, harvestAmount: "" });
     } catch (err) {
@@ -365,39 +466,148 @@ export const VaultManagement: React.FC<VaultManagementProps> = ({
             <div className="space-y-6">
               <h3 className="text-xl font-semibold text-white mb-4">Manage Members</h3>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
-                    Member Address
-                  </label>
-                  <input
-                    type="text"
-                    value={formData.memberAddress}
-                    onChange={(e) => setFormData({ ...formData, memberAddress: e.target.value })}
-                    placeholder="0x..."
-                    className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
-                  />
+              {/* Add/Remove Member Form */}
+              <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700/30">
+                <h4 className="text-lg font-semibold text-white mb-4">Add/Remove Member</h4>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Member Address
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.memberAddress}
+                      onChange={(e) => setFormData({ ...formData, memberAddress: e.target.value })}
+                      placeholder="0x..."
+                      className="w-full px-4 py-3 bg-gray-700/50 border border-gray-600/50 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:border-red-500/50"
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-4">
+                    <button
+                      onClick={handleAddMember}
+                      disabled={loading_action === "add-member"}
+                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <UserPlusIcon className="h-4 w-4" />
+                      <span>{loading_action === "add-member" ? "Adding..." : "Add Member"}</span>
+                    </button>
+                    
+                    <button
+                      onClick={handleRemoveMember}
+                      disabled={loading_action === "remove-member"}
+                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <UserMinusIcon className="h-4 w-4" />
+                      <span>{loading_action === "remove-member" ? "Removing..." : "Remove Member"}</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Current Members List */}
+              <div className="bg-gray-800/30 rounded-xl p-6 border border-gray-700/30">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-semibold text-white">Current Members</h4>
+                  <button
+                    onClick={fetchVaultMembers}
+                    className="px-3 py-1 bg-gray-600/50 text-gray-300 rounded-lg text-sm hover:bg-gray-600 transition-all duration-200"
+                  >
+                    Refresh
+                  </button>
+                  <button
+                    onClick={() => {
+                      console.log("Manual member fetch triggered");
+                      console.log("Vault address:", vaultAddress);
+                      console.log("Public client:", !!publicClient);
+                      fetchVaultMembers();
+                    }}
+                    className="px-3 py-1 bg-blue-600/50 text-blue-300 rounded-lg text-sm hover:bg-blue-600 transition-all duration-200 ml-2"
+                  >
+                    Debug Fetch
+                  </button>
+                  <button
+                    onClick={async () => {
+                      console.log("Testing API endpoint...");
+                      try {
+                        const response = await fetch(`/api/vault/members?vaultAddress=${vaultAddress}`);
+                        const data = await response.json();
+                        console.log("API response:", data);
+                        if (data.members && data.members.length > 0) {
+                          setMembers(data.members.map((m: any) => ({ address: m.address, isActive: m.isActive })));
+                        }
+                      } catch (err) {
+                        console.error("API test failed:", err);
+                      }
+                    }}
+                    className="px-3 py-1 bg-green-600/50 text-green-300 rounded-lg text-sm hover:bg-green-600 transition-all duration-200 ml-2"
+                  >
+                    Test API
+                  </button>
                 </div>
                 
-                <div className="flex space-x-4">
-                  <button
-                    onClick={handleAddMember}
-                    disabled={loading_action === "add-member"}
-                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-600 hover:to-emerald-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <UserPlusIcon className="h-4 w-4" />
-                    <span>{loading_action === "add-member" ? "Adding..." : "Add Member"}</span>
-                  </button>
-                  
-                  <button
-                    onClick={handleRemoveMember}
-                    disabled={loading_action === "remove-member"}
-                    className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <UserMinusIcon className="h-4 w-4" />
-                    <span>{loading_action === "remove-member" ? "Removing..." : "Remove Member"}</span>
-                  </button>
-                </div>
+                {members.length === 0 ? (
+                  <div className="text-center py-8">
+                    <UserIcon className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-400">No members found</p>
+                    <p className="text-gray-500 text-sm mt-1">Add members using the form above</p>
+                    <div className="mt-4 p-3 bg-gray-800/50 rounded-lg text-left">
+                      <p className="text-xs text-gray-400 mb-2">Debug Info:</p>
+                      <p className="text-xs text-gray-500">Vault Address: {vaultAddress}</p>
+                      <p className="text-xs text-gray-500">Check browser console for detailed logs</p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {members.map((member, index) => (
+                      <motion.div
+                        key={member.address}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`flex items-center justify-between p-4 rounded-lg border ${
+                          member.isActive 
+                            ? "bg-green-500/10 border-green-500/30" 
+                            : "bg-red-500/10 border-red-500/30"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            member.isActive ? "bg-green-400" : "bg-red-400"
+                          }`} />
+                          <div>
+                            <p className="text-white font-mono text-sm">
+                              {member.address.slice(0, 6)}...{member.address.slice(-4)}
+                            </p>
+                            <p className={`text-xs ${
+                              member.isActive ? "text-green-400" : "text-red-400"
+                            }`}>
+                              {member.isActive ? "Active Member" : "Removed"}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        {member.isActive && (
+                          <button
+                            onClick={() => {
+                              setFormData({ ...formData, memberAddress: member.address });
+                              handleRemoveMember();
+                            }}
+                            className="px-3 py-1 bg-red-500/20 text-red-400 rounded-lg text-sm hover:bg-red-500/30 transition-all duration-200"
+                          >
+                            Remove
+                          </button>
+                        )}
+                      </motion.div>
+                    ))}
+                    
+                    <div className="mt-4 text-center">
+                      <p className="text-gray-400 text-sm">
+                        Total: {members.filter(m => m.isActive).length} active members
+                      </p>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

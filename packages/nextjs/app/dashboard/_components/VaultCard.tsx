@@ -16,7 +16,13 @@ interface VaultInfo {
   allowlistEnabled: boolean;
   depositCap: string;
   minDeposit: string;
+  totalAssets?: string;
+  totalSupply?: string;
+  userBalance?: string;
+  userShares?: string;
+  isPaused?: boolean;
   isAdmin: boolean;
+  isMember?: boolean;
 }
 
 interface VaultCardProps {

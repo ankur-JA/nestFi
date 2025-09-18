@@ -38,6 +38,7 @@ export const useVaultFactory = (factoryAddress?: string) => {
   const [error, setError] = useState<string | null>(null);
   const [userVaults, setUserVaults] = useState<VaultInfo[]>([]);
   const [loading, setLoading] = useState(false);
+  const [allDiscoveredVaults, setAllDiscoveredVaults] = useState<string[]>([]);
 
   const { writeContract: createVault, data: createVaultData, isPending: createVaultLoading, error: createVaultError } = useWriteContract();
   const { isLoading: createVaultTxLoading, isSuccess: createVaultSuccess, data: createVaultReceipt, error: createVaultTxError } = useTransaction({
@@ -49,7 +50,56 @@ export const useVaultFactory = (factoryAddress?: string) => {
 
   const factoryContractAddress = factoryAddress || (deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address;
 
-  // Read user's own created vaults (fast path) to keep existing behavior
+  // Discover member vaults by checking known vault addresses
+  const discoverMemberVaults = useCallback(async () => {
+    if (!userAddress) return [];
+    
+    try {
+      console.log("Discovering member vaults...");
+      
+      // For now, we'll use a simple approach: check if there are any vaults
+      // where the user has a balance or is on the allowlist
+      // This could be enhanced with a registry or The Graph in the future
+      
+      // Get all vaults created by the factory (limited range to avoid RPC issues)
+      if (!publicClient) {
+        console.log("No public client available for member vault discovery");
+        return [];
+      }
+      
+      try {
+        const factoryABI = parseAbi([
+          "event VaultCreated(address indexed vault, address indexed admin, address indexed asset, string name, string symbol)"
+        ]);
+        
+        // Get recent VaultCreated events (last 10 blocks to avoid RPC limits)
+        const currentBlock = await publicClient.getBlockNumber();
+        const fromBlock = currentBlock > 10n ? currentBlock - 10n : 0n;
+        
+        const logs = await publicClient.getLogs({
+          address: factoryContractAddress as `0x${string}`,
+          event: factoryABI[0] as any,
+          fromBlock,
+          toBlock: currentBlock,
+        });
+        
+        const vaultAddresses = logs.map((log: any) => log.args?.vault as string).filter(Boolean);
+        console.log(`Found ${vaultAddresses.length} vaults to check for membership`);
+        
+        setAllDiscoveredVaults(vaultAddresses);
+        return vaultAddresses;
+      } catch (rpcError) {
+        console.warn("RPC error during vault discovery, falling back to empty list:", rpcError);
+        setAllDiscoveredVaults([]);
+        return [];
+      }
+    } catch (err) {
+      console.error("Error discovering member vaults:", err);
+      return [];
+    }
+  }, [userAddress, publicClient, factoryContractAddress]);
+
+  // Read user's own created vaults (admin vaults)
   const { data: userVaultAddresses, refetch: refetchUserVaults, error: readError } = useReadContract({
     address: factoryContractAddress as `0x${string}`,
     abi: ((deployedContracts as any)[CHAIN_ID]?.VaultFactory?.abi) || [],
@@ -57,6 +107,8 @@ export const useVaultFactory = (factoryAddress?: string) => {
     args: [userAddress || "0x0000000000000000000000000000000000000000"] as any,
     query: {
       enabled: !!userAddress && !!factoryContractAddress && !!(deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address,
+      refetchInterval: 30000, // Refetch every 30 seconds instead of constantly
+      retry: 1, // Reduce retries to avoid spam
     },
   });
 
@@ -71,7 +123,11 @@ export const useVaultFactory = (factoryAddress?: string) => {
   // Fetch vault owner
   const fetchVaultOwner = useCallback(async (vaultAddress: string): Promise<string> => {
     try {
-      const owner = await fetch(`/api/vault/owner?address=${vaultAddress}`).then(res => res.json());
+      const response = await fetch(`/api/vault/owner?address=${vaultAddress}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      const owner = await response.json();
       return owner.owner;
     } catch (err) {
       console.error("Error fetching vault owner:", err);
@@ -85,6 +141,9 @@ export const useVaultFactory = (factoryAddress?: string) => {
         ? `/api/vault/info?address=${vaultAddress}&user=${userAddress}`
         : `/api/vault/info?address=${vaultAddress}`;
       const response = await fetch(url);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
       const data = await response.json();
       return data;
     } catch (err) {
@@ -104,117 +163,106 @@ export const useVaultFactory = (factoryAddress?: string) => {
     }
   }, [userAddress]);
 
-  // Fetch vault details for each vault address
-  const fetchVaultDetails = useCallback(async (vaultAddresses: string[]) => {
-    if (!vaultAddresses || vaultAddresses.length === 0) {
-      setUserVaults([]);
-      return;
-    }
-
+  // Enhanced vault loading that checks membership for all discovered vaults
+  const fetchVaultDetails = useCallback(async (adminVaultAddresses: string[], allVaultAddresses: string[]) => {
     setLoading(true);
     try {
-      // Augment list with all created vaults discovered via events so other users can see them
-      let combined = [...vaultAddresses];
-      try {
-        if (publicClient && factoryContractAddress) {
-          const eventAbi = parseAbi([
-            "event VaultCreated(address indexed vault, address indexed owner, address indexed asset, string name, string symbol, bool allowlistEnabled, uint256 depositCap, uint256 minDeposit)"
-          ]);
-          const logs = await publicClient.getLogs({
-            address: factoryContractAddress as `0x${string}`,
-            event: eventAbi[0] as any,
-            fromBlock: 0n,
-            toBlock: "latest",
-          });
-          const fromEvents = (logs || []).map(l => (l as any).args?.vault as string).filter(Boolean);
-          combined = Array.from(new Set([...combined, ...fromEvents]));
-        }
-      } catch (e) {
-        console.warn("Failed to read VaultCreated logs; falling back to user-only vaults.", e);
+      // Combine admin vaults and all discovered vaults, removing duplicates
+      const allVaultsToCheck = Array.from(new Set([...adminVaultAddresses, ...allVaultAddresses]));
+      
+      if (allVaultsToCheck.length === 0) {
+        setUserVaults([]);
+        setLoading(false);
+        return;
       }
 
-      const results = await Promise.all(
-        combined.map(async (vaultAddress) => {
+      // Check membership for all vaults
+      const vaultResults = await Promise.all(
+        allVaultsToCheck.map(async (vaultAddress) => {
           try {
             const [ownerResp, infoResp] = await Promise.all([
-              fetch(`/api/vault/owner?address=${vaultAddress}`, { cache: "no-store" }).then(r => r.json()),
-              fetch(`/api/vault/info?address=${vaultAddress}`, { cache: "no-store" }).then(r => r.json()),
+              fetch(`/api/vault/owner?address=${vaultAddress}`).then(r => r.ok ? r.json() : null).catch(() => null),
+              fetch(`/api/vault/info?address=${vaultAddress}&user=${userAddress}`).then(r => r.ok ? r.json() : null).catch(() => null),
             ]);
 
             const owner: string = ownerResp?.owner || "0x0000000000000000000000000000000000000000";
             const isAdmin = owner.toLowerCase() === (userAddress || "").toLowerCase();
-
             const vaultInfo = infoResp || {};
+            
+            // Check if user is a member (has balance, is on allowlist, or is admin)
+            const userBalance = BigInt(vaultInfo.userBalance || "0");
+            const isOnAllowlist = vaultInfo.isAllowed || false; // From API response
+            const isMember = isAdmin || userBalance > 0n || isOnAllowlist;
 
-            // Determine membership: admin OR allowlisted OR has shares
-            let isMember = isAdmin;
-            try {
-              if (publicClient && userAddress) {
-                const erc20Abi = parseAbi([
-                  "function balanceOf(address) view returns (uint256)",
-                  "function isAllowed(address) view returns (bool)"
-                ]);
-                const [bal, allowed] = await Promise.all([
-                  publicClient.readContract({
-                    address: vaultAddress as `0x${string}`,
-                    abi: erc20Abi,
-                    functionName: "balanceOf",
-                    args: [userAddress],
-                  }) as Promise<bigint>,
-                  publicClient.readContract({
-                    address: vaultAddress as `0x${string}`,
-                    abi: erc20Abi,
-                    functionName: "isAllowed",
-                    args: [userAddress],
-                  }) as Promise<boolean>,
-                ]);
-                isMember = isMember || allowed || (bal as bigint) > 0n;
-              }
-            } catch (e) {
-              // ignore membership errors
+            // Debug logging for the specific vault
+            if (vaultAddress.toLowerCase() === "0xba230e7c7E39D09443d8Da0a332DD787BD1352cb".toLowerCase()) {
+              console.log("🔍 Debugging specific vault:", {
+                vaultAddress,
+                userAddress,
+                owner,
+                isAdmin,
+                userBalance: userBalance.toString(),
+                isOnAllowlist,
+                isMember,
+                vaultInfo
+              });
             }
 
-            const item: VaultInfo = {
-              address: vaultAddress,
-              owner,
-              asset: vaultInfo.asset || "0x0000000000000000000000000000000000000000",
-              name: vaultInfo.name || "Vault",
-              symbol: vaultInfo.symbol || "vTKN",
-              allowlistEnabled: Boolean(vaultInfo.allowlistEnabled),
-              depositCap: vaultInfo.depositCap || "0",
-              minDeposit: vaultInfo.minDeposit || "0",
-              totalAssets: vaultInfo.totalAssets || "0",
-              totalSupply: vaultInfo.totalSupply || "0",
-              userBalance: vaultInfo.userBalance || "0",
-              isPaused: Boolean(vaultInfo.isPaused),
-              isAdmin,
-              isMember,
-            };
-
-            return item;
+            // Only return vaults where user is either admin or member
+            if (isAdmin || isMember) {
+              console.log(`✅ User is member of vault: ${vaultAddress} (admin: ${isAdmin}, member: ${isMember})`);
+              return {
+                address: vaultAddress,
+                owner,
+                asset: vaultInfo.asset || "0x1c7D4B196Cb0C7B01d743Fbc6116a902379C7238", // USDC on Sepolia
+                name: vaultInfo.name || "Investment Vault",
+                symbol: vaultInfo.symbol || "INV",
+                allowlistEnabled: Boolean(vaultInfo.allowlistEnabled),
+                depositCap: vaultInfo.depositCap || "10000000000",
+                minDeposit: vaultInfo.minDeposit || "10000000",
+                totalAssets: vaultInfo.totalAssets || "0",
+                totalSupply: vaultInfo.totalSupply || "0",
+                userBalance: vaultInfo.userBalance || "0",
+                isPaused: Boolean(vaultInfo.isPaused),
+                isAdmin,
+                isMember,
+              };
+            } else {
+              console.log(`❌ User is NOT member of vault: ${vaultAddress} (admin: ${isAdmin}, member: ${isMember})`);
+            }
+            return null;
           } catch (err) {
-            console.error(`Error fetching vault details for ${vaultAddress}:`, err);
+            console.error(`Error fetching details for ${vaultAddress}:`, err);
             return null;
           }
         })
       );
 
-      const finalVaults = (results.filter(Boolean) as VaultInfo[])
-        .filter(v => v.isAdmin || v.isMember);
-      setUserVaults(finalVaults);
+      // Filter out null results (vaults where user is not a member)
+      const userVaults = vaultResults.filter(Boolean) as VaultInfo[];
+      setUserVaults(userVaults);
+
     } catch (err) {
       console.error("Error in fetchVaultDetails:", err);
-      // Don't set error state for read errors as they're expected when contracts aren't deployed
     } finally {
       setLoading(false);
     }
-  }, [userAddress, publicClient, factoryContractAddress]);
+  }, [userAddress]);
 
   useEffect(() => {
-    if (userAddress && userVaultAddresses) {
-      fetchVaultDetails(userVaultAddresses as unknown as string[]);
-    }
-  }, [userAddress, userVaultAddresses, fetchVaultDetails]);
+    const loadAllVaults = async () => {
+      if (!userAddress) return;
+      
+      // Discover member vaults first
+      const allVaults = await discoverMemberVaults();
+      
+      // Then fetch details for both admin vaults and all discovered vaults
+      const adminVaults = (userVaultAddresses as unknown as string[]) || [];
+      await fetchVaultDetails(adminVaults, allVaults);
+    };
+
+    loadAllVaults();
+  }, [userAddress, userVaultAddresses, discoverMemberVaults, fetchVaultDetails]);
 
   useEffect(() => {
     if (createVaultSuccess) {
@@ -359,6 +407,134 @@ export const useVaultFactory = (factoryAddress?: string) => {
     [factoryContractAddress, userAddress, createVault]
   );
 
+  // Check if user is a member of a specific vault and add to user vaults if they are
+  const checkVaultMembership = useCallback(async (vaultAddress: string): Promise<VaultInfo | null> => {
+    if (!userAddress || !vaultAddress) return null;
+
+    // Validate vault address format
+    if (!vaultAddress.startsWith('0x') || vaultAddress.length !== 42) {
+      console.error("Invalid vault address format:", vaultAddress);
+      return null;
+    }
+
+    try {
+      console.log("Checking membership for vault:", vaultAddress);
+      const response = await fetch(`/api/vault/check-membership?vaultAddress=${vaultAddress}&userAddress=${userAddress}`);
+      
+      if (!response.ok) {
+        console.error("API response not ok:", response.status, response.statusText);
+        return null;
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        console.error("API error:", data.error);
+        return null;
+      }
+      
+      if (!data.isMember) return null;
+
+      const vaultInfo: VaultInfo = {
+        address: vaultAddress,
+        owner: data.isOwner ? userAddress : "unknown",
+        asset: "0x0000000000000000000000000000000000000000", // We'll get this from the main API
+        name: data.vaultName || "Investment Vault",
+        symbol: data.vaultSymbol || "INV",
+        allowlistEnabled: data.allowlistEnabled,
+        depositCap: "0", // We'll get this from the main API
+        minDeposit: "0", // We'll get this from the main API
+        totalAssets: data.totalAssets || "0",
+        totalSupply: data.totalSupply || "0",
+        userBalance: data.userBalance || "0",
+        isPaused: data.isPaused || false,
+        isAdmin: data.isOwner,
+        isMember: true,
+      };
+
+      // Add this vault to the user's vault list if it's not already there
+      setUserVaults(prevVaults => {
+        const exists = prevVaults.some(vault => vault.address.toLowerCase() === vaultAddress.toLowerCase());
+        if (!exists) {
+          return [...prevVaults, vaultInfo];
+        }
+        return prevVaults;
+      });
+
+      return vaultInfo;
+    } catch (err) {
+      console.error("Error checking vault membership:", err);
+      return null;
+    }
+  }, [userAddress]);
+
+  // Load admin vaults when user connects
+  useEffect(() => {
+    const loadAdminVaults = async () => {
+      if (!userAddress) {
+        setUserVaults([]);
+        setLoading(false);
+        return;
+      }
+      
+      const adminVaults = (userVaultAddresses as unknown as string[]) || [];
+      if (adminVaults.length > 0) {
+        await fetchVaultDetails(adminVaults, []);
+      } else {
+        setUserVaults([]);
+        setLoading(false);
+      }
+    };
+    
+    loadAdminVaults();
+  }, [userAddress, userVaultAddresses, fetchVaultDetails]);
+
+  // Manual refresh function to rediscover member vaults
+  const refreshVaults = useCallback(async () => {
+    if (!userAddress) return;
+    
+    console.log("Manually refreshing vaults...");
+    setLoading(true);
+    
+    try {
+      // Discover member vaults
+      const allVaults = await discoverMemberVaults();
+      
+      // Get admin vaults
+      const adminVaults = (userVaultAddresses as unknown as string[]) || [];
+      
+      // Fetch details for all vaults
+      await fetchVaultDetails(adminVaults, allVaults);
+    } catch (err) {
+      console.error("Error refreshing vaults:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userAddress, discoverMemberVaults, fetchVaultDetails, userVaultAddresses]);
+
+  // Function to manually check a specific vault address
+  const checkSpecificVault = useCallback(async (vaultAddress: string) => {
+    if (!userAddress) return;
+    
+    console.log(`Manually checking specific vault: ${vaultAddress}`);
+    setLoading(true);
+    
+    try {
+      // Get admin vaults
+      const adminVaults = (userVaultAddresses as unknown as string[]) || [];
+      
+      // Add the specific vault to the list to check
+      const vaultsToCheck = [...adminVaults, vaultAddress];
+      
+      // Fetch details for all vaults including the specific one
+      await fetchVaultDetails(adminVaults, [vaultAddress]);
+    } catch (err) {
+      console.error("Error checking specific vault:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [userAddress, fetchVaultDetails, userVaultAddresses]);
+
   return {
     createVault: handleCreateVault,
     userVaults,
@@ -368,5 +544,8 @@ export const useVaultFactory = (factoryAddress?: string) => {
     setError,
     receipt: createVaultReceipt,
     refetchUserVaults,
+    checkVaultMembership,
+    refreshVaults,
+    checkSpecificVault,
   };
 };

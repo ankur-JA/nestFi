@@ -20,6 +20,7 @@ import { useAccount, usePublicClient } from "wagmi";
 import { formatUnits, parseAbi } from "viem";
 import { useVaultContract } from "~~/hooks/useVaultContract";
 import { VaultManagement } from "../_components/VaultManagement";
+import { VaultActions } from "../_components/VaultActions";
 
 interface VaultData {
   address: string;
@@ -81,28 +82,37 @@ const VaultDetailsPage: React.FC = () => {
         setLoading(true);
         
         // Fetch vault info from API
-        const infoResponse = await fetch(`/api/vault/info?address=${vaultId}`);
+        const infoResponse = await fetch(`/api/vault/info?address=${vaultId}&user=${userAddress}`);
+        if (!infoResponse.ok) {
+          throw new Error(`Failed to fetch vault info: ${infoResponse.status} ${infoResponse.statusText}`);
+        }
         const vaultInfo = await infoResponse.json();
+        
+        console.log("Vault info from API:", vaultInfo);
         
         // Fetch vault owner
         const ownerResponse = await fetch(`/api/vault/owner?address=${vaultId}`);
+        if (!ownerResponse.ok) {
+          throw new Error(`Failed to fetch vault owner: ${ownerResponse.status} ${ownerResponse.statusText}`);
+        }
         const ownerData = await ownerResponse.json();
         
-        // For now, we'll use mock data since the contract calls might not work
-        // In a real implementation, you'd call the actual contract functions
-        const mockVaultData: VaultData = {
+        console.log("Vault owner from API:", ownerData);
+        
+        // Use actual vault data from API
+        const actualVaultData: VaultData = {
           address: vaultId as string,
           asset: vaultInfo.asset || "0x0000000000000000000000000000000000000000",
-          name: vaultInfo.name || "Unknown Vault",
-          symbol: vaultInfo.symbol || "vTKN",
-          totalAssets: "1000000", // 1 USDC in wei
-          totalShares: "1000000000000000000", // 1 share token
-          userBalance: "100000", // 0.1 USDC in wei
-          userShares: "100000000000000000", // 0.1 share tokens
+          name: vaultInfo.name || "Investment Vault",
+          symbol: vaultInfo.symbol || "INV",
+          totalAssets: vaultInfo.totalAssets || "0",
+          totalShares: vaultInfo.totalSupply || "0",
+          userBalance: vaultInfo.userBalance || "0",
+          userShares: "0", // We'll get this from chainVault when available
           isAdmin: ownerData.owner === userAddress,
         };
         
-        setVaultData(mockVaultData);
+        setVaultData(actualVaultData);
       } catch (err) {
         console.error("Error fetching vault data:", err);
         setError("Failed to load vault details");
@@ -134,14 +144,22 @@ const VaultDetailsPage: React.FC = () => {
   useEffect(() => {
     const fetchMembers = async () => {
       try {
-        if (!publicClient || !vaultId) return;
+        if (!publicClient || !vaultId || !userAddress) return;
+        
+        // Validate vault address format
+        const vaultAddress = Array.isArray(vaultId) ? vaultId[0] : vaultId;
+        if (!vaultAddress || !vaultAddress.startsWith('0x') || vaultAddress.length !== 42) {
+          console.error("Invalid vault address format:", vaultAddress);
+          return;
+        }
+        
         const eventAbi = parseAbi([
           "event AllowlistUpdated(address indexed user, bool allowed)"
         ]);
         const logs = await publicClient.getLogs({
           address: vaultId as `0x${string}`,
           event: eventAbi[0] as any,
-          fromBlock: 0n,
+          fromBlock: "earliest",
           toBlock: "latest",
         });
         const latest: Record<string, boolean> = {};
@@ -159,10 +177,10 @@ const VaultDetailsPage: React.FC = () => {
       }
     };
     fetchMembers();
-  }, [publicClient, vaultId, chainVault?.allowlistEnabled]);
+  }, [publicClient, vaultId, userAddress, chainVault?.allowlistEnabled]);
 
   const handleDeposit = () => {
-    if (!depositAmount) return;
+    if (!depositAmount || !deposit) return;
     deposit(depositAmount);
   };
 
@@ -375,56 +393,15 @@ const VaultDetailsPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
+              className="max-w-2xl mx-auto"
             >
-              {/* Deposit */}
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
-                <h3 className="text-xl font-semibold text-white mb-4">Deposit</h3>
-                {chainVault?.allowlistEnabled && !chainVault?.isAllowed && (
-                  <div className="mb-3 text-yellow-300 text-sm">You must be on the allowlist to deposit.</div>
-                )}
-                {chainVault?.isPaused && (
-                  <div className="mb-3 text-red-400 text-sm">Vault is paused. Deposits are disabled.</div>
-                )}
-                <div className="space-y-4">
-            <input
-              type="number"
-              placeholder="Amount (USDC)"
-              value={depositAmount}
-              onChange={(e) => setDepositAmount(e.target.value)}
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-red-500 transition-all duration-300"
-                  />
-                  <motion.button
-                onClick={handleDeposit}
-                    disabled={Boolean(chainVault?.isPaused || (chainVault?.allowlistEnabled && !chainVault?.isAllowed))}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl hover:from-red-600 hover:to-pink-600 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                Deposit
-                  </motion.button>
-                </div>
-            </div>
-
-              {/* Withdraw */}
-              <div className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50">
-                <h3 className="text-xl font-semibold text-white mb-4">Withdraw</h3>
-                <div className="space-y-4">
-                  <input
-                    type="number"
-                    placeholder="Amount (USDC)"
-                    className="w-full px-4 py-3 bg-gray-800/50 border border-gray-600 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:border-red-500 transition-all duration-300"
-                  />
-                  <motion.button
-                    onClick={handleWithdraw}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold rounded-xl hover:from-blue-600 hover:to-purple-600 transition-all duration-300"
-                  >
-                    Withdraw
-                  </motion.button>
-                </div>
-              </div>
+              <VaultActions 
+                vaultAddress={vaultData.address}
+                onSuccess={() => {
+                  // Refresh vault data after successful transaction
+                  window.location.reload();
+                }}
+              />
             </motion.div>
           )}
 
