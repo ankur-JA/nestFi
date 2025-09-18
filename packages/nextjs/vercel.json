@@ -1,6 +1,6 @@
 {
-  "installCommand": "yarn install --network-timeout 100000",
-  "buildCommand": "yarn build",
+  "installCommand": "npm ci",
+  "buildCommand": "npm run build",
   "outputDirectory": ".next",
   "framework": "nextjs",
   "ignoreCommand": "git diff --quiet HEAD^ HEAD ./"
