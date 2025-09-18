@@ -47,7 +47,6 @@
     "vercel:yolo": "yarn workspace @se-2/nextjs vercel:yolo",
     "verify": "yarn foundry:verify"
   },
-  "packageManager": "yarn@3.2.3",
   "engines": {
     "node": ">=20.18.3"
   },
