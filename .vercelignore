@@ -16,3 +16,16 @@ node_modules/
 out/
 cache/
 broadcast/
+
+# Ignore package-lock.json files (use yarn.lock instead)
+**/package-lock.json
+package-lock.json
+
+# Ignore test files
+**/*.test.*
+**/*.spec.*
+__tests__/
+
+# Ignore development files
+*.md
+!README.md
