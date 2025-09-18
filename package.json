@@ -33,7 +33,7 @@
     "foundry:test": "yarn workspace @se-2/foundry test",
     "foundry:verify": "yarn workspace @se-2/foundry verify",
     "generate": "yarn foundry:generate",
-    "postinstall": "husky install",
+    "postinstall": "husky install || echo 'Husky install failed, continuing...'",
     "ipfs": "yarn workspace @se-2/nextjs ipfs",
     "lint": "echo 'lint disabled'",
     "next:build": "yarn workspace @se-2/nextjs build",

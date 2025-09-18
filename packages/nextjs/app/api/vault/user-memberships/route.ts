@@ -179,7 +179,7 @@ export async function GET(request: NextRequest) {
     });
 
     const results = await Promise.all(membershipPromises);
-    const memberships = results.filter(Boolean);
+    const memberships = results.filter((m): m is NonNullable<typeof m> => m !== null);
 
     console.log(`Found ${memberships.length} vault memberships for user ${userAddress}`);
 

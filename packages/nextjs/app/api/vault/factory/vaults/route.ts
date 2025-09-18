@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
           toBlock: currentBlock,
         });
 
-        vaults = logs.map((log: any) => log.args?.vault as string).filter(Boolean);
+        vaults = logs.map((log: any) => log.args?.vault as string).filter((vault): vault is string => Boolean(vault));
         console.log(`Found ${vaults.length} vaults via event scanning`);
       } catch (error) {
         console.error("Error scanning vault creation events:", error);

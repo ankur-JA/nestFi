@@ -1,0 +1,18 @@
+# Ignore foundry package for Vercel deployment
+packages/foundry/
+packages/foundry/**
+
+# Ignore other non-essential files
+*.log
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Ignore build artifacts
+node_modules/
+.next/
+out/
+cache/
+broadcast/
