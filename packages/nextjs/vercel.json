@@ -1,5 +1,5 @@
 {
-  "installCommand": "yarn install",
+  "installCommand": "yarn install --network-timeout 100000",
   "buildCommand": "yarn build",
   "outputDirectory": ".next",
   "framework": "nextjs",
