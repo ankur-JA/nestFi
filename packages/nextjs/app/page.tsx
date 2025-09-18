@@ -17,31 +17,31 @@ import NestFiLogo from "~~/components/NestFiLogo";
 const features = [
   {
     icon: ShieldCheckIcon,
-    title: "Secure Vaults",
-    description: "Your investments are protected by industry-leading security protocols and smart contract audits."
+    title: "ERC-4626 Standard",
+    description: "Built on the industry-standard ERC-4626 vault specification for maximum compatibility and security."
   },
   {
     icon: ChartBarIcon,
-    title: "Smart Investing",
-    description: "Automated strategies and professional management for optimal returns on your investments."
+    title: "Multi-Protocol Yield",
+    description: "Invest pooled USDC funds in Aave, Compound, or Uniswap LPs to maximize yield generation."
   },
   {
     icon: UsersIcon,
-    title: "Community Driven",
-    description: "Join a community of investors and share strategies for collective financial growth."
+    title: "Social Investing",
+    description: "Create vaults and invite friends to deposit USDC, building investment communities together."
   },
   {
     icon: RocketLaunchIcon,
-    title: "Gasless Transactions",
-    description: "Experience seamless DeFi with our innovative gasless transaction technology."
+    title: "Tokenized Vaults",
+    description: "Each vault is tokenized, making it easy to track shares and distribute yield to participants."
   }
 ];
 
 const stats = [
-  { number: "100%", label: "Secure" },
-  { number: "24/7", label: "Available" },
-  { number: "0%", label: "Gas Fees" },
-  { number: "∞", label: "Possibilities" }
+  { number: "ERC-4626", label: "Standard" },
+  { number: "USDC", label: "Deposits" },
+  { number: "3+", label: "Protocols" },
+  { number: "∞", label: "Yield" }
 ];
 
 export default function HomePage() {
@@ -103,12 +103,12 @@ export default function HomePage() {
                 </motion.div>
                 
                 <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
-                  Your <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Financial Nest</span> for the Future
+                  ERC-4626 <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Investment Vaults</span> Made Simple
                 </h1>
                 
                 <p className="text-xl text-gray-300 leading-relaxed">
-                  Discover the power of DeFi investment vaults. Secure, smart, and gasless - 
-                  your journey to financial freedom starts here.
+                  Create tokenized vaults, invite friends to deposit USDC, and invest pooled funds in Aave, Compound, or Uniswap LPs. 
+                  Earn and distribute yield with professional DeFi strategies.
                 </p>
               </div>
 
@@ -198,7 +198,7 @@ export default function HomePage() {
                         />
                       </div>
                       <div className="text-center mt-2">
-                        <span className="text-sm text-gray-300 font-medium">Investment Vault</span>
+                        <span className="text-sm text-gray-300 font-medium">ERC-4626 Vault</span>
                       </div>
                     </motion.div>
 
@@ -225,10 +225,10 @@ export default function HomePage() {
                       transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
                     >
                       <p className="text-gray-200 text-sm leading-relaxed">
-                        <span className="font-semibold text-blue-400">"See how easy it is?"</span> 
+                        <span className="font-semibold text-blue-400">"Create an ERC-4626 vault!"</span> 
                         <br />
-                        "You just deposit your assets into a vault, and our smart contracts handle the rest. 
-                        It's like having a professional investment manager, but completely decentralized!"
+                        "Invite friends to deposit USDC, then invest the pooled funds in Aave, Compound, or Uniswap LPs. 
+                        Everyone earns yield based on their share of the vault!"
                       </p>
                     </motion.div>
                   </div>
@@ -288,11 +288,11 @@ export default function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Why Choose <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">NestFi</span>?
+              How <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">NestFi</span> Works
             </h2>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Experience the future of DeFi with our innovative vault system designed for security, 
-              efficiency, and maximum returns.
+              Create ERC-4626 vaults, pool USDC with friends, and earn yield through professional DeFi strategies 
+              on Aave, Compound, and Uniswap.
             </p>
           </motion.div>
 
@@ -329,11 +329,11 @@ export default function HomePage() {
             className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl p-12 border border-gray-700/50"
           >
             <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Ready to Start Your <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Investment Journey</span>?
+              Ready to Create Your <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">ERC-4626 Vault</span>?
             </h2>
             <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Join thousands of investors who trust NestFi for their DeFi investments. 
-              Create your first vault in minutes and start earning today.
+              Start building your investment community today. Create a vault, invite friends to deposit USDC, 
+              and begin earning yield through professional DeFi strategies.
             </p>
             <motion.div
               whileHover={{ scale: 1.05 }}
