@@ -60,121 +60,107 @@ export const Footer = () => {
 
       {/* Main Footer */}
       <footer className="bg-base-200 border-t border-base-300">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        <div className="max-w-6xl mx-auto px-6 py-16">
+          
           {/* Main Footer Content */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-12">
             
             {/* Product Section */}
-            <div className="col-span-2 md:col-span-1">
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
                 Product
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 <li>
-                  <Link href="/" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <span>Home</span>
+                  <Link href="/" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Home
                   </Link>
                 </li>
                 <li>
-                  <Link href="/createvault" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <span>Create Vault</span>
+                  <Link href="/createvault" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Create Vault
                   </Link>
                 </li>
                 <li>
-                  <Link href="/dashboard" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <span>Dashboard</span>
+                  <Link href="/dashboard" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Dashboard
                   </Link>
                 </li>
                 <li>
-                  <Link href="/about" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <span>DeFi Strategies</span>
+                  <Link href="/about" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    DeFi Strategies
                   </Link>
                 </li>
               </ul>
             </div>
 
             {/* Company Section */}
-            <div className="col-span-2 md:col-span-1">
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
                 Company
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 <li>
-                  <Link href="/about" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <InformationCircleIcon className="h-4 w-4" />
-                    <span>About</span>
+                  <Link href="/about" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    About
                   </Link>
                 </li>
                 <li>
-                  <a href="https://github.com/your-org/nestfi" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <UserGroupIcon className="h-4 w-4" />
-                    <span>Team</span>
+                  <a href="https://nestfi.io/team" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Team
                   </a>
                 </li>
                 <li>
-                  <a href="https://github.com/your-org/nestfi/blob/main/CONTRIBUTING.md" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <CodeBracketIcon className="h-4 w-4" />
-                    <span>Careers</span>
+                  <a href="https://nestfi.io/careers" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Careers
                   </a>
                 </li>
               </ul>
             </div>
 
             {/* Resources Section */}
-            <div className="col-span-2 md:col-span-1">
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
                 Resources
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 <li>
-                  <a href="https://docs.nestfi.io" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <DocumentTextIcon className="h-4 w-4" />
-                    <span>Documentation</span>
+                  <a href="https://docs.nestfi.io" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Documentation
                   </a>
                 </li>
                 <li>
-                  <a href="https://blog.nestfi.io" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <BookOpenIcon className="h-4 w-4" />
-                    <span>Blog</span>
+                  <a href="https://github.com/your-org/nestfi" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    GitHub
                   </a>
                 </li>
                 <li>
-                  <a href="https://github.com/your-org/nestfi" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <CodeBracketIcon className="h-4 w-4" />
-                    <span>GitHub</span>
-                  </a>
-                </li>
-                <li>
-                  <Link href="/blockexplorer" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <MagnifyingGlassIcon className="h-4 w-4" />
-                    <span>Block Explorer</span>
+                  <Link href="/blockexplorer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Block Explorer
                   </Link>
                 </li>
               </ul>
             </div>
 
             {/* Legal Section */}
-            <div className="col-span-2 md:col-span-1">
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-4">
+            <div>
+              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
                 Legal
               </h3>
-              <ul className="space-y-3">
+              <ul className="space-y-4">
                 <li>
-                  <Link href="/privacy" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <ShieldCheckIcon className="h-4 w-4" />
-                    <span>Privacy Policy</span>
+                  <Link href="/privacy" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Privacy Policy
                   </Link>
                 </li>
                 <li>
-                  <Link href="/terms" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <DocumentTextIcon className="h-4 w-4" />
-                    <span>Terms of Service</span>
+                  <Link href="/terms" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Terms of Service
                   </Link>
                 </li>
                 <li>
-                  <Link href="/security" className="text-sm text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2">
-                    <ShieldCheckIcon className="h-4 w-4" />
-                    <span>Security</span>
+                  <Link href="/security" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
+                    Security
                   </Link>
                 </li>
               </ul>
@@ -182,27 +168,25 @@ export const Footer = () => {
           </div>
 
           {/* Bottom Section */}
-          <div className="mt-12 pt-8 border-t border-base-300">
-            <div className="flex flex-col lg:flex-row justify-between items-center">
+          <div className="pt-8 border-t border-base-300">
+            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               
               {/* Logo and Copyright */}
-              <div className="flex items-center space-x-4 mb-4 lg:mb-0">
-                <NestFiLogo className="h-8 w-8" />
-                <div>
-                  <p className="text-sm text-base-content/70">
-                    © 2024 NestFi. All Rights Reserved.
-                  </p>
+              <div className="flex items-center gap-4">
+                <NestFiLogo className="h-10 w-10 flex-shrink-0" />
+                <div className="flex flex-col">
+                  <p className="text-sm font-semibold text-base-content leading-tight">NestFi Protocol</p>
+                  <p className="text-xs text-base-content/60 mt-1">© 2024 NestFi Labs, Inc. All Rights Reserved.</p>
                 </div>
               </div>
 
-              {/* Social Links and Contact */}
-              <div className="flex items-center space-x-6">
-                {/* GitHub */}
+              {/* Social Links */}
+              <div className="flex items-center gap-4">
                 <a 
                   href="https://github.com/your-org/nestfi" 
                   target="_blank" 
                   rel="noreferrer"
-                  className="text-base-content/70 hover:text-base-content transition-colors duration-200"
+                  className="text-base-content/60 hover:text-primary transition-colors duration-200"
                   aria-label="GitHub"
                 >
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -210,12 +194,11 @@ export const Footer = () => {
                   </svg>
                 </a>
 
-                {/* Twitter/X */}
                 <a 
                   href="https://twitter.com/nestfi" 
                   target="_blank" 
                   rel="noreferrer"
-                  className="text-base-content/70 hover:text-base-content transition-colors duration-200"
+                  className="text-base-content/60 hover:text-primary transition-colors duration-200"
                   aria-label="Twitter"
                 >
                   <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
@@ -223,55 +206,23 @@ export const Footer = () => {
                   </svg>
                 </a>
 
-                {/* Discord */}
                 <a 
                   href="https://discord.gg/nestfi" 
                   target="_blank" 
                   rel="noreferrer"
-                  className="text-base-content/70 hover:text-base-content transition-colors duration-200"
+                  className="text-base-content/60 hover:text-primary transition-colors duration-200"
                   aria-label="Discord"
                 >
                   <ChatBubbleLeftRightIcon className="h-5 w-5" />
                 </a>
 
-                {/* Contact */}
                 <a 
                   href="mailto:contact@nestfi.io"
-                  className="text-base-content/70 hover:text-base-content transition-colors duration-200 flex items-center gap-2"
+                  className="text-sm text-base-content/60 hover:text-primary transition-colors duration-200"
                 >
-                  <span className="text-sm">Contact</span>
-                  <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                  </svg>
+                  Contact
                 </a>
               </div>
-            </div>
-
-            {/* Built with Love Section */}
-            <div className="mt-6 pt-6 border-t border-base-300">
-              <div className="flex justify-center items-center gap-2 text-sm text-base-content/70">
-                <span>Built with</span>
-                <HeartIcon className="inline-block h-4 w-4 text-red-500" />
-                <span>using</span>
-                <a
-                  className="flex justify-center items-center gap-1 hover:text-base-content transition-colors duration-200"
-                  href="https://scaffoldeth.io/"
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span className="link">Scaffold-ETH 2</span>
-                </a>
-                <span>&</span>
-                <a
-                  className="flex justify-center items-center gap-1 hover:text-base-content transition-colors duration-200"
-                href="https://buidlguidl.com/"
-                target="_blank"
-                rel="noreferrer"
-              >
-                <BuidlGuidlLogo className="w-3 h-5 pb-1" />
-                <span className="link">BuidlGuidl</span>
-              </a>
-            </div>
             </div>
           </div>
       </div>

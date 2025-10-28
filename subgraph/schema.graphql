@@ -69,14 +69,9 @@ type VaultFactory @entity {
   id: ID! # factory address
   address: Bytes!
   totalVaults: BigInt!
-  vaults: [Vault!]! @derivedFrom(field: "factory")
 }
 
 type User @entity {
   id: ID! # user address
   address: Bytes!
-  vaultsCreated: [Vault!]! @derivedFrom(field: "owner")
-  memberships: [VaultMember!]! @derivedFrom(field: "user")
-  deposits: [Deposit!]! @derivedFrom(field: "user")
-  withdrawals: [Withdrawal!]! @derivedFrom(field: "user")
 }

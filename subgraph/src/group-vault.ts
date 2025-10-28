@@ -120,7 +120,7 @@ export function handleWithdraw(event: Withdraw): void {
     event.transaction.hash.toHexString() + "-" + event.logIndex.toString()
   )
   withdrawal.vault = vault.id
-  withdrawal.user = event.params.owner
+  withdrawal.user = event.params.receiver
   withdrawal.assets = event.params.assets
   withdrawal.shares = event.params.shares
   withdrawal.timestamp = event.block.timestamp
@@ -129,10 +129,10 @@ export function handleWithdraw(event: Withdraw): void {
   withdrawal.save()
 
   // Create or update user entity
-  let user = User.load(event.params.owner.toHexString())
+  let user = User.load(event.params.receiver.toHexString())
   if (user == null) {
-    user = new User(event.params.owner.toHexString())
-    user.address = event.params.owner
+    user = new User(event.params.receiver.toHexString())
+    user.address = event.params.receiver
   }
   user.save()
 }

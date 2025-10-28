@@ -57,7 +57,7 @@ dataSources:
           handler: handleAllowlistUpdated
         - event: Deposit(indexed address,indexed address,uint256,uint256)
           handler: handleDeposit
-        - event: Withdraw(indexed address,indexed address,uint256,uint256)
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
         - event: Paused(address)
           handler: handlePaused
@@ -94,7 +94,7 @@ templates:
           handler: handleAllowlistUpdated
         - event: Deposit(indexed address,indexed address,uint256,uint256)
           handler: handleDeposit
-        - event: Withdraw(indexed address,indexed address,uint256,uint256)
+        - event: Withdraw(indexed address,indexed address,indexed address,uint256,uint256)
           handler: handleWithdraw
       callHandlers: []
       blockHandlers: []
