@@ -6,23 +6,12 @@ import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
 const deployedContracts = {
   11155111: {
-    ERC7702Relayer: {
-      address: "0x515ede902a79075b6f600c24d38d3e25ae4d5ea4",
+    GroupVault: {
+      address: "0xc5961aa5a79e9ecf41eb7d106f70ca5d2de25b5c",
       abi: [
         {
           type: "constructor",
-          inputs: [
-            {
-              name: "_gasToken",
-              type: "address",
-              internalType: "address",
-            },
-            {
-              name: "_gasPriceInToken",
-              type: "uint256",
-              internalType: "uint256",
-            },
-          ],
+          inputs: [],
           stateMutability: "nonpayable",
         },
         {
@@ -1037,19 +1026,6 @@ const deployedContracts = {
         },
         {
           type: "function",
-          name: "erc7702Relayer",
-          inputs: [],
-          outputs: [
-            {
-              name: "",
-              type: "address",
-              internalType: "contract IERC7702",
-            },
-          ],
-          stateMutability: "view",
-        },
-        {
-          type: "function",
           name: "harvest",
           inputs: [
             {
@@ -1471,19 +1447,6 @@ const deployedContracts = {
         },
         {
           type: "function",
-          name: "setERC7702Relayer",
-          inputs: [
-            {
-              name: "_relayer",
-              type: "address",
-              internalType: "address",
-            },
-          ],
-          outputs: [],
-          stateMutability: "nonpayable",
-        },
-        {
-          type: "function",
           name: "setMinDeposit",
           inputs: [
             {
@@ -1857,19 +1820,6 @@ const deployedContracts = {
               type: "uint256",
               indexed: false,
               internalType: "uint256",
-            },
-          ],
-          anonymous: false,
-        },
-        {
-          type: "event",
-          name: "ERC7702RelayerSet",
-          inputs: [
-            {
-              name: "relayer",
-              type: "address",
-              indexed: true,
-              internalType: "address",
             },
           ],
           anonymous: false,
@@ -2310,11 +2260,6 @@ const deployedContracts = {
         {
           type: "error",
           name: "ExpectedPause",
-          inputs: [],
-        },
-        {
-          type: "error",
-          name: "InvalidERC7702Relayer",
           inputs: [],
         },
         {

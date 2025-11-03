@@ -98,12 +98,11 @@ No Firebase. No centralized DB.
 - **`VaultFactory`**: Creates and manages vault instances
 - **`GroupVault`**: ERC-4626 compliant vault implementation
   (Mocks removed for production)
-- **`ERC7702Relayer`**: Gasless transaction relayer
 
 ### Key Features
 
 - **ERC-4626 Standard**: Full compliance with vault standard
-- **Gasless Deposits**: ERC-7702 + Permit2 integration for gasless transactions
+- **Gasless Deposits**: Permit2 integration for gasless transactions
 - **Real Strategies**: Pluggable adapters (Aave v3, Compound v3 Comet, Uniswap V3 LP)
 - **Allowlist Control**: Restrict vault access to approved addresses
 - **Deposit Caps**: Set maximum vault capacity

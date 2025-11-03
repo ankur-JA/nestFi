@@ -3,7 +3,6 @@ import { useAccount, useWriteContract, useTransaction } from "wagmi";
 import { parseUnits } from "viem";
 import deployedContracts from "../contracts/deployedContracts";
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
-import { useERC7702 } from "./useERC7702";
 
 interface Permit2Data {
   owner: string;
@@ -28,8 +27,6 @@ export const useGaslessVault = () => {
   const { address: userAddress } = useAccount();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const { executeWithGasPayment, estimateGasCost } = useERC7702();
 
   const { writeContract: executePermit2, data: permit2Data, isPending: permit2Loading } = useWriteContract();
   const { isLoading: permit2TxLoading, isSuccess: permit2Success } = useTransaction({
@@ -37,7 +34,7 @@ export const useGaslessVault = () => {
   });
 
   /**
-   * Complete gasless deposit flow using both Permit2 and ERC-7702
+   * Complete gasless deposit flow using Permit2
    */
   const gaslessDeposit = useCallback(async (params: GaslessDepositParams) => {
     if (!userAddress) {
@@ -49,7 +46,7 @@ export const useGaslessVault = () => {
     setError(null);
 
     try {
-      const { vaultAddress, assets, receiver, gasToken, gasAmount, permit2Data } = params;
+      const { vaultAddress, assets, receiver, permit2Data } = params;
 
       // Step 1: If Permit2 data is provided, execute permit first
       if (permit2Data) {
@@ -58,16 +55,13 @@ export const useGaslessVault = () => {
         console.log("Permit2 execution skipped - using mock implementation");
       }
 
-      // Step 2: Execute deposit with ERC-7702 gas payment
-      await executeWithGasPayment(
-        vaultAddress,
-        {
-          functionName: "depositWithERC7702",
-          args: [parseUnits(assets, 6), receiver],
-        } as any,
-        gasToken,
-        gasAmount
-      );
+      // Step 2: Execute regular deposit with Permit2
+      executePermit2({
+        address: vaultAddress as `0x${string}`,
+        abi: ((deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi) || [],
+        functionName: "depositWithPermit2",
+        args: [parseUnits(assets, 6), receiver, permit2Data],
+      });
 
     } catch (err) {
       setError("Failed to execute gasless deposit");
@@ -75,7 +69,7 @@ export const useGaslessVault = () => {
     } finally {
       setLoading(false);
     }
-  }, [userAddress, executeWithGasPayment]);
+  }, [userAddress, executePermit2]);
 
   /**
    * Create Permit2 signature for token approval
@@ -162,9 +156,7 @@ export const useGaslessVault = () => {
     vaultAddress: string,
     assets: string,
     receiver: string,
-    assetToken: string,
-    gasToken: string,
-    gasAmount: string
+    assetToken: string
   ) => {
     if (!userAddress) {
       setError("User address not available");
@@ -189,8 +181,8 @@ export const useGaslessVault = () => {
         vaultAddress,
         assets,
         receiver,
-        gasToken,
-        gasAmount,
+        gasToken: "",
+        gasAmount: "",
         permit2Data,
       });
 
@@ -202,49 +194,10 @@ export const useGaslessVault = () => {
     }
   }, [userAddress, createPermit2Signature, gaslessDeposit]);
 
-  /**
-   * Gasless withdraw using ERC-7702
-   */
-  const gaslessWithdraw = useCallback(async (
-    vaultAddress: string,
-    shares: string,
-    receiver: string,
-    owner: string,
-    gasToken: string,
-    gasAmount: string
-  ) => {
-    if (!userAddress) {
-      setError("User address not available");
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      await executeWithGasPayment(
-        vaultAddress,
-        {
-          functionName: "withdrawWithERC7702",
-          args: [parseUnits(shares, 18), receiver, owner],
-        } as any,
-        gasToken,
-        gasAmount
-      );
-
-    } catch (err) {
-      setError("Failed to execute gasless withdraw");
-      console.error("Gasless withdraw error:", err);
-    } finally {
-      setLoading(false);
-    }
-  }, [userAddress, executeWithGasPayment]);
-
   return {
     // Core functions
     gaslessDeposit,
     gaslessDepositWithPermit,
-    gaslessWithdraw,
     
     // Helper functions
     createPermit2Signature,
