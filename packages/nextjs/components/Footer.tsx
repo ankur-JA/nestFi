@@ -1,232 +1,256 @@
+"use client";
+
 import React from "react";
 import Link from "next/link";
-import { hardhat } from "viem/chains";
-import { 
-  CurrencyDollarIcon, 
-  MagnifyingGlassIcon,
-  HeartIcon,
-  DocumentTextIcon,
-  ChatBubbleLeftRightIcon,
-  ShieldCheckIcon,
-  InformationCircleIcon,
-  BookOpenIcon,
-  UserGroupIcon,
-  CodeBracketIcon
-} from "@heroicons/react/24/outline";
-import { SwitchTheme } from "~~/components/SwitchTheme";
-import { BuidlGuidlLogo } from "~~/components/assets/BuidlGuidlLogo";
 import NestFiLogo from "~~/components/NestFiLogo";
-import { Faucet } from "~~/components/scaffold-eth";
-import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
-import { useGlobalState } from "~~/services/store/store";
+import { useTheme } from "~~/contexts/ThemeContext";
 
 /**
- * Site footer with comprehensive sections
+ * Premium fintech footer - full width with theme support
  */
 export const Footer = () => {
-  const nativeCurrencyPrice = useGlobalState(state => state.nativeCurrency.price);
-  const { targetNetwork } = useTargetNetwork();
-  const isLocalNetwork = targetNetwork.id === hardhat.id;
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
 
   return (
-    <>
-      {/* Development Tools Bar */}
-    <div className="min-h-0 py-5 px-1 mb-11 lg:mb-0">
-      <div>
-        <div className="fixed flex justify-between items-center w-full z-10 p-4 bottom-0 left-0 pointer-events-none">
-          <div className="flex flex-col md:flex-row gap-2 pointer-events-auto">
-            {nativeCurrencyPrice > 0 && (
-              <div>
-                <div className="btn btn-primary btn-sm font-normal gap-1 cursor-auto">
-                  <CurrencyDollarIcon className="h-4 w-4" />
-                  <span>{nativeCurrencyPrice.toFixed(2)}</span>
-                </div>
-              </div>
-            )}
-            {isLocalNetwork && (
-              <>
-                <Faucet />
-                <Link href="/blockexplorer" passHref className="btn btn-primary btn-sm font-normal gap-1">
-                  <MagnifyingGlassIcon className="h-4 w-4" />
-                  <span>Block Explorer</span>
-                </Link>
-              </>
-            )}
-          </div>
-          <SwitchTheme className={`pointer-events-auto ${isLocalNetwork ? "self-end md:self-auto" : ""}`} />
-        </div>
-      </div>
-      </div>
-
-      {/* Main Footer */}
-      <footer className="bg-base-200 border-t border-base-300">
-        <div className="max-w-6xl mx-auto px-6 py-16">
-          
-          {/* Main Footer Content */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-12 mb-12">
+    <footer 
+      className="relative transition-colors duration-300"
+      style={{ 
+        background: isDark ? '#050507' : '#f8fafc',
+        borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+      }}
+    >
+      {/* Subtle gradient accent */}
+      <div 
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          background: isDark 
+            ? 'linear-gradient(to bottom, rgba(20,184,166,0.02), transparent)'
+            : 'linear-gradient(to bottom, rgba(16,185,129,0.03), transparent)',
+        }}
+      />
+      
+      <div className="relative">
+        {/* Main Footer Content */}
+        <div className="px-8 lg:px-16 xl:px-24 py-16">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
             
-            {/* Product Section */}
+            {/* Brand Section */}
+            <div className="col-span-2">
+              <NestFiLogo size="md" animated={false} />
+              <p 
+                className="mt-4 text-sm max-w-xs leading-relaxed"
+                style={{ color: isDark ? '#6b7280' : '#64748b' }}
+              >
+                The decentralized asset management protocol. Pool funds, deploy strategies, and grow together.
+              </p>
+              
+              {/* Social Links */}
+              <div className="flex items-center gap-3 mt-6">
+                {[
+                  { href: "https://twitter.com", icon: (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    </svg>
+                  )},
+                  { href: "https://discord.com", icon: (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028 14.09 14.09 0 0 0 1.226-1.994.076.076 0 0 0-.041-.106 13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.062 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.03zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/>
+                    </svg>
+                  )},
+                  { href: "https://github.com", icon: (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                    </svg>
+                  )},
+                  { href: "https://t.me", icon: (
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                      <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.83-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/>
+                    </svg>
+                  )},
+                ].map((social, i) => (
+                  <a 
+                    key={i}
+                    href={social.href} 
+                    target="_blank" 
+                    rel="noreferrer"
+                    className="p-2 rounded-lg transition-all"
+                    style={{
+                      background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                      border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+                      color: isDark ? '#6b7280' : '#64748b',
+                    }}
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Product */}
             <div>
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
+              <h3 
+                className="text-xs font-semibold uppercase tracking-wider mb-4"
+                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+              >
                 Product
               </h3>
-              <ul className="space-y-4">
-                <li>
-                  <Link href="/" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Home
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/createvault" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Create Vault
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/dashboard" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Dashboard
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/about" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    DeFi Strategies
-                  </Link>
-                </li>
+              <ul className="space-y-3">
+                {[
+                  { href: "/investor", label: "Invest" },
+                  { href: "/curator", label: "Create Vault" },
+                  { href: "/about", label: "About" },
+                ].map((link) => (
+                  <li key={link.href}>
+                    <Link 
+                      href={link.href} 
+                      className="text-sm transition-colors"
+                      style={{ color: isDark ? '#6b7280' : '#64748b' }}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Company Section */}
+            {/* Resources */}
             <div>
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
-                Company
-              </h3>
-              <ul className="space-y-4">
-                <li>
-                  <Link href="/about" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    About
-                  </Link>
-                </li>
-                <li>
-                  <a href="https://nestfi.io/team" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Team
-                  </a>
-                </li>
-                <li>
-                  <a href="https://nestfi.io/careers" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Careers
-                  </a>
-                </li>
-              </ul>
-            </div>
-
-            {/* Resources Section */}
-            <div>
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
+              <h3 
+                className="text-xs font-semibold uppercase tracking-wider mb-4"
+                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+              >
                 Resources
               </h3>
-              <ul className="space-y-4">
-                <li>
-                  <a href="https://docs.nestfi.io" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Documentation
-                  </a>
-                </li>
-                <li>
-                  <a href="https://github.com/your-org/nestfi" target="_blank" rel="noreferrer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    GitHub
-                  </a>
-                </li>
-                <li>
-                  <Link href="/blockexplorer" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Block Explorer
-                  </Link>
-                </li>
+              <ul className="space-y-3">
+                {[
+                  { href: "https://docs.nestfi.io", label: "Documentation", external: true },
+                  { href: "https://github.com", label: "GitHub", external: true },
+                  { href: "/blockexplorer", label: "Explorer" },
+                  { href: "#", label: "Audit Reports" },
+                ].map((link) => (
+                  <li key={link.label}>
+                    {link.external ? (
+                      <a 
+                        href={link.href} 
+                        target="_blank" 
+                        rel="noreferrer" 
+                        className="text-sm transition-colors"
+                        style={{ color: isDark ? '#6b7280' : '#64748b' }}
+                      >
+                        {link.label}
+                      </a>
+                    ) : (
+                      <Link 
+                        href={link.href} 
+                        className="text-sm transition-colors"
+                        style={{ color: isDark ? '#6b7280' : '#64748b' }}
+                      >
+                        {link.label}
+                      </Link>
+                    )}
+                  </li>
+                ))}
               </ul>
             </div>
 
-            {/* Legal Section */}
+            {/* Legal */}
             <div>
-              <h3 className="text-sm font-semibold text-base-content uppercase tracking-wider mb-6">
+              <h3 
+                className="text-xs font-semibold uppercase tracking-wider mb-4"
+                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+              >
                 Legal
               </h3>
-              <ul className="space-y-4">
-                <li>
-                  <Link href="/privacy" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Privacy Policy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/terms" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Terms of Service
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/security" className="text-sm text-base-content/70 hover:text-primary transition-colors duration-200">
-                    Security
-                  </Link>
-                </li>
+              <ul className="space-y-3">
+                {[
+                  { href: "/privacy", label: "Privacy Policy" },
+                  { href: "/terms", label: "Terms of Service" },
+                  { href: "/security", label: "Security" },
+                ].map((link) => (
+                  <li key={link.href}>
+                    <Link 
+                      href={link.href} 
+                      className="text-sm transition-colors"
+                      style={{ color: isDark ? '#6b7280' : '#64748b' }}
+                    >
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
               </ul>
             </div>
-          </div>
 
-          {/* Bottom Section */}
-          <div className="pt-8 border-t border-base-300">
-            <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-              
-              {/* Logo and Copyright */}
-              <div className="flex items-center gap-4">
-                <NestFiLogo className="h-10 w-10 flex-shrink-0" />
-                <div className="flex flex-col">
-                  <p className="text-sm font-semibold text-base-content leading-tight">NestFi Protocol</p>
-                  <p className="text-xs text-base-content/60 mt-1">© 2024 NestFi Labs, Inc. All Rights Reserved.</p>
-                </div>
-              </div>
-
-              {/* Social Links */}
-              <div className="flex items-center gap-4">
-                <a 
-                  href="https://github.com/your-org/nestfi" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="text-base-content/60 hover:text-primary transition-colors duration-200"
-                  aria-label="GitHub"
-                >
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                  </svg>
-                </a>
-
-                <a 
-                  href="https://twitter.com/nestfi" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="text-base-content/60 hover:text-primary transition-colors duration-200"
-                  aria-label="Twitter"
-                >
-                  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-                  </svg>
-                </a>
-
-                <a 
-                  href="https://discord.gg/nestfi" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  className="text-base-content/60 hover:text-primary transition-colors duration-200"
-                  aria-label="Discord"
-                >
-                  <ChatBubbleLeftRightIcon className="h-5 w-5" />
-                </a>
-
-                <a 
-                  href="mailto:contact@nestfi.io"
-                  className="text-sm text-base-content/60 hover:text-primary transition-colors duration-200"
-                >
-                  Contact
-                </a>
+            {/* Newsletter */}
+            <div>
+              <h3 
+                className="text-xs font-semibold uppercase tracking-wider mb-4"
+                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+              >
+                Stay Updated
+              </h3>
+              <p 
+                className="text-sm mb-3"
+                style={{ color: isDark ? '#6b7280' : '#64748b' }}
+              >
+                Get the latest updates
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="Email"
+                  className="flex-1 px-3 py-2 rounded-lg text-sm transition-colors focus:outline-none"
+                  style={{
+                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
+                    color: isDark ? '#ffffff' : '#0f172a',
+                  }}
+                />
+                <button className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white text-sm font-medium rounded-lg transition-all">
+                  →
+                </button>
               </div>
             </div>
           </div>
+        </div>
+
+        {/* Bottom Bar */}
+        <div 
+          className="px-8 lg:px-16 xl:px-24 py-6"
+          style={{
+            borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
+            background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
+          }}
+        >
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center gap-6">
+              <p 
+                className="text-sm"
+                style={{ color: isDark ? '#6b7280' : '#64748b' }}
+              >
+                © 2025 NestFi Labs. All rights reserved.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-6">
+              <span 
+                className="flex items-center gap-2 text-sm"
+                style={{ color: isDark ? '#6b7280' : '#64748b' }}
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                All systems operational
+              </span>
+              <span style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
+              <span 
+                className="text-sm"
+                style={{ color: isDark ? '#6b7280' : '#64748b' }}
+              >
+                Built on <span className="text-emerald-500">Ethereum</span>
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
-      </footer>
-    </>
+    </footer>
   );
 };

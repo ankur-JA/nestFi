@@ -1,181 +1,91 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { motion } from "framer-motion";
-import {
-  BanknotesIcon,
-  UsersIcon,
-  ChartBarIcon,
-  StarIcon,
-  UserIcon,
-  ArrowPathIcon
-} from "@heroicons/react/24/outline";
-import VaultCard from "./_components/VaultCard";
-import { VaultExplorer } from "./_components/VaultExplorer";
-import { VaultMembershipStatus } from "./_components/VaultMembershipStatus";
-import { useVaultFactory } from "../../hooks/useVaultFactory";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useVaultFactoryGraph } from "~~/hooks/useVaultFactoryGraph";
+import { WalletIcon } from "@heroicons/react/24/outline";
+import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 
-interface DashboardStats {
-  totalVaults: number;
-  totalValueLocked: string;
-  totalMembers: number;
-  averageAPY: string;
-}
+export default function DashboardRouter() {
+  const { address, isConnected } = useAccount();
+  const router = useRouter();
+  const { userVaults: allVaults, loading: isLoading } = useVaultFactoryGraph();
+  const [isMounted, setIsMounted] = useState(false);
 
-const DashboardPage: React.FC = () => {
-  const { address: userAddress, isConnected } = useAccount();
-  const { userVaults, loading, error, refreshVaults, checkSpecificVault } = useVaultFactory();
-  const [dashboardStats, setDashboardStats] = useState<DashboardStats>({
-    totalVaults: 0,
-    totalValueLocked: "0",
-    totalMembers: 0,
-    averageAPY: "0",
-  });
-
-  // Calculate dashboard stats from user vaults
   useEffect(() => {
-    if (userVaults) {
-      const totalVaults = userVaults.length;
-      const adminVaults = userVaults.filter(vault => vault.isAdmin).length;
-      const memberVaults = userVaults.filter(vault => vault.isMember && !vault.isAdmin).length;
-      
-      // Calculate total value locked from vault balances
-      const totalValueLocked = userVaults.reduce((sum, vault) => {
-        const assets = BigInt(vault.totalAssets || "0");
-        return sum + Number(assets) / 1e6; // Convert from USDC units (6 decimals)
-      }, 0);
-      
-      // For now, set totalMembers to the number of member vaults (could be enhanced later)
-      const totalMembers = memberVaults;
-      
-      setDashboardStats({
-        totalVaults,
-        totalValueLocked: totalValueLocked.toFixed(2),
-        totalMembers,
-        averageAPY: "0", // Would calculate from vault yields
-      });
+    setIsMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isMounted) return;
+    
+    // Don't redirect if not connected - show connect prompt instead
+    if (!isConnected || !address) {
+      return;
     }
-  }, [userVaults]);
 
-  return (
-    <div className="flex flex-col items-center flex-grow pt-10 px-4 md:px-8 bg-black text-white">
-      {/* Not connected state */}
-      {!isConnected && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mt-20"
-        >
-          <BanknotesIcon className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-gray-300 mb-2">Connect Your Wallet</h2>
-          <p className="text-gray-400">
-            Connect your wallet to view your vaults and manage your investments
-          </p>
-        </motion.div>
-      )}
+    if (isLoading) return;
 
-      {/* Loading state */}
-      {isConnected && loading && (
-        <div className="min-h-[40vh] w-full flex items-center justify-center">
-          <div className="text-center">
-            <div className="w-16 h-16 border-4 border-red-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-300 text-lg">Loading your vaults...</p>
-          </div>
-        </div>
-      )}
+    // Check if user has created any vaults (is a manager)
+    const hasCreatedVaults = allVaults?.some(v => v.owner?.toLowerCase() === address.toLowerCase());
 
-      {/* Main content */}
-      {isConnected && !loading && (
-        <>
+    // Route based on role - default to investor if no vaults created
+    if (hasCreatedVaults) {
+      router.push("/dashboard/manager");
+    } else {
+      router.push("/dashboard/investor");
+    }
+  }, [isMounted, address, isConnected, allVaults, isLoading, router]);
 
-          {/* Main Dashboard Section */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="w-full max-w-7xl mb-8"
-          >
-            <div className="mb-6">
-              <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mb-2">
-                Your Vault Dashboard
-              </h1>
-              <p className="text-gray-400">
-                Overview of all vaults where you have admin or member access
+  if (!isMounted) {
+    return null;
+  }
+
+  // Show connect wallet prompt if not connected
+  if (!isConnected) {
+    return (
+      <div className="flex justify-center items-center min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+        <div className="max-w-md w-full mx-4">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl p-8 text-center">
+            <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <WalletIcon className="h-10 w-10 text-primary" />
+            </div>
+            
+            <h1 className="text-3xl font-bold mb-3">Connect Your Wallet</h1>
+            <p className="text-gray-600 dark:text-gray-400 mb-8">
+              Connect your wallet to access your investment dashboard and start managing your vaults.
+            </p>
+            
+            <div className="flex justify-center mb-6">
+              <RainbowKitCustomConnectButton />
+            </div>
+            
+            <div className="pt-6 border-t border-gray-200 dark:border-gray-700">
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                Don't have a wallet?{" "}
+                <a
+                  href="https://metamask.io"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline"
+                >
+                  Get MetaMask
+                </a>
               </p>
             </div>
-            <VaultMembershipStatus />
-          </motion.div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="w-full max-w-7xl"
-          >
-            {userVaults && userVaults.length > 0 ? (
-              <div>
-                {/* Admin Vaults */}
-                {userVaults.filter(vault => vault.isAdmin).length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <StarIcon className="h-6 w-6 text-yellow-400" />
-                      <h2 className="text-xl font-semibold text-white">Your Admin Vaults</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {userVaults
-                        .filter(vault => vault.isAdmin)
-                        .map((vault) => (
-                          <VaultCard
-                            key={vault.address}
-                            vaultAddress={vault.address}
-                            isCurrentUserAdmin={true}
-                            vaultInfo={vault}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Member Vaults */}
-                {userVaults.filter(vault => !vault.isAdmin && vault.isMember).length > 0 && (
-                  <div className="mb-8">
-                    <div className="flex items-center space-x-2 mb-4">
-                      <UserIcon className="h-6 w-6 text-blue-400" />
-                      <h2 className="text-xl font-semibold text-white">Vaults You&apos;ve Joined</h2>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                      {userVaults
-                        .filter(vault => !vault.isAdmin && vault.isMember)
-                        .map((vault) => (
-                          <VaultCard
-                            key={vault.address}
-                            vaultAddress={vault.address}
-                            isCurrentUserAdmin={false}
-                            vaultInfo={vault}
-                          />
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Explore Other Vaults - Temporarily disabled to prevent blockchain errors */}
-                {false && isConnected && userAddress && (
-                  <div className="mb-8">
-                    <VaultExplorer onVaultFound={(address) => {
-                      console.log("Found vault:", address);
-                      // The vault will be automatically added to the user's vault list
-                      // No need to reload the page
-                    }} />
-                  </div>
-                )}
-              </div>
-            ) : null}
-          </motion.div>
-        </>
-      )}
+  return (
+    <div className="flex justify-center items-center h-screen">
+      <div className="flex flex-col items-center gap-4">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        <p className="text-gray-600 dark:text-gray-400">Loading dashboard...</p>
+      </div>
     </div>
   );
-};
-
-export default DashboardPage;
+}

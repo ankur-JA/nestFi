@@ -35,7 +35,7 @@ export default function KeyFeatures() {
         <div className="text-center">
           <div className="text-3xl mb-2">🧩</div>
           <h3 className="text-lg font-semibold text-red-400 mb-2">Real Strategies</h3>
-          <p className="text-gray-300 text-sm">Aave v3, Compound v3 (Comet), Uniswap V3 LP adapters on Optimism</p>
+          <p className="text-gray-300 text-sm">Aave v3 lending adapter on Optimism</p>
         </div>
         <div className="text-center">
           <div className="text-3xl mb-2">🛠️</div>

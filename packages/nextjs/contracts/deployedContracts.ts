@@ -557,8 +557,8 @@ const deployedContracts = {
       deploymentFile: "run-1758049812.json",
       deploymentScript: "Deploy.s.sol",
     },
-    GroupVault: {
-      address: "0xc5961aa5a79e9ecf41eb7d106f70ca5d2de25b5c",
+    _DUPLICATE_MARKER_: {
+      address: "0x0000000000000000000000000000000000000000",
       abi: [
         {
           type: "constructor",

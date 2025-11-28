@@ -1,29 +1,30 @@
 import { NetworkOptions } from "./NetworkOptions";
 import { useDisconnect } from "wagmi";
-import { ArrowLeftOnRectangleIcon, ChevronDownIcon } from "@heroicons/react/24/outline";
+import { ArrowLeftOnRectangleIcon, ChevronDownIcon, ExclamationTriangleIcon } from "@heroicons/react/24/outline";
 
 export const WrongNetworkDropdown = () => {
   const { disconnect } = useDisconnect();
 
   return (
-    <div className="dropdown dropdown-end mr-2">
-      <label tabIndex={0} className="btn btn-error btn-sm dropdown-toggle gap-1">
-        <span>Wrong network</span>
-        <ChevronDownIcon className="h-6 w-4 ml-2 sm:ml-0" />
+    <div className="dropdown dropdown-end">
+      <label tabIndex={0} className="flex items-center gap-2 px-4 py-2 bg-red-500/20 border border-red-500/30 text-red-400 rounded-xl cursor-pointer hover:bg-red-500/30 transition-colors">
+        <ExclamationTriangleIcon className="h-4 w-4" />
+        <span className="text-sm font-medium">Wrong Network</span>
+        <ChevronDownIcon className="h-4 w-4" />
       </label>
       <ul
         tabIndex={0}
-        className="dropdown-content menu p-2 mt-1 shadow-center shadow-accent bg-base-200 rounded-box gap-1"
+        className="dropdown-content menu z-50 p-2 mt-3 bg-[#12121a] border border-white/10 rounded-xl shadow-2xl shadow-black/50 min-w-[180px]"
       >
         <NetworkOptions />
-        <li>
+        <li className="border-t border-white/10 mt-1 pt-1">
           <button
-            className="menu-item text-error btn-sm rounded-xl! flex gap-3 py-3"
+            className="flex items-center gap-3 px-3 py-2.5 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-lg cursor-pointer transition-colors w-full"
             type="button"
             onClick={() => disconnect()}
           >
-            <ArrowLeftOnRectangleIcon className="h-6 w-4 ml-2 sm:ml-0" />
-            <span>Disconnect</span>
+            <ArrowLeftOnRectangleIcon className="h-4 w-4" />
+            <span className="text-sm">Disconnect</span>
           </button>
         </li>
       </ul>

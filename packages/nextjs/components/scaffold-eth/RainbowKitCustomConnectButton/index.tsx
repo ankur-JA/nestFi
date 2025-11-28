@@ -12,6 +12,8 @@ import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
 import { motion } from "framer-motion";
+import { WalletIcon } from "@heroicons/react/24/outline";
+import { SettingsDropdown } from "~~/components/SettingsDropdown";
 
 /**
  * Custom Wagmi Connect Button (watch balance + custom design)
@@ -21,60 +23,74 @@ export const RainbowKitCustomConnectButton = () => {
   const { targetNetwork } = useTargetNetwork();
 
   return (
-    <ConnectButton.Custom>
-      {({ account, chain, openConnectModal, mounted }) => {
-        const connected = mounted && account && chain;
-        const blockExplorerAddressLink = account
-          ? getBlockExplorerAddressLink(targetNetwork, account.address)
-          : undefined;
+    <div className="flex items-center gap-2">
+      <ConnectButton.Custom>
+        {({ account, chain, openConnectModal, mounted }) => {
+          const connected = mounted && account && chain;
+          const blockExplorerAddressLink = account
+            ? getBlockExplorerAddressLink(targetNetwork, account.address)
+            : undefined;
 
-        return (
-          <>
-            {(() => {
-              if (!connected) {
+          return (
+            <>
+              {(() => {
+                if (!connected) {
+                  return (
+                    <motion.button
+                      onClick={openConnectModal}
+                      className="group relative flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white font-semibold text-sm rounded-xl shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all duration-300"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <WalletIcon className="w-4 h-4" />
+                      Connect
+                    </motion.button>
+                  );
+                }
+
+                if (chain.unsupported || chain.id !== targetNetwork.id) {
+                  return <WrongNetworkDropdown />;
+                }
+
                 return (
-                  <motion.button
-                    onClick={openConnectModal}
-                    className="btn btn-primary btn-sm px-4 py-2 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white font-medium rounded-lg shadow-lg hover:shadow-xl hover:shadow-red-500/25 transition-all duration-300 border-0"
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                  >
-                    Connect
-                  </motion.button>
+                  <div className="flex items-center gap-2">
+                    {/* Balance & Network Pill */}
+                    <motion.div 
+                      className="hidden sm:flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-gray-900 to-gray-800 rounded-xl border border-white/[0.08]"
+                      initial={{ opacity: 0, x: 10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {/* Network indicator dot */}
+                      <div 
+                        className="w-2 h-2 rounded-full animate-pulse"
+                        style={{ backgroundColor: networkColor }}
+                      />
+                      <Balance 
+                        address={account.address as Address} 
+                        className="min-h-0 h-auto text-white font-medium text-sm" 
+                      />
+                    </motion.div>
+                    
+                    {/* Address Dropdown */}
+                    <AddressInfoDropdown
+                      address={account.address as Address}
+                      displayName={account.displayName}
+                      ensAvatar={account.ensAvatar}
+                      blockExplorerAddressLink={blockExplorerAddressLink}
+                    />
+                    <AddressQRCodeModal address={account.address as Address} modalId="qrcode-modal" />
+                    <RevealBurnerPKModal />
+                  </div>
                 );
-              }
-
-              if (chain.unsupported || chain.id !== targetNetwork.id) {
-                return <WrongNetworkDropdown />;
-              }
-
-              return (
-                <>
-                  <motion.div 
-                    className="flex flex-col items-center mr-2 p-2 bg-gradient-to-r from-gray-800/50 to-gray-900/50 rounded-lg border border-gray-700/50 backdrop-blur-sm"
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Balance address={account.address as Address} className="min-h-0 h-auto text-white font-semibold text-sm" />
-                    <span className="text-xs text-gray-300 mt-0.5" style={{ color: networkColor }}>
-                      {chain.name}
-                    </span>
-                  </motion.div>
-                  <AddressInfoDropdown
-                    address={account.address as Address}
-                    displayName={account.displayName}
-                    ensAvatar={account.ensAvatar}
-                    blockExplorerAddressLink={blockExplorerAddressLink}
-                  />
-                  <AddressQRCodeModal address={account.address as Address} modalId="qrcode-modal" />
-                  <RevealBurnerPKModal />
-                </>
-              );
-            })()}
-          </>
-        );
-      }}
-    </ConnectButton.Custom>
+              })()}
+            </>
+          );
+        }}
+      </ConnectButton.Custom>
+      
+      {/* Settings Button */}
+      <SettingsDropdown />
+    </div>
   );
 };

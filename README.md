@@ -1,255 +1,407 @@
-# 🪺 NestFi - Decentralized Investment Vaults
+<p align="center">
+  <img src="https://img.shields.io/badge/Status-Active-brightgreen" alt="Status" />
+  <img src="https://img.shields.io/badge/License-MIT-blue" alt="License" />
+  <img src="https://img.shields.io/badge/Solidity-0.8.20-purple" alt="Solidity" />
+  <img src="https://img.shields.io/badge/Next.js-14-black" alt="Next.js" />
+</p>
 
-A modern, gasless DeFi platform for creating and managing investment vaults with ERC-4626 standard and ERC-7702 gasless transactions.
+<h1 align="center">🪺 NestFi</h1>
 
-Made with ❤️ by Gearhead (solo builder)
+<p align="center">
+  <strong>Decentralized Asset Management Protocol</strong>
+</p>
 
-## ✨ Features
-
-- **🪺 ERC-4626 Vaults**: Standard-compliant investment vaults
-- **⚡ Gasless Transactions**: ERC-7702 integration for gasless deposits
-- **🔐 Permit2 Support**: Off-chain approvals for seamless UX
-- **🎯 Allowlist Management**: Control who can join your vaults
-- **📊 Live Dashboard**: On‑chain reads with Wagmi/Viem (no centralized DB)
-- **🎨 Modern UI**: Beautiful, responsive interface with animations
-- **🔧 Factory Pattern**: Easy vault creation and management
-- **🗂️ Firebase‑free**: Pure Web3 data model (no Firebase)
-- **📈 Optional Indexing**: The Graph support is available but disabled by default
-
-## 🏗️ Architecture
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   Frontend      │    │   Smart         │    │   Gasless       │
-│   (Next.js)     │◄──►│   Contracts     │◄──►│   Infrastructure │
-│                 │    │                 │    │                 │
-│ • Dashboard     │    │ • VaultFactory  │    │ • ERC-7702      │
-│ • Vault Creation│    │ • GroupVault    │    │ • Permit2       │
-│ • User Mgmt     │    │ • USDC (real)   │    │ • Relayer       │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-
-Optional: The Graph subgraph → consumed via Apollo Client on the client‑side only.
-
-No Firebase. No centralized DB.
+<p align="center">
+  Pool funds into curated DeFi vaults. Curators manage strategies, investors share returns.<br/>
+  Fully transparent. Fully on-chain.
+</p>
 
 ---
 
-## 🧠 Data & Indexing
+## 📖 Table of Contents
 
-- Default setup reads directly from the blockchain using Wagmi/Viem and simple API routes.
-- The Graph is supported for richer lists/analytics, but is off by default to simplify local development.
-- To enable The Graph in the frontend, set an endpoint:
-  - `packages/nextjs/.env.local`
-    ```env
-    NEXT_PUBLIC_GRAPH_ENDPOINT=https://api.thegraph.com/subgraphs/name/<owner>/<subgraph>
-    ```
-  If not provided, the app gracefully falls back to on‑chain reads only.
+- [Overview](#-overview)
+- [Features](#-features)
+- [Architecture](#-architecture)
+- [Getting Started](#-getting-started)
+- [Smart Contracts](#-smart-contracts)
+- [Frontend](#-frontend)
+- [User Roles](#-user-roles)
+- [Tech Stack](#-tech-stack)
+- [Environment Variables](#-environment-variables)
+- [Deployment](#-deployment)
+- [Security](#-security)
+- [Roadmap](#-roadmap)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
+## 🌟 Overview
+
+**NestFi** is a decentralized investment vault protocol built on Ethereum. It enables:
+
+- **Investors** to deposit funds into professionally managed vaults and earn passive yields
+- **Curators** to create investment vaults, deploy DeFi strategies, and earn management fees
+
+The protocol uses the **ERC-4626** tokenized vault standard for maximum composability and transparency.
+
+---
+
+## ✨ Features
+
+| Feature | Description |
+|---------|-------------|
+| 🏦 **ERC-4626 Vaults** | Fully compliant tokenized vault standard |
+| ⚡ **Gasless Transactions** | ERC-7702 + Permit2 for seamless UX |
+| 🔐 **Non-Custodial** | Users always control their funds |
+| 📊 **Multi-Strategy** | Deploy to Aave, Uniswap, Velodrome, and more |
+| 🎯 **Allowlist Control** | Curators can restrict vault access |
+| 💰 **Flexible Fees** | Customizable management fee structure |
+| 🌙 **Dark/Light Theme** | Beautiful, modern UI with theme support |
+| 📱 **Responsive Design** | Works on all devices |
+
+---
+
+## 🏗 Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────┐
+│                              NestFi                                  │
+├─────────────────────────────────────────────────────────────────────┤
+│                                                                      │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
+│  │   Frontend  │    │   Smart     │    │  Strategies │             │
+│  │  (Next.js)  │◄──►│  Contracts  │◄──►│  (DeFi)     │             │
+│  └─────────────┘    └─────────────┘    └─────────────┘             │
+│        │                  │                   │                      │
+│        ▼                  ▼                   ▼                      │
+│  ┌─────────────┐    ┌─────────────┐    ┌─────────────┐             │
+│  │  RainbowKit │    │ VaultFactory│    │    Aave     │             │
+│  │  Wagmi/Viem │    │  GroupVault │    │   Uniswap   │             │
+│  │  React      │    │   Permit2   │    │  Velodrome  │             │
+│  └─────────────┘    └─────────────┘    └─────────────┘             │
+│                                                                      │
+└─────────────────────────────────────────────────────────────────────┘
 ```
 
-## 🚀 Quick Start
+### Data Flow
+
+1. **User connects wallet** via RainbowKit
+2. **Frontend reads** vault data from blockchain (Wagmi/Viem)
+3. **User signs** deposit/withdraw transactions
+4. **Smart contracts** execute operations
+5. **Strategies** deploy funds to DeFi protocols
+
+---
+
+## 🚀 Getting Started
 
 ### Prerequisites
 
-- Node.js 18+
-- Yarn
-- Foundry
+| Requirement | Version |
+|-------------|---------|
+| Node.js | 18+ |
+| Yarn | 1.22+ |
+| Foundry | Latest |
+| Git | Latest |
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone <repository-url>
-   cd nestfi
-   ```
+```bash
+# 1. Clone the repository
+git clone https://github.com/your-username/nestfi.git
+cd nestfi
 
-2. **Install dependencies**
-   ```bash
-   yarn install
-   ```
+# 2. Install dependencies
+yarn install
 
-3. **Set up environment variables**
-   ```bash
-   cd packages/foundry
-   cp .env.example .env
-   # Edit .env with your private key
-   ```
+# 3. Set up environment variables
+cp packages/foundry/.env.example packages/foundry/.env
+# Edit .env with your private key
 
-4. **Deploy contracts (local Anvil)**
-   ```bash
-   cd packages/foundry
-   yarn deploy --reset
-   ```
+# 4. Start local blockchain
+cd packages/foundry
+anvil
 
-5. **Start the frontend**
-   ```bash
-   cd packages/nextjs
-   yarn dev
-   ```
+# 5. Deploy contracts (in a new terminal)
+cd packages/foundry
+yarn deploy --reset
 
-6. **Visit the application**
-   ```
-   http://localhost:3000
-   ```
+# 6. Start frontend (in a new terminal)
+cd packages/nextjs
+yarn dev
 
-## 📋 Smart Contracts
+# 7. Open in browser
+open http://localhost:3000
+```
+
+---
+
+## 📜 Smart Contracts
 
 ### Core Contracts
 
-- **`VaultFactory`**: Creates and manages vault instances
-- **`GroupVault`**: ERC-4626 compliant vault implementation
-  (Mocks removed for production)
+| Contract | Description |
+|----------|-------------|
+| `VaultFactory.sol` | Factory for creating vault instances |
+| `GroupVault.sol` | ERC-4626 compliant investment vault |
 
-### Key Features
+### Strategy Contracts
 
-- **ERC-4626 Standard**: Full compliance with vault standard
-- **Gasless Deposits**: Permit2 integration for gasless transactions
-- **Real Strategies**: Pluggable adapters (Aave v3, Compound v3 Comet, Uniswap V3 LP)
-- **Allowlist Control**: Restrict vault access to approved addresses
-- **Deposit Caps**: Set maximum vault capacity
-- **Minimum Deposits**: Enforce minimum investment amounts
-- **Pausable**: Emergency pause functionality
-- **Reentrancy Protection**: Secure against reentrancy attacks
+| Contract | Description |
+|----------|-------------|
+| `AaveStrategy.sol` | Aave V3 lending strategy |
+| `UniswapStrategy.sol` | Uniswap V3 liquidity strategy |
+| `VelodromeStrategy.sol` | Velodrome DEX strategy |
 
-## 🎯 Usage
+### Contract Features
 
-### Creating a Vault
+- ✅ ERC-4626 compliant
+- ✅ Permit2 gasless approvals
+- ✅ Reentrancy protection
+- ✅ Pausable functionality
+- ✅ Access control (allowlists)
+- ✅ Deposit caps & minimums
 
-1. Navigate to `/createvault`
-2. Fill in vault details:
-   - **Name**: Vault display name
-   - **Symbol**: Vault token symbol
-   - **Deposit Cap**: Maximum vault capacity
-   - **Min Deposit**: Minimum investment amount
-   - **Allowlist**: Enable/disable access control
-3. Click "Create Vault"
-4. Confirm transaction in wallet
+---
 
-### Managing Vaults
-
-- **Dashboard**: View all your vaults at `/dashboard`
-- **Admin Vaults**: Manage vaults you created
-- **Member Vaults**: View vaults you've joined
-- **Real-time Stats**: Track total assets, shares, and performance
-
-### Gasless Deposits
-
-1. Approve USDC spending (off-chain via Permit2)
-2. Sign deposit transaction (off-chain via ERC-7702)
-3. Relayer executes transaction (gasless for user)
-
-## 🔧 Development
+## 💻 Frontend
 
 ### Project Structure
 
 ```
-nestfi/
-├── packages/
-│   ├── foundry/          # Smart contracts
-│   │   ├── contracts/    # Solidity contracts
-│   │   ├── script/       # Deployment scripts
-│   │   └── test/         # Contract tests
-│   └── nextjs/           # Frontend application
-│       ├── app/          # Next.js app router
-│       ├── components/   # React components
-│       ├── hooks/        # Custom hooks
-│       └── utils/        # Utility functions
-└── lib/                  # Shared dependencies
+packages/nextjs/
+├── app/                    # Next.js App Router
+│   ├── page.tsx           # Landing page
+│   ├── investor/          # Investor dashboard
+│   └── curator/           # Curator dashboard
+├── components/            # React components
+│   ├── Header.tsx         # Navigation header
+│   ├── Footer.tsx         # Site footer
+│   ├── NestFiLogo.tsx     # Brand logo
+│   └── SettingsDropdown.tsx # Settings panel
+├── contexts/              # React contexts
+│   └── ThemeContext.tsx   # Theme management
+├── hooks/                 # Custom hooks
+└── styles/                # Global styles
 ```
 
-### Key Technologies
+### Key Components
 
-- **Smart Contracts**: Solidity, OpenZeppelin, Foundry
-- **Frontend**: Next.js App Router, React, TypeScript, Tailwind CSS
-- **Web3**: Wagmi v2, Viem, RainbowKit
-- **UI/UX**: Framer Motion, Headless UI
-- **Gasless**: ERC-7702, Permit2
-
-### Testing
-
-```bash
-# Test smart contracts
-cd packages/foundry
-forge test
-
-# Test frontend
-cd packages/nextjs
-yarn test
-```
-
-## 🌐 Deployment
-
-### Production Deployment
-
-1. **Deploy to Optimism**
-   ```bash
-   cd packages/foundry
-   # Update .env with production private key
-   yarn deploy --network optimism
-   ```
-
-2. **Update USDC Address**
-   - Set real USDC address
-   - Update Permit2 address for Optimism
-
-3. **Deploy Frontend**
-   ```bash
-   cd packages/nextjs
-   # Deploy to Vercel or your preferred platform
-   ```
-
-### Environment Variables
-
-```env
-# Foundry
-PRIVATE_KEY=your_private_key
-RPC_URL=your_rpc_url
-
-# Frontend (App)
-NEXT_PUBLIC_CHAIN_ID=10
-NEXT_PUBLIC_RPC_URL=your_optimism_rpc
-# Optional (enable Graph indexing)
-NEXT_PUBLIC_GRAPH_ENDPOINT=
-
-# Strategy addresses (after adapter deploy)
-NEXT_PUBLIC_AAVE_STRATEGY=
-NEXT_PUBLIC_COMET_STRATEGY=
-NEXT_PUBLIC_UNIV3_STRATEGY=
-```
-
-## 🔒 Security
-
-- **Audited Dependencies**: OpenZeppelin contracts
-- **Reentrancy Protection**: Secure against reentrancy attacks
-- **Access Control**: Role-based permissions
-- **Pausable**: Emergency stop functionality
-- **Input Validation**: Comprehensive parameter checks
-
-## 📈 Roadmap
-
-- [ ] **Multi-chain Support**: Deploy to multiple networks
-- [ ] **Advanced Strategies**: Yield farming integrations
-- [ ] **Governance**: DAO governance for vaults
-- [ ] **Analytics**: Advanced vault analytics
-- [ ] **Mobile App**: React Native mobile application
-- [ ] **API**: Public API for third-party integrations
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests
-5. Submit a pull request
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) for details
-
-## 🆘 Support
-
-- **Repository**: https://github.com/ankur-JA/nestFi
-- **Issues**: Open a GitHub issue in the repo
+| Component | Purpose |
+|-----------|---------|
+| `Header` | Navigation with wallet connection |
+| `Footer` | Site footer with links |
+| `SettingsDropdown` | Theme toggle, language, settings |
+| `VaultCard` | Display vault information |
 
 ---
 
-**Made with ❤️ by Gearhead**
+## 👥 User Roles
+
+### 🔵 Investor
+
+Investors deposit funds into vaults to earn passive yields.
+
+| Action | Description |
+|--------|-------------|
+| Browse Vaults | Explore available investment vaults |
+| Deposit USDC | Invest any amount into a vault |
+| Track Performance | Monitor your investments |
+| Withdraw | Exit your position anytime |
+
+### 🟢 Curator
+
+Curators create and manage investment vaults.
+
+| Action | Description |
+|--------|-------------|
+| Create Vault | Set up a new investment vault |
+| Deploy Strategies | Allocate funds to DeFi protocols |
+| Manage Access | Control who can invest |
+| Earn Fees | Collect management fees |
+
+---
+
+## 🛠 Tech Stack
+
+### Smart Contracts
+
+| Technology | Purpose |
+|------------|---------|
+| Solidity | Smart contract language |
+| Foundry | Development framework |
+| OpenZeppelin | Security libraries |
+
+### Frontend
+
+| Technology | Purpose |
+|------------|---------|
+| Next.js 14 | React framework |
+| TypeScript | Type safety |
+| Tailwind CSS | Styling |
+| Framer Motion | Animations |
+
+### Web3
+
+| Technology | Purpose |
+|------------|---------|
+| Wagmi v2 | React hooks for Ethereum |
+| Viem | TypeScript Ethereum library |
+| RainbowKit | Wallet connection |
+
+---
+
+## 🔐 Environment Variables
+
+### Foundry (`packages/foundry/.env`)
+
+```env
+# Required
+PRIVATE_KEY=your_private_key_here
+
+# Network RPC URLs
+RPC_URL_SEPOLIA=https://sepolia.infura.io/v3/YOUR_KEY
+RPC_URL_OPTIMISM=https://optimism.infura.io/v3/YOUR_KEY
+
+# Etherscan API (for verification)
+ETHERSCAN_API_KEY=your_api_key
+```
+
+### Frontend (`packages/nextjs/.env.local`)
+
+```env
+# Chain configuration
+NEXT_PUBLIC_CHAIN_ID=11155111
+
+# Optional: The Graph endpoint
+NEXT_PUBLIC_GRAPH_ENDPOINT=
+
+# Optional: Strategy addresses
+NEXT_PUBLIC_AAVE_STRATEGY=
+```
+
+---
+
+## 🚢 Deployment
+
+### Deploy to Testnet (Sepolia)
+
+```bash
+cd packages/foundry
+
+# Set environment variables
+export PRIVATE_KEY=your_private_key
+
+# Deploy
+forge script script/Deploy.s.sol --rpc-url sepolia --broadcast --verify
+```
+
+### Deploy to Production (Optimism)
+
+```bash
+cd packages/foundry
+
+# Deploy with production settings
+forge script script/Deploy.s.sol --rpc-url optimism --broadcast --verify
+```
+
+### Deploy Frontend
+
+```bash
+cd packages/nextjs
+
+# Build for production
+yarn build
+
+# Deploy to Vercel
+vercel --prod
+```
+
+---
+
+## 🔒 Security
+
+### Smart Contract Security
+
+- ✅ OpenZeppelin audited libraries
+- ✅ Reentrancy guards on all external calls
+- ✅ Access control on admin functions
+- ✅ Input validation on all parameters
+- ✅ Emergency pause functionality
+
+### Best Practices
+
+- All funds are non-custodial
+- No admin keys can drain funds
+- Transparent on-chain operations
+- Open source code
+
+---
+
+## 🗺 Roadmap
+
+### Phase 1: Foundation ✅
+- [x] ERC-4626 vault implementation
+- [x] Basic strategies (Aave)
+- [x] Frontend dashboard
+- [x] Wallet integration
+
+### Phase 2: Enhancement 🚧
+- [ ] Additional strategies (Uniswap, Velodrome)
+- [ ] Performance analytics
+- [ ] Vault reputation system
+- [ ] Mobile optimization
+
+### Phase 3: Scale 📋
+- [ ] Multi-chain deployment
+- [ ] Governance token
+- [ ] DAO voting
+- [ ] API for integrations
+
+---
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. **Fork** the repository
+2. **Create** a feature branch (`git checkout -b feature/amazing-feature`)
+3. **Commit** your changes (`git commit -m 'Add amazing feature'`)
+4. **Push** to the branch (`git push origin feature/amazing-feature`)
+5. **Open** a Pull Request
+
+### Development Guidelines
+
+- Write tests for new features
+- Follow existing code style
+- Update documentation as needed
+- Keep commits atomic and descriptive
+
+---
+
+## 📄 License
+
+This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 📞 Support & Links
+
+| Resource | Link |
+|----------|------|
+| 📖 Documentation | Coming soon |
+| 🐛 Report Bug | [Open Issue](https://github.com/your-username/nestfi/issues) |
+| 💬 Discord | Coming soon |
+| 🐦 Twitter | Coming soon |
+
+---
+
+<p align="center">
+  <strong>Made with ❤️ by NestFi Labs</strong>
+</p>
+
+<p align="center">
+  <sub>Invest together. Grow together.</sub>
+</p>

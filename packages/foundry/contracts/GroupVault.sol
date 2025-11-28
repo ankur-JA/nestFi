@@ -14,11 +14,11 @@ import {IStrategy} from "./interfaces/IStrategy.sol";
 /**
  * @title GroupVault
  * @dev ERC-4626 vault with allowlist and caps
- */
+*/
 contract GroupVault is 
-    Initializable, 
+    Initializable,
     ERC4626Upgradeable, 
-    OwnableUpgradeable, 
+    OwnableUpgradeable,
     PausableUpgradeable, 
     ReentrancyGuardUpgradeable 
 {

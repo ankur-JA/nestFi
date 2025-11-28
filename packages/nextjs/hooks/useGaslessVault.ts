@@ -56,12 +56,14 @@ export const useGaslessVault = () => {
       }
 
       // Step 2: Execute regular deposit with Permit2
-      executePermit2({
-        address: vaultAddress as `0x${string}`,
-        abi: ((deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi) || [],
-        functionName: "depositWithPermit2",
-        args: [parseUnits(assets, 6), receiver, permit2Data],
-      });
+      if (permit2Data) {
+        executePermit2({
+          address: vaultAddress as `0x${string}`,
+          abi: ((deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi) || [],
+          functionName: "depositWithPermit2",
+          args: [parseUnits(assets, 6), receiver, permit2Data] as unknown as readonly unknown[],
+        });
+      }
 
     } catch (err) {
       setError("Failed to execute gasless deposit");
@@ -201,7 +203,6 @@ export const useGaslessVault = () => {
     
     // Helper functions
     createPermit2Signature,
-    estimateGasCost,
     
     // State
     loading: loading || permit2Loading || permit2TxLoading,

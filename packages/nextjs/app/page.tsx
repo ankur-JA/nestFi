@@ -4,353 +4,416 @@ import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
-  ChartBarIcon, 
-  ShieldCheckIcon, 
-  RocketLaunchIcon, 
-  UsersIcon,
   ArrowRightIcon,
-  StarIcon,
-  SparklesIcon
+  ShieldCheckIcon,
+  ChartBarIcon,
+  UserGroupIcon,
+  BanknotesIcon,
+  CogIcon,
+  CheckIcon,
+  SparklesIcon,
+  CubeTransparentIcon
 } from "@heroicons/react/24/outline";
-import NestFiLogo from "~~/components/NestFiLogo";
-
-const features = [
-  {
-    icon: ShieldCheckIcon,
-    title: "ERC-4626 Standard",
-    description: "Built on the industry-standard ERC-4626 vault specification for maximum compatibility and security."
-  },
-  {
-    icon: ChartBarIcon,
-    title: "Multi-Protocol Yield",
-    description: "Invest pooled USDC funds in Aave, Compound, or Uniswap LPs to maximize yield generation."
-  },
-  {
-    icon: UsersIcon,
-    title: "Social Investing",
-    description: "Create vaults and invite friends to deposit USDC, building investment communities together."
-  },
-  {
-    icon: RocketLaunchIcon,
-    title: "Tokenized Vaults",
-    description: "Each vault is tokenized, making it easy to track shares and distribute yield to participants."
-  }
-];
-
-const stats = [
-  { number: "ERC-4626", label: "Standard" },
-  { number: "USDC", label: "Deposits" },
-  { number: "3+", label: "Protocols" },
-  { number: "∞", label: "Yield" }
-];
+import { Header } from "~~/components/Header";
+import { Footer } from "~~/components/Footer";
+import { useTheme } from "~~/contexts/ThemeContext";
 
 export default function HomePage() {
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Animated background elements */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <motion.div
-          className="absolute top-20 left-20 w-72 h-72 bg-red-500/10 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, 100, 0],
-            y: [0, -50, 0],
-            scale: [1, 1.1, 1]
+    <div 
+      className="min-h-screen relative overflow-hidden transition-colors duration-300"
+      style={{ background: isDark ? '#030303' : '#fafafa' }}
+    >
+      
+      {/* Premium Gradient Background */}
+      <div className="absolute inset-0">
+        <div 
+          className="absolute inset-0 transition-colors duration-300"
+          style={{ 
+            background: isDark 
+              ? 'linear-gradient(to bottom right, #020617, #030303, #020617)' 
+              : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)' 
           }}
-          transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
         />
-        <motion.div
-          className="absolute top-40 right-20 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, -80, 0],
-            y: [0, 60, 0],
-            scale: [1, 0.9, 1]
+        
+        {/* Top glow */}
+        <motion.div 
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full"
+          style={{
+            background: isDark 
+              ? 'radial-gradient(circle, rgba(20,184,166,0.12) 0%, rgba(20,184,166,0.04) 40%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 40%, transparent 70%)',
           }}
-          transition={{ duration: 25, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.8, 0.6] }}
+          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
         />
-        <motion.div
-          className="absolute bottom-20 left-1/3 w-64 h-64 bg-yellow-500/10 rounded-full blur-3xl"
-          animate={{ 
-            x: [0, 60, 0],
-            y: [0, -40, 0],
-            scale: [1, 1.2, 1]
+        
+        {/* Left glow */}
+        <motion.div 
+          className="absolute top-1/4 -left-20 w-[600px] h-[600px] rounded-full"
+          style={{
+            background: isDark
+              ? 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.03) 50%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, rgba(59,130,246,0.02) 50%, transparent 70%)',
           }}
-          transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          animate={{ x: [0, 40, 0], opacity: [0.4, 0.6, 0.4] }}
+          transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
+        />
+        
+        {/* Right glow */}
+        <motion.div 
+          className="absolute top-1/3 -right-20 w-[600px] h-[600px] rounded-full"
+          style={{
+            background: isDark
+              ? 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 50%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 50%, transparent 70%)',
+          }}
+          animate={{ x: [0, -40, 0], opacity: [0.4, 0.6, 0.4] }}
+          transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
         />
       </div>
+      
+      {/* Header */}
+      <Header />
+      
+      {/* Main Content */}
+      <div className="relative z-10">
+        
+        {/* Hero Section */}
+        <section className="px-6 lg:px-12 xl:px-20 pt-20 pb-16">
+          <div className="max-w-7xl mx-auto">
+            <div className="text-center mb-16">
+              {/* Badge */}
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="mb-8"
+              >
+                <span 
+                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm backdrop-blur-sm"
+                  style={{
+                    background: isDark ? 'rgba(20,184,166,0.1)' : 'rgba(16,185,129,0.1)',
+                    border: `1px solid ${isDark ? 'rgba(20,184,166,0.2)' : 'rgba(16,185,129,0.3)'}`,
+                    color: isDark ? '#2dd4bf' : '#059669',
+                  }}
+                >
+                  <SparklesIcon className="h-4 w-4" />
+                  The Future of DeFi Asset Management
+                </span>
+              </motion.div>
 
-      {/* Hero Section */}
-      <section className="relative pt-32 pb-20 px-6">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left side - Text content */}
+              {/* Headline */}
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+                className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight"
+              >
+                <span style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Invest together.</span>
+                <br />
+                <span className="bg-gradient-to-r from-teal-500 via-emerald-500 to-green-500 bg-clip-text text-transparent">
+                  Grow together.
+                </span>
+              </motion.h1>
+
+              {/* Subheadline */}
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+                className="text-xl max-w-3xl mx-auto leading-relaxed"
+                style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+              >
+                Pool funds into curated DeFi vaults. Expert curators manage strategies, 
+                investors earn yields. Fully transparent, on-chain.
+              </motion.p>
+            </div>
+
+            {/* Role Selection Cards */}
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="space-y-8"
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.4 }}
+              className="grid lg:grid-cols-2 gap-8"
             >
-              <div className="space-y-4">
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.8, delay: 0.2 }}
-                  className="flex items-center gap-3"
+              {/* Investor Card */}
+              <div className="relative group">
+                <div 
+                  className="absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-50 transition-all duration-500"
+                  style={{ background: 'linear-gradient(to right, rgba(59,130,246,0.3), rgba(6,182,212,0.3))' }}
+                />
+                <div 
+                  className="relative rounded-3xl p-8 lg:p-10 transition-all duration-300 h-full"
+                  style={{
+                    background: isDark 
+                      ? 'linear-gradient(to bottom right, #0a0f14, #070a0d)' 
+                      : 'linear-gradient(to bottom right, #ffffff, #f8fafc)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+                    boxShadow: isDark ? 'none' : '0 4px 24px rgba(0,0,0,0.06)',
+                  }}
                 >
-                  <NestFiLogo size="lg" showText={false} />
-                  <span className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                    Welcome to NestFi
-                  </span>
-                </motion.div>
-                
-                <h1 className="text-5xl lg:text-6xl font-bold text-white leading-tight">
-                  ERC-4626 <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">Investment Vaults</span> Made Simple
-                </h1>
-                
-                <p className="text-xl text-gray-300 leading-relaxed">
-                  Create tokenized vaults, invite friends to deposit USDC, and invest pooled funds in Aave, Compound, or Uniswap LPs. 
-                  Earn and distribute yield with professional DeFi strategies.
-                </p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link
-                    href="/createvault"
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-red-500/25 transition-all duration-300"
-                  >
-                    <SparklesIcon className="h-5 w-5" />
-                    Create Your First Vault
-                    <ArrowRightIcon className="h-4 w-4" />
-                  </Link>
-                </motion.div>
-                
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <Link
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 px-8 py-4 bg-gray-800/50 text-white font-semibold rounded-xl border border-gray-700 hover:bg-gray-700/50 transition-all duration-300"
-                  >
-                    <ChartBarIcon className="h-5 w-5" />
-                    View Dashboard
-                  </Link>
-                </motion.div>
-              </div>
-            </motion.div>
-
-            {/* Right side - Story illustration */}
-            <motion.div
-              initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="relative"
-            >
-              <div className="relative bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl p-8 border border-gray-700/50">
-                {/* Story scene */}
-                <div className="space-y-6">
-                  {/* Boy explaining to girl */}
-                  <div className="flex items-center justify-center space-x-8">
-                    {/* Boy */}
-                    <motion.div
-                      className="relative"
-                      animate={{ y: [0, -5, 0] }}
-                      transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                    >
-                      <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-blue-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">👨‍💼</span>
+                  
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                        style={{
+                          background: isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)',
+                          border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                        }}
+                      >
+                        <BanknotesIcon className="h-7 w-7 text-blue-500" />
                       </div>
-                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                        <StarIcon className="h-3 w-3 text-white" />
+                      <div>
+                        <h2 
+                          className="text-2xl font-bold"
+                          style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                        >
+                          Investor
+                        </h2>
+                        <p style={{ color: isDark ? '#6b7280' : '#64748b' }}>Deposit & Earn Yield</p>
                       </div>
-                    </motion.div>
-
-                    {/* Vault visualization */}
-                    <motion.div
-                      className="relative"
-                      animate={{ scale: [1, 1.05, 1] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                    </div>
+                    <div 
+                      className="px-3 py-1.5 rounded-full"
+                      style={{
+                        background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.1)',
+                        border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                      }}
                     >
-                      <div className="w-32 h-24 bg-gradient-to-br from-yellow-400 to-yellow-600 rounded-2xl border-4 border-yellow-300 relative overflow-hidden">
-                        {/* Coins inside vault */}
-                        <div className="absolute inset-2 flex flex-wrap gap-1">
-                          <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">$</span>
-                          </div>
-                          <div className="w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">$</span>
-                          </div>
-                          <div className="w-4 h-4 bg-purple-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">$</span>
-                          </div>
-                          <div className="w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
-                            <span className="text-white text-xs font-bold">$</span>
-                          </div>
+                      <span className="text-xs font-medium text-blue-500">Passive Income</span>
+                    </div>
+                  </div>
+                  
+                  {/* Description */}
+                  <p 
+                    className="text-lg mb-8 leading-relaxed"
+                    style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                  >
+                    Deposit USDC into vaults managed by expert curators. Sit back and watch your investment grow with professional DeFi strategies.
+                  </p>
+                  
+                  {/* Features Grid */}
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    {[
+                      "Browse vault strategies",
+                      "Deposit any amount",
+                      "Earn DeFi yields",
+                      "Withdraw anytime"
+                    ].map((feature) => (
+                      <div key={feature} className="flex items-center gap-3">
+                        <div 
+                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)' }}
+                        >
+                          <CheckIcon className="h-3 w-3 text-blue-500" />
                         </div>
-                        {/* Growth indicator */}
-                        <motion.div
-                          className="absolute -top-1 -right-1 w-3 h-3 bg-green-400 rounded-full"
-                          animate={{ scale: [1, 1.3, 1] }}
-                          transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-                        />
+                        <span 
+                          className="text-sm"
+                          style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                        >
+                          {feature}
+                        </span>
                       </div>
-                      <div className="text-center mt-2">
-                        <span className="text-sm text-gray-300 font-medium">ERC-4626 Vault</span>
-                      </div>
-                    </motion.div>
+                    ))}
+                  </div>
 
-                    {/* Girl */}
-                    <motion.div
-                      className="relative"
-                      animate={{ y: [0, -3, 0] }}
-                      transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
+                  {/* CTA */}
+                  <Link href="/investor" className="block">
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25"
                     >
-                      <div className="w-20 h-20 bg-gradient-to-br from-pink-500 to-pink-600 rounded-full flex items-center justify-center">
-                        <span className="text-white font-bold text-lg">👩‍💼</span>
-                      </div>
-                      <div className="absolute -top-2 -left-2 w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center">
-                        <SparklesIcon className="h-3 w-3 text-white" />
-                      </div>
-                    </motion.div>
-                  </div>
+                      Start Investing
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </motion.button>
+                  </Link>
+                </div>
+              </div>
 
-                  {/* Explanation text */}
-                  <div className="text-center space-y-3">
-                    <motion.div
-                      className="bg-gradient-to-r from-blue-500/20 to-purple-500/20 rounded-xl p-4 border border-blue-500/30"
-                      animate={{ opacity: [0.7, 1, 0.7] }}
-                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+              {/* Curator Card */}
+              <div className="relative group">
+                <div 
+                  className="absolute -inset-1 rounded-3xl blur-xl opacity-0 group-hover:opacity-50 transition-all duration-500"
+                  style={{ background: 'linear-gradient(to right, rgba(16,185,129,0.3), rgba(20,184,166,0.3))' }}
+                />
+                <div 
+                  className="relative rounded-3xl p-8 lg:p-10 transition-all duration-300 h-full"
+                  style={{
+                    background: isDark 
+                      ? 'linear-gradient(to bottom right, #0a0f14, #070a0d)' 
+                      : 'linear-gradient(to bottom right, #ffffff, #f8fafc)',
+                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
+                    boxShadow: isDark ? 'none' : '0 4px 24px rgba(0,0,0,0.06)',
+                  }}
+                >
+                  
+                  {/* Header */}
+                  <div className="flex items-start justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <div 
+                        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                        style={{
+                          background: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)',
+                          border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                        }}
+                      >
+                        <CogIcon className="h-7 w-7 text-emerald-500" />
+                      </div>
+                      <div>
+                        <h2 
+                          className="text-2xl font-bold"
+                          style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                        >
+                          Curator
+                        </h2>
+                        <p style={{ color: isDark ? '#6b7280' : '#64748b' }}>Manage & Earn Fees</p>
+                      </div>
+                    </div>
+                    <div 
+                      className="px-3 py-1.5 rounded-full"
+                      style={{
+                        background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.1)',
+                        border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                      }}
                     >
-                      <p className="text-gray-200 text-sm leading-relaxed">
-                        <span className="font-semibold text-blue-400">"Create an ERC-4626 vault!"</span> 
-                        <br />
-                        "Invite friends to deposit USDC, then invest the pooled funds in Aave, Compound, or Uniswap LPs. 
-                        Everyone earns yield based on their share of the vault!"
-                      </p>
-                    </motion.div>
+                      <span className="text-xs font-medium text-emerald-500">Active Income</span>
+                    </div>
+                  </div>
+                  
+                  {/* Description */}
+                  <p 
+                    className="text-lg mb-8 leading-relaxed"
+                    style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                  >
+                    Create vaults, deploy strategies across DeFi protocols, and earn management fees. Build your reputation as a fund manager.
+                  </p>
+                  
+                  {/* Features Grid */}
+                  <div className="grid grid-cols-2 gap-4 mb-8">
+                    {[
+                      "Create investment vaults",
+                      "Multi-protocol strategies",
+                      "Earn management fees",
+                      "On-chain reputation"
+                    ].map((feature) => (
+                      <div key={feature} className="flex items-center gap-3">
+                        <div 
+                          className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
+                          style={{ background: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)' }}
+                        >
+                          <CheckIcon className="h-3 w-3 text-emerald-500" />
+                        </div>
+                        <span 
+                          className="text-sm"
+                          style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                        >
+                          {feature}
+                        </span>
+                      </div>
+                    ))}
                   </div>
 
-                  {/* Connection lines */}
-                  <div className="relative h-8">
-                    <motion.div
-                      className="absolute top-1/2 left-1/4 w-1/2 h-0.5 bg-gradient-to-r from-blue-500 to-purple-500"
-                      animate={{ scaleX: [0, 1, 0] }}
-                      transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    />
-                  </div>
+                  {/* CTA */}
+                  <Link href="/curator" className="block">
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/25"
+                    >
+                      Create a Vault
+                      <ArrowRightIcon className="h-4 w-4" />
+                    </motion.button>
+                  </Link>
                 </div>
               </div>
             </motion.div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Stats Section */}
-      <section className="py-16 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="grid grid-cols-2 lg:grid-cols-4 gap-8"
-          >
-            {stats.map((stat, index) => (
-              <motion.div
-                key={stat.label}
-                initial={{ opacity: 0, scale: 0.8 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="text-center"
-              >
-                <div className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">
-                  {stat.number}
-                </div>
-                <div className="text-gray-400 font-medium">{stat.label}</div>
-              </motion.div>
-            ))}
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="text-center mb-16"
-          >
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              How <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">NestFi</span> Works
-            </h2>
-            <p className="text-xl text-gray-300 max-w-3xl mx-auto">
-              Create ERC-4626 vaults, pool USDC with friends, and earn yield through professional DeFi strategies 
-              on Aave, Compound, and Uniswap.
-            </p>
-          </motion.div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <motion.div
-                key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                whileHover={{ scale: 1.05 }}
-                className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-2xl p-6 border border-gray-700/50 hover:border-red-500/30 transition-all duration-300"
-              >
-                <div className="w-12 h-12 bg-gradient-to-r from-red-500 to-pink-500 rounded-xl flex items-center justify-center mb-4">
-                  <feature.icon className="h-6 w-6 text-white" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-gray-300 leading-relaxed">{feature.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8 }}
-            viewport={{ once: true }}
-            className="bg-gradient-to-br from-gray-800/50 to-gray-900/50 backdrop-blur-xl rounded-3xl p-12 border border-gray-700/50"
-          >
-            <h2 className="text-4xl lg:text-5xl font-bold text-white mb-6">
-              Ready to Create Your <span className="bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent">ERC-4626 Vault</span>?
-            </h2>
-            <p className="text-xl text-gray-300 mb-8 max-w-2xl mx-auto">
-              Start building your investment community today. Create a vault, invite friends to deposit USDC, 
-              and begin earning yield through professional DeFi strategies.
-            </p>
+        {/* Why NestFi - Simple & Clean */}
+        <section className="px-6 lg:px-12 xl:px-20 py-20">
+          <div className="max-w-5xl mx-auto">
             <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              className="grid md:grid-cols-3 gap-8 text-center"
             >
-              <Link
-                href="/createvault"
-                className="inline-flex items-center gap-2 px-10 py-4 bg-gradient-to-r from-red-500 to-pink-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-red-500/25 transition-all duration-300 text-lg"
-              >
-                <SparklesIcon className="h-6 w-6" />
-                Get Started Now
-                <ArrowRightIcon className="h-5 w-5" />
-              </Link>
+              {[
+                { 
+                  emoji: "🔒", 
+                  title: "Non-Custodial", 
+                  desc: "Your funds, your control. Always." 
+                },
+                { 
+                  emoji: "📊", 
+                  title: "Transparent", 
+                  desc: "Every transaction visible on-chain." 
+                },
+                { 
+                  emoji: "⚡", 
+                  title: "No Lock-ups", 
+                  desc: "Withdraw anytime you want." 
+                },
+              ].map((item, i) => (
+                <motion.div
+                  key={item.title}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1 }}
+                  className="p-6"
+                >
+                  <div className="text-4xl mb-4">{item.emoji}</div>
+                  <h3 
+                    className="text-xl font-bold mb-2"
+                    style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                  >
+                    {item.title}
+                  </h3>
+                  <p style={{ color: isDark ? '#6b7280' : '#64748b' }}>{item.desc}</p>
+                </motion.div>
+              ))}
             </motion.div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
+
+        {/* Trust Indicators */}
+        <section 
+          className="px-6 lg:px-12 xl:px-20 py-16"
+          style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}` }}
+        >
+          <div className="max-w-7xl mx-auto">
+            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+              {[
+                { icon: ShieldCheckIcon, label: "ERC-4626 Standard" },
+                { icon: ChartBarIcon, label: "Multi-Strategy Support" },
+                { icon: UserGroupIcon, label: "Fully Transparent" },
+                { icon: CubeTransparentIcon, label: "Non-Custodial" },
+              ].map((item) => (
+                <div 
+                  key={item.label} 
+                  className="flex items-center gap-3"
+                  style={{ color: isDark ? '#6b7280' : '#64748b' }}
+                >
+                  <item.icon className="h-5 w-5" style={{ color: isDark ? 'rgba(20,184,166,0.7)' : '#10b981' }} />
+                  <span className="text-sm font-medium">{item.label}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      {/* Footer */}
+      <Footer />
     </div>
   );
 }
