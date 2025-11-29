@@ -84,8 +84,8 @@ export const Footer = () => {
                     {social.icon}
                   </a>
                 ))}
-              </div>
-            </div>
+      </div>
+      </div>
 
             {/* Product */}
             <div>
@@ -108,8 +108,8 @@ export const Footer = () => {
                       style={{ color: isDark ? '#6b7280' : '#64748b' }}
                     >
                       {link.label}
-                    </Link>
-                  </li>
+                  </Link>
+                </li>
                 ))}
               </ul>
             </div>
@@ -147,9 +147,9 @@ export const Footer = () => {
                         style={{ color: isDark ? '#6b7280' : '#64748b' }}
                       >
                         {link.label}
-                      </Link>
+                  </Link>
                     )}
-                  </li>
+                </li>
                 ))}
               </ul>
             </div>
@@ -175,8 +175,8 @@ export const Footer = () => {
                       style={{ color: isDark ? '#6b7280' : '#64748b' }}
                     >
                       {link.label}
-                    </Link>
-                  </li>
+                  </Link>
+                </li>
                 ))}
               </ul>
             </div>
@@ -211,8 +211,8 @@ export const Footer = () => {
                 </button>
               </div>
             </div>
-          </div>
-        </div>
+                </div>
+              </div>
 
         {/* Bottom Bar */}
         <div 
@@ -231,12 +231,12 @@ export const Footer = () => {
                 © 2025 NestFi Labs. All rights reserved.
               </p>
             </div>
-            
+
             <div className="flex items-center gap-6">
               <span 
                 className="flex items-center gap-2 text-sm"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
-              >
+                >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 All systems operational
               </span>
@@ -247,10 +247,10 @@ export const Footer = () => {
               >
                 Built on <span className="text-emerald-500">Ethereum</span>
               </span>
+              </div>
             </div>
           </div>
-        </div>
       </div>
-    </footer>
+      </footer>
   );
 };

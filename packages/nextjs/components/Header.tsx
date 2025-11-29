@@ -33,7 +33,7 @@ export const Header = () => {
           {/* Logo - Fixed left */}
           <div className="flex-shrink-0">
             <Link href="/">
-              <NestFiLogo size="sm" />
+              <NestFiLogo size="md" />
             </Link>
           </div>
 
