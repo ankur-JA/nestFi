@@ -54,10 +54,10 @@ export const useScaffoldReadContract = <
       ...queryOptions,
     },
   }) as Omit<ReturnType<typeof useReadContract>, "data" | "refetch"> & {
-    data: AbiFunctionReturnType<ContractAbi, TFunctionName> | undefined;
+    data: AbiFunctionReturnType<ContractAbi<TContractName> & Abi, TFunctionName> | undefined;
     refetch: (
       options?: RefetchOptions | undefined,
-    ) => Promise<QueryObserverResult<AbiFunctionReturnType<ContractAbi, TFunctionName>, ReadContractErrorType>>;
+    ) => Promise<QueryObserverResult<AbiFunctionReturnType<ContractAbi<TContractName> & Abi, TFunctionName>, ReadContractErrorType>>;
   };
 
   const queryClient = useQueryClient();
