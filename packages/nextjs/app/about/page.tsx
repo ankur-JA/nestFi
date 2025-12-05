@@ -180,18 +180,16 @@ export default function About() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-[1.1] tracking-tight"
+              className="text-4xl md:text-5xl lg:text-6xl font-bold mb-8 leading-[1.15] tracking-tight"
               style={{ color: isDark ? "#ffffff" : "#0f172a" }}
             >
-              The simplest way to{" "}
               <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                pool money
+                Pool. Invest. Earn.
               </span>
-              , invest together, and{" "}
-              <span className="bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                earn on-chain
+              <br />
+              <span style={{ color: isDark ? "#e5e7eb" : "#1e293b" }}>
+                Together, On-Chain, Trustlessly.
               </span>
-              —trustlessly.
             </motion.h1>
 
             <motion.p
@@ -212,13 +210,13 @@ export default function About() {
               transition={{ delay: 0.3 }}
               className="flex flex-col sm:flex-row items-center justify-center gap-4"
             >
-              <Link href="/createvault">
+              <Link href="/curator">
                 <button className="group px-8 py-4 bg-gradient-to-r from-emerald-500 to-teal-500 text-white font-semibold rounded-xl flex items-center gap-2 shadow-lg shadow-emerald-500/25 hover:shadow-emerald-500/40 transition-all hover:scale-[1.02]">
                   Start as Curator
                   <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </Link>
-              <Link href="/vaults">
+              <Link href="/investor">
                 <button
                   className="px-8 py-4 rounded-xl font-semibold transition-all hover:scale-[1.02]"
                   style={{
@@ -742,7 +740,7 @@ export default function About() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/createvault">
+                <Link href="/curator">
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
@@ -752,7 +750,7 @@ export default function About() {
                     <ArrowRightIcon className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
                   </motion.button>
                 </Link>
-                <Link href="/vaults">
+                <Link href="/investor">
                   <motion.button
                     whileHover={{ scale: 1.03 }}
                     whileTap={{ scale: 0.98 }}
