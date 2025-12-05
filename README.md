@@ -103,7 +103,7 @@ The protocol uses the **ERC-4626** tokenized vault standard for maximum composab
 | Requirement | Version |
 |-------------|---------|
 | Node.js | 18+ |
-| Yarn | 1.22+ |
+| pnpm | Latest |
 | Foundry | Latest |
 | Git | Latest |
 
@@ -115,7 +115,7 @@ git clone https://github.com/your-username/nestfi.git
 cd nestfi
 
 # 2. Install dependencies
-yarn install
+pnpm install
 
 # 3. Set up environment variables
 cp packages/foundry/.env.example packages/foundry/.env
@@ -127,11 +127,11 @@ anvil
 
 # 5. Deploy contracts (in a new terminal)
 cd packages/foundry
-yarn deploy --reset
+pnpm deploy --reset
 
 # 6. Start frontend (in a new terminal)
 cd packages/nextjs
-yarn dev
+pnpm dev
 
 # 7. Open in browser
 open http://localhost:3000
@@ -314,7 +314,7 @@ forge script script/Deploy.s.sol --rpc-url optimism --broadcast --verify
 cd packages/nextjs
 
 # Build for production
-yarn build
+pnpm build
 
 # Deploy to Vercel
 vercel --prod
