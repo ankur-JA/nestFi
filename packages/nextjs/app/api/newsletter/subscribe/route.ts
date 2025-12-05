@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "~~/lib/supabase";
+import { getSupabaseClient } from "~~/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +16,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if Supabase is configured
-    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
+    const supabase = getSupabaseClient();
+    
+    if (!supabase) {
       // Fallback: just return success (for development without Supabase)
       console.log("Newsletter subscription (Supabase not configured):", email);
       return NextResponse.json({
@@ -84,6 +86,15 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const supabase = getSupabaseClient();
+    
+    if (!supabase) {
+      return NextResponse.json({
+        success: true,
+        subscribed: false,
+      });
+    }
+
     const { data: subscriber } = await supabase
       .from("newsletter_subscribers")
       .select("email, subscribed_at")
