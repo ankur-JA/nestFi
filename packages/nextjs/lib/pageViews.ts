@@ -7,7 +7,6 @@ export const trackPageView = async (): Promise<boolean> => {
   const supabase = getSupabaseClient();
   
   if (!supabase) {
-    // In development, just log
     console.log("Page view tracked (Supabase not configured)");
     return false;
   }
@@ -18,29 +17,35 @@ export const trackPageView = async (): Promise<boolean> => {
     const month = now.getMonth() + 1; // 1-12
     const monthKey = `${year}-${month.toString().padStart(2, "0")}`; // e.g., "2025-01"
 
-    // Try to increment existing count for this month
-    const { data: existing } = await supabase
+    // First, check if record exists
+    const { data: existing, error: selectError } = await supabase
       .from("page_views")
       .select("count")
       .eq("page", "landing")
       .eq("month_key", monthKey)
-      .single();
+      .maybeSingle();
 
-    if (existing && existing.count) {
-      // Update existing count (increment)
-      const { error } = await supabase
+    if (selectError && selectError.code !== "PGRST116") {
+      // PGRST116 is "not found" which is fine
+      console.error("Error checking page view:", selectError);
+      return false;
+    }
+
+    if (existing && existing.count !== null && existing.count !== undefined) {
+      // Record exists, increment count
+      const { error: updateError } = await supabase
         .from("page_views")
         .update({ count: (existing.count as number) + 1 })
         .eq("page", "landing")
         .eq("month_key", monthKey);
 
-      if (error) {
-        console.error("Error updating page view:", error);
+      if (updateError) {
+        console.error("Error updating page view:", updateError);
         return false;
       }
     } else {
-      // Create new entry for this month
-      const { error } = await supabase
+      // Record doesn't exist, create new one
+      const { error: insertError } = await supabase
         .from("page_views")
         .insert([
           {
@@ -52,8 +57,8 @@ export const trackPageView = async (): Promise<boolean> => {
           },
         ]);
 
-      if (error) {
-        console.error("Error inserting page view:", error);
+      if (insertError) {
+        console.error("Error inserting page view:", insertError);
         return false;
       }
     }
@@ -86,13 +91,18 @@ export const getCurrentMonthViews = async (): Promise<number> => {
       .select("count")
       .eq("page", "landing")
       .eq("month_key", monthKey)
-      .single();
+      .maybeSingle();
 
-    if (error || !data) {
+    if (error) {
+      console.error("Error getting page views:", error);
       return 0;
     }
 
-    return (data.count as number) || 0;
+    if (!data || data.count === null || data.count === undefined) {
+      return 0;
+    }
+
+    return data.count as number;
   } catch (error) {
     console.error("Error getting page views:", error);
     return 0;

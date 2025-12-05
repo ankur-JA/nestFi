@@ -349,7 +349,7 @@ export const Footer = () => {
                 className="text-sm"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
-                © 2025 NestFi Labs. All rights reserved.
+                © 2025 NestFi Foundation. All rights reserved.
               </p>
             </div>
 
