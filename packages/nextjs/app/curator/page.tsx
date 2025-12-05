@@ -241,7 +241,7 @@ export default function CreateVaultPage() {
           </p>
           <div className="bg-black/20 rounded-xl p-4 mb-6 text-left">
             <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
-              <selectedModel.icon className="h-4 w-4" />
+              {selectedModel && <selectedModel.icon className="h-4 w-4" />}
               <span>Withdrawal Model: <span className="text-white">{selectedModel?.title}</span></span>
             </div>
             <p className="text-xs text-gray-500">

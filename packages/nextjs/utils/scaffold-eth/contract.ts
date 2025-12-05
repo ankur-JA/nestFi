@@ -265,12 +265,12 @@ export type UseScaffoldEventConfig<
 
 type IndexedEventInputs<
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
-> = Extract<AbiEventInputs<ContractAbi<TContractName>, TEventName>[number], { indexed: true }>;
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
+> = Extract<AbiEventInputs<ContractAbi<TContractName> & Abi, TEventName>[number], { indexed: true }>;
 
 export type EventFilters<
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
 > = IsContractDeclarationMissing<
   any,
   IndexedEventInputs<TContractName, TEventName> extends never
@@ -285,7 +285,7 @@ export type EventFilters<
 
 export type UseScaffoldEventHistoryConfig<
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
   TBlockData extends boolean = false,
   TTransactionData extends boolean = false,
   TReceiptData extends boolean = false,
@@ -306,12 +306,12 @@ export type UseScaffoldEventHistoryConfig<
 
 export type UseScaffoldEventHistoryData<
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
   TBlockData extends boolean = false,
   TTransactionData extends boolean = false,
   TReceiptData extends boolean = false,
-  TEvent extends ExtractAbiEvent<ContractAbi<TContractName>, TEventName> = ExtractAbiEvent<
-    ContractAbi<TContractName>,
+  TEvent extends ExtractAbiEvent<ContractAbi<TContractName> & Abi, TEventName> = ExtractAbiEvent<
+    ContractAbi<TContractName> & Abi,
     TEventName
   >,
 > =

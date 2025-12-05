@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd packages/nextjs && yarn build",
+  "outputDirectory": "packages/nextjs/.next",
+  "installCommand": "yarn install",
+  "framework": "nextjs",
+  "rootDirectory": "packages/nextjs",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD packages/nextjs/"
+}

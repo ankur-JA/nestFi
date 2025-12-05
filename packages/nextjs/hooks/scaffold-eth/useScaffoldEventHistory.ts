@@ -71,7 +71,7 @@ const getEvents = async (
  */
 export const useScaffoldEventHistory = <
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
   TBlockData extends boolean = false,
   TTransactionData extends boolean = false,
   TReceiptData extends boolean = false,
