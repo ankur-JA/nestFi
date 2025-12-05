@@ -1,5 +1,5 @@
 {
-  "buildCommand": "yarn build",
+  "buildCommand": "cd ../.. && corepack enable && corepack prepare yarn@3.2.3 --activate && cd packages/nextjs && yarn build",
   "outputDirectory": ".next",
   "installCommand": "cd ../.. && corepack enable && corepack prepare yarn@3.2.3 --activate && cd packages/nextjs && yarn install",
   "framework": "nextjs",
