@@ -6,16 +6,11 @@ import { motion } from "framer-motion";
 import {
   ArrowRightIcon,
   ShieldCheckIcon,
-  ChartBarIcon,
   UserGroupIcon,
-  CubeTransparentIcon,
   BoltIcon,
   LockClosedIcon,
   EyeIcon,
   CogIcon,
-  CheckIcon,
-  CodeBracketIcon,
-  ArrowTopRightOnSquareIcon,
   SparklesIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "~~/contexts/ThemeContext";
@@ -76,20 +71,9 @@ const howItWorks = [
   },
 ];
 
-const contracts = [
-  { name: "Vault Factory", address: "0xF35821E65b52412c13eF759599956D81dAE7F85C", type: "Core" },
-  { name: "GroupVault Implementation", address: "0xC5961Aa5a79e9EcF41Eb7d106F70ca5D2DE25b5c", type: "Core" },
-  { name: "Aave V3 Strategy", address: "0x3d15D0e9bf40108f3326c3c87c4BBA2c71FB6cf4", type: "Strategy" },
-  { name: "Compound Strategy", address: "0xeC0A4d5d92bb9E64C5BC7b4564EBe756A8AD12F5", type: "Strategy" },
-];
-
-const techStack = ["Solidity", "ERC-4626", "Next.js 15", "Wagmi/Viem", "Foundry", "TailwindCSS"];
-
 export default function About() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
-
-  const formatAddress = (addr: string) => `${addr.slice(0, 6)}...${addr.slice(-4)}`;
 
   return (
     <div className="relative min-h-screen py-12 px-4 md:px-8">
@@ -328,150 +312,6 @@ export default function About() {
                 </p>
               </motion.div>
             ))}
-          </div>
-        </motion.section>
-
-        {/* Deployed Contracts */}
-        <motion.section
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-20"
-        >
-          <h2
-            className="text-2xl md:text-3xl font-bold text-center mb-4"
-            style={{ color: isDark ? "#ffffff" : "#0f172a" }}
-          >
-            Deployed Contracts
-          </h2>
-          <p
-            className="text-center mb-12"
-            style={{ color: isDark ? "#6b7280" : "#64748b" }}
-          >
-            Verified on Sepolia Etherscan
-          </p>
-          <div className="grid md:grid-cols-2 gap-4">
-            {contracts.map((contract, i) => (
-              <motion.a
-                key={contract.address}
-                href={`https://sepolia.etherscan.io/address/${contract.address}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-                className="flex items-center justify-between p-5 rounded-xl transition-all hover:scale-[1.01]"
-                style={{
-                  background: isDark ? "rgba(255,255,255,0.02)" : "rgba(0,0,0,0.02)",
-                  border: `1px solid ${isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.06)"}`,
-                }}
-              >
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className="font-medium"
-                      style={{ color: isDark ? "#ffffff" : "#0f172a" }}
-                    >
-                      {contract.name}
-                    </span>
-                    <span
-                      className="text-xs px-2 py-0.5 rounded-full"
-                      style={{
-                        background: isDark ? "rgba(16,185,129,0.1)" : "rgba(16,185,129,0.1)",
-                        color: "#10b981",
-                      }}
-                    >
-                      {contract.type}
-                    </span>
-                  </div>
-                  <code
-                    className="text-sm font-mono"
-                    style={{ color: isDark ? "#6b7280" : "#64748b" }}
-                  >
-                    {formatAddress(contract.address)}
-                  </code>
-                </div>
-                <ArrowTopRightOnSquareIcon
-                  className="h-5 w-5"
-                  style={{ color: isDark ? "#6b7280" : "#9ca3af" }}
-                />
-              </motion.a>
-            ))}
-          </div>
-        </motion.section>
-
-        {/* Builder Section */}
-        <motion.section
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="mb-20"
-        >
-          <div
-            className="rounded-2xl p-8 md:p-10 text-center"
-            style={{
-              background: isDark
-                ? "linear-gradient(135deg, rgba(16,185,129,0.05) 0%, rgba(59,130,246,0.05) 100%)"
-                : "linear-gradient(135deg, rgba(16,185,129,0.08) 0%, rgba(59,130,246,0.08) 100%)",
-              border: `1px solid ${isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.08)"}`,
-            }}
-          >
-            <div
-              className="w-20 h-20 rounded-2xl mx-auto mb-6 flex items-center justify-center text-3xl font-bold"
-              style={{
-                background: "linear-gradient(135deg, #10b981, #14b8a6)",
-                color: "#ffffff",
-              }}
-            >
-              G
-            </div>
-            <h2
-              className="text-2xl font-bold mb-2"
-              style={{ color: isDark ? "#ffffff" : "#0f172a" }}
-            >
-              Built by Gearhead
-            </h2>
-            <p className="mb-6" style={{ color: isDark ? "#6b7280" : "#64748b" }}>
-              Full-Stack Web3 Developer
-            </p>
-            <p
-              className="mb-8 max-w-2xl mx-auto"
-              style={{ color: isDark ? "#9ca3af" : "#64748b" }}
-            >
-              Building elegant, secure, and user-centric DeFi applications. NestFi represents 
-              a vision for democratizing sophisticated investment strategies.
-            </p>
-
-            <div className="flex flex-wrap justify-center gap-2 mb-8">
-              {techStack.map((tech) => (
-                <span
-                  key={tech}
-                  className="px-3 py-1.5 rounded-full text-sm"
-                  style={{
-                    background: isDark ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.05)",
-                    color: isDark ? "#9ca3af" : "#64748b",
-                  }}
-                >
-                  {tech}
-                </span>
-              ))}
-            </div>
-
-            <a
-              href="https://github.com/ankur-JA/nestFi"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-medium transition-all hover:scale-105"
-              style={{
-                background: isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
-                color: isDark ? "#ffffff" : "#0f172a",
-                border: `1px solid ${isDark ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.1)"}`,
-              }}
-            >
-              <CodeBracketIcon className="h-5 w-5" />
-              View Source Code
-            </a>
           </div>
         </motion.section>
 
