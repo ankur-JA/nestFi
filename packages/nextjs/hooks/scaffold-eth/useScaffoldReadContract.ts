@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { QueryObserverResult, RefetchOptions, useQueryClient } from "@tanstack/react-query";
 import type { ExtractAbiFunctionNames } from "abitype";
-import { ReadContractErrorType } from "viem";
+import { Abi, ReadContractErrorType } from "viem";
 import { useBlockNumber, useReadContract } from "wagmi";
 import { useSelectedNetwork } from "~~/hooks/scaffold-eth";
 import { useDeployedContractInfo } from "~~/hooks/scaffold-eth";
@@ -24,7 +24,7 @@ import {
  */
 export const useScaffoldReadContract = <
   TContractName extends ContractName,
-  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, "pure" | "view">,
+  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, "pure" | "view">,
 >({
   contractName,
   functionName,
