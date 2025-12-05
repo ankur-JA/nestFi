@@ -17,7 +17,7 @@ import { ContractAbi, ContractName, UseScaffoldEventConfig } from "~~/utils/scaf
  */
 export const useScaffoldWatchContractEvent = <
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
 >({
   contractName,
   eventName,
