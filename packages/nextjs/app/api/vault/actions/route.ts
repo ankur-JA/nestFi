@@ -68,7 +68,7 @@ export async function GET(request: NextRequest) {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "maxDeposit",
-        args: [userAddress],
+        args: [userAddress as `0x${string}`],
       }) as bigint;
       maxDeposit = maxDepositBigInt.toString();
     } catch (e) {
@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "maxMint",
-        args: [userAddress],
+        args: [userAddress as `0x${string}`],
       }) as bigint;
       maxMint = maxMintBigInt.toString();
     } catch (e) {
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "maxRedeem",
-        args: [userAddress],
+        args: [userAddress as `0x${string}`],
       }) as bigint;
       maxRedeem = maxRedeemBigInt.toString();
     } catch (e) {
@@ -108,7 +108,7 @@ export async function GET(request: NextRequest) {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "maxWithdraw",
-        args: [userAddress],
+        args: [userAddress as `0x${string}`],
       }) as bigint;
       maxWithdraw = maxWithdrawBigInt.toString();
     } catch (e) {
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
         address: vaultAddress as `0x${string}`,
         abi: vaultABI,
         functionName: "balanceOf",
-        args: [userAddress],
+        args: [userAddress as `0x${string}`],
       }) as bigint;
       userBalance = userBalanceBigInt.toString();
     } catch (e) {
