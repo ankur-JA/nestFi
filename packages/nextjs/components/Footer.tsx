@@ -125,7 +125,6 @@ export const Footer = () => {
               <ul className="space-y-3">
                 {[
                   { href: "https://docs.nestfi.io", label: "Documentation", external: true },
-                  { href: "https://github.com/ankur-JA/nestFi", label: "GitHub", external: true },
                   { href: "/blockexplorer", label: "Explorer" },
                   { href: "#", label: "Audit Reports" },
                 ].map((link) => (
