@@ -8,14 +8,10 @@ const titleTemplate = "%s | NestFi";
 export const getMetadata = ({
   title,
   description,
-  imageRelativePath = "/thumbnail.jpg",
 }: {
   title: string;
   description: string;
-  imageRelativePath?: string;
 }): Metadata => {
-  const imageUrl = `${baseUrl}${imageRelativePath}`;
-
   return {
     metadataBase: new URL(baseUrl),
     title: {
@@ -29,19 +25,16 @@ export const getMetadata = ({
         template: titleTemplate,
       },
       description: description,
-      images: [
-        {
-          url: imageUrl,
-        },
-      ],
+      siteName: "NestFi",
+      type: "website",
     },
     twitter: {
+      card: "summary_large_image",
       title: {
         default: title,
         template: titleTemplate,
       },
       description: description,
-      images: [imageUrl],
     },
     icons: {
       icon: [
