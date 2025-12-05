@@ -1,9 +1,152 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
+import { motion, AnimatePresence } from "framer-motion";
+import { CheckCircleIcon } from "@heroicons/react/24/outline";
 import NestFiLogo from "~~/components/NestFiLogo";
 import { useTheme } from "~~/contexts/ThemeContext";
+
+/**
+ * Newsletter subscription component
+ */
+const NewsletterForm = ({ isDark }: { isDark: boolean }) => {
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
+
+  const handleSubscribe = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Validate email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email)) {
+      setErrorMessage("Please enter a valid email address");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+      return;
+    }
+
+    setStatus("loading");
+
+    try {
+      // Store in localStorage for now
+      const existingEmails = JSON.parse(localStorage.getItem("nestfi_subscribers") || "[]");
+      if (existingEmails.includes(email)) {
+        setErrorMessage("You're already subscribed!");
+        setStatus("error");
+        setTimeout(() => setStatus("idle"), 3000);
+        return;
+      }
+      
+      existingEmails.push(email);
+      localStorage.setItem("nestfi_subscribers", JSON.stringify(existingEmails));
+      
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      setStatus("success");
+      setEmail("");
+      
+      // Reset after 5 seconds
+      setTimeout(() => setStatus("idle"), 5000);
+    } catch (error) {
+      setErrorMessage("Something went wrong. Please try again.");
+      setStatus("error");
+      setTimeout(() => setStatus("idle"), 3000);
+    }
+  };
+
+  return (
+    <div>
+      <h3 
+        className="text-xs font-semibold uppercase tracking-wider mb-4"
+        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+      >
+        Stay Updated
+      </h3>
+      
+      <AnimatePresence mode="wait">
+        {status === "success" ? (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex items-center gap-3 p-4 rounded-xl"
+            style={{
+              background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.1)',
+              border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.3)'}`,
+            }}
+          >
+            <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+              <CheckCircleIcon className="w-6 h-6 text-emerald-500" />
+            </div>
+            <div>
+              <p className="font-medium text-emerald-500">Thanks for subscribing!</p>
+              <p 
+                className="text-sm"
+                style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+              >
+                We'll keep you updated on NestFi news.
+              </p>
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <p 
+              className="text-sm mb-3"
+              style={{ color: isDark ? '#6b7280' : '#64748b' }}
+            >
+              Get the latest updates
+            </p>
+            <form onSubmit={handleSubscribe} className="flex gap-2">
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Enter your email"
+                disabled={status === "loading"}
+                className="flex-1 px-3 py-2 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50"
+                style={{
+                  background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
+                  border: `1px solid ${status === "error" ? '#ef4444' : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
+                  color: isDark ? '#ffffff' : '#0f172a',
+                }}
+              />
+              <button 
+                type="submit"
+                disabled={status === "loading"}
+                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {status === "loading" ? (
+                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                ) : (
+                  "→"
+                )}
+              </button>
+            </form>
+            {status === "error" && (
+              <motion.p
+                initial={{ opacity: 0, y: -5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-xs text-red-500 mt-2"
+              >
+                {errorMessage}
+              </motion.p>
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
 
 /**
  * Premium fintech footer - full width with theme support
@@ -74,7 +217,7 @@ export const Footer = () => {
                     href={social.href} 
                     target="_blank" 
                     rel="noreferrer"
-                    className="p-2 rounded-lg transition-all"
+                    className="p-2 rounded-lg transition-all hover:scale-105"
                     style={{
                       background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
                       border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
@@ -84,8 +227,8 @@ export const Footer = () => {
                     {social.icon}
                   </a>
                 ))}
-      </div>
-      </div>
+              </div>
+            </div>
 
             {/* Product */}
             <div>
@@ -104,12 +247,12 @@ export const Footer = () => {
                   <li key={link.href}>
                     <Link 
                       href={link.href} 
-                      className="text-sm transition-colors"
+                      className="text-sm transition-colors hover:text-emerald-500"
                       style={{ color: isDark ? '#6b7280' : '#64748b' }}
                     >
                       {link.label}
-                  </Link>
-                </li>
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -134,7 +277,7 @@ export const Footer = () => {
                         href={link.href} 
                         target="_blank" 
                         rel="noreferrer" 
-                        className="text-sm transition-colors"
+                        className="text-sm transition-colors hover:text-emerald-500"
                         style={{ color: isDark ? '#6b7280' : '#64748b' }}
                       >
                         {link.label}
@@ -142,13 +285,13 @@ export const Footer = () => {
                     ) : (
                       <Link 
                         href={link.href} 
-                        className="text-sm transition-colors"
+                        className="text-sm transition-colors hover:text-emerald-500"
                         style={{ color: isDark ? '#6b7280' : '#64748b' }}
                       >
                         {link.label}
-                  </Link>
+                      </Link>
                     )}
-                </li>
+                  </li>
                 ))}
               </ul>
             </div>
@@ -170,48 +313,20 @@ export const Footer = () => {
                   <li key={link.href}>
                     <Link 
                       href={link.href} 
-                      className="text-sm transition-colors"
+                      className="text-sm transition-colors hover:text-emerald-500"
                       style={{ color: isDark ? '#6b7280' : '#64748b' }}
                     >
                       {link.label}
-                  </Link>
-                </li>
+                    </Link>
+                  </li>
                 ))}
               </ul>
             </div>
 
             {/* Newsletter */}
-            <div>
-              <h3 
-                className="text-xs font-semibold uppercase tracking-wider mb-4"
-                style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-              >
-                Stay Updated
-              </h3>
-              <p 
-                className="text-sm mb-3"
-                style={{ color: isDark ? '#6b7280' : '#64748b' }}
-              >
-                Get the latest updates
-              </p>
-              <div className="flex gap-2">
-                <input
-                  type="email"
-                  placeholder="Email"
-                  className="flex-1 px-3 py-2 rounded-lg text-sm transition-colors focus:outline-none"
-                  style={{
-                    background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
-                    border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
-                    color: isDark ? '#ffffff' : '#0f172a',
-                  }}
-                />
-                <button className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white text-sm font-medium rounded-lg transition-all">
-                  →
-                </button>
-              </div>
-            </div>
-                </div>
-              </div>
+            <NewsletterForm isDark={isDark} />
+          </div>
+        </div>
 
         {/* Bottom Bar */}
         <div 
@@ -235,7 +350,7 @@ export const Footer = () => {
               <span 
                 className="flex items-center gap-2 text-sm"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
-                >
+              >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 All systems operational
               </span>
@@ -246,10 +361,10 @@ export const Footer = () => {
               >
                 Built on <span className="text-emerald-500">Ethereum</span>
               </span>
-              </div>
             </div>
           </div>
+        </div>
       </div>
-      </footer>
+    </footer>
   );
 };
