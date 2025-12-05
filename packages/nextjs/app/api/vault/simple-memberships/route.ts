@@ -1,13 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http, parseAbi, isAddress } from "viem";
+import { createPublicClient, http, parseAbi, isAddress, defineChain } from "viem";
 import { sepolia } from "viem/chains";
 import deployedContracts from "../../../../contracts/deployedContracts";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
+// Define localhost chain
+const localhostChain = defineChain({
+  id: 31337,
+  name: "Localhost",
+  network: "localhost",
+  nativeCurrency: {
+    name: "Ether",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["http://127.0.0.1:8545"],
+    },
+    public: {
+      http: ["http://127.0.0.1:8545"],
+    },
+  },
+});
+
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/JfjuIv_X8UDcQcKmIwnsY";
+const chain = CHAIN_ID === 31337 ? localhostChain : sepolia;
+
 const publicClient = createPublicClient({
-  chain: sepolia,
-  transport: http(process.env.NEXT_PUBLIC_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/JfjuIv_X8UDcQcKmIwnsY", {
+  chain,
+  transport: http(rpcUrl, {
     timeout: 10000,
     retryCount: 2,
   }),
@@ -27,6 +50,7 @@ const vaultABI = parseAbi([
 
 const factoryABI = parseAbi([
   "function getVaultsByUser(address user) view returns (address[])",
+  "function getAllVaults() view returns (address[])",
 ]);
 
 export async function GET(request: NextRequest) {
@@ -50,39 +74,53 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Vault factory not deployed on this network" }, { status: 400 });
     }
 
-    // Get vaults created by the user
-    let userVaults: string[] = [];
+    // Get ALL vaults from factory (to find vaults where user has invested)
+    let allVaults: string[] = [];
     
     try {
+      // First try to get all vaults
       const vaults = await publicClient.readContract({
         address: factoryAddress as `0x${string}`,
         abi: factoryABI,
-        functionName: "getVaultsByUser",
-        args: [userAddress as `0x${string}`],
+        functionName: "getAllVaults",
+        args: [],
       }) as string[];
       
-      userVaults = vaults.filter(address => address && address !== "0x0000000000000000000000000000000000000000");
-      console.log(`Found ${userVaults.length} vaults created by user`);
+      allVaults = vaults.filter(address => address && address !== "0x0000000000000000000000000000000000000000");
+      console.log(`Found ${allVaults.length} total vaults to check`);
     } catch (error) {
-      console.error("Error fetching user vaults:", error);
-      // Return empty result if we can't fetch vaults
-      return NextResponse.json({
-        userAddress,
-        memberships: [],
-        summary: {
-          totalVaults: 0,
-          adminVaults: 0,
-          memberVaults: 0,
-          totalValueLocked: "0.00",
-        },
-        factoryAddress,
-        chainId: CHAIN_ID,
-        error: "Could not fetch user vaults",
-      });
+      console.log("Could not fetch all vaults, trying user vaults:", error);
+      // Fallback: get vaults created by the user
+      try {
+        const userVaults = await publicClient.readContract({
+          address: factoryAddress as `0x${string}`,
+          abi: factoryABI,
+          functionName: "getVaultsByUser",
+          args: [userAddress as `0x${string}`],
+        }) as string[];
+        
+        allVaults = userVaults.filter(address => address && address !== "0x0000000000000000000000000000000000000000");
+        console.log(`Found ${allVaults.length} vaults created by user (fallback)`);
+      } catch (fallbackError) {
+        console.error("Error fetching vaults:", fallbackError);
+        return NextResponse.json({
+          userAddress,
+          memberships: [],
+          summary: {
+            totalVaults: 0,
+            adminVaults: 0,
+            memberVaults: 0,
+            totalValueLocked: "0.00",
+          },
+          factoryAddress,
+          chainId: CHAIN_ID,
+          error: "Could not fetch vaults",
+        });
+      }
     }
 
     // Check membership for each vault
-    const membershipPromises = userVaults.map(async (vaultAddress) => {
+    const membershipPromises = allVaults.map(async (vaultAddress) => {
       try {
         const [owner, userBalance, allowlistEnabled, isOnAllowlist, vaultName, vaultSymbol, totalAssets, totalSupply, isPaused] = await Promise.all([
           publicClient.readContract({

@@ -4,6 +4,8 @@ pragma solidity ^0.8.23;
 import "./DeployHelpers.s.sol";
 import {GroupVault} from "../contracts/GroupVault.sol";
 import {VaultFactory} from "../contracts/VaultFactory.sol";
+import {VaultManager} from "../contracts/VaultManager.sol";
+import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AaveV3Strategy} from "../contracts/strategies/AaveV3Strategy.sol";
 import {IPool} from "../contracts/interfaces/aave/IPool.sol";
@@ -15,7 +17,12 @@ import {IVelodromeGauge} from "../contracts/interfaces/velodrome/IVelodromeGauge
 
 /**
  * @notice Deploy script for NestFi contracts
- * @dev Deploys GroupVault implementation and VaultFactory
+ * @dev Deploys VaultManager (UUPS proxy), GroupVault implementation, and VaultFactory
+ *
+ * Required env vars:
+ *   USDC - USDC token address
+ *   PERMIT2 - Permit2 contract address
+ *   SWAP_ROUTER - Uniswap V3 SwapRouter address
  *
  * Example: yarn deploy --file DeployNestFi.s.sol
  */
@@ -26,13 +33,36 @@ contract DeployNestFi is ScaffoldETHDeploy {
         // Use real USDC & Permit2 from env
         address usdc = vm.envAddress("USDC");
         address permit2Address = vm.envAddress("PERMIT2");
+        address swapRouterAddress = vm.envOr("SWAP_ROUTER", address(0));
+
+        // Deploy VaultManager with UUPS proxy
+        VaultManager managerImpl = new VaultManager();
+        console.log("VaultManager implementation deployed at:", address(managerImpl));
+        
+        bytes memory initData = abi.encodeWithSelector(
+            VaultManager.initialize.selector,
+            msg.sender // owner
+        );
+        ERC1967Proxy managerProxy = new ERC1967Proxy(
+            address(managerImpl),
+            initData
+        );
+        VaultManager vaultManager = VaultManager(address(managerProxy));
+        console.log("VaultManager proxy deployed at:", address(vaultManager));
+
+        // Configure VaultManager
+        if (swapRouterAddress != address(0)) {
+            vaultManager.setSwapRouter(swapRouterAddress);
+            console.log("SwapRouter set to:", swapRouterAddress);
+        }
+        vaultManager.setDefaultSwapFee(3000); // 0.3%
 
         // Deploy GroupVault implementation
         GroupVault implementation = new GroupVault();
         console.log("GroupVault implementation deployed at:", address(implementation));
 
-        // Deploy VaultFactory with implementation and Permit2
-        VaultFactory factory = new VaultFactory(implementation, permit2Address);
+        // Deploy VaultFactory with implementation, Permit2, and VaultManager
+        VaultFactory factory = new VaultFactory(implementation, permit2Address, address(vaultManager));
         console.log("VaultFactory deployed at:", address(factory));
 
         // Optionally deploy AaveV3Strategy (requires AAVE_V3_POOL env var)

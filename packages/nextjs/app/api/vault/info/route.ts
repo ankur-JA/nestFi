@@ -1,10 +1,35 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http, parseAbi } from "viem";
+import { createPublicClient, http, parseAbi, defineChain } from "viem";
 import { sepolia } from "viem/chains";
 
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
+
+// Define localhost chain
+const localhostChain = defineChain({
+  id: 31337,
+  name: "Localhost",
+  network: "localhost",
+  nativeCurrency: {
+    name: "Ether",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["http://127.0.0.1:8545"],
+    },
+    public: {
+      http: ["http://127.0.0.1:8545"],
+    },
+  },
+});
+
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/JfjuIv_X8UDcQcKmIwnsY";
+const chain = CHAIN_ID === 31337 ? localhostChain : sepolia;
+
 const publicClient = createPublicClient({
-  chain: sepolia,
-  transport: http(process.env.NEXT_PUBLIC_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/JfjuIv_X8UDcQcKmIwnsY", {
+  chain,
+  transport: http(rpcUrl, {
     timeout: 10000, // 10 second timeout
     retryCount: 2,  // Retry twice
   }),

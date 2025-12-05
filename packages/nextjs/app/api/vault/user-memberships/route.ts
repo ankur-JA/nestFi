@@ -1,13 +1,36 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createPublicClient, http, parseAbi, isAddress } from "viem";
+import { createPublicClient, http, parseAbi, isAddress, defineChain } from "viem";
 import { sepolia } from "viem/chains";
 import deployedContracts from "../../../../contracts/deployedContracts";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
+// Define localhost chain
+const localhostChain = defineChain({
+  id: 31337,
+  name: "Localhost",
+  network: "localhost",
+  nativeCurrency: {
+    name: "Ether",
+    symbol: "ETH",
+    decimals: 18,
+  },
+  rpcUrls: {
+    default: {
+      http: ["http://127.0.0.1:8545"],
+    },
+    public: {
+      http: ["http://127.0.0.1:8545"],
+    },
+  },
+});
+
+const rpcUrl = process.env.NEXT_PUBLIC_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/JfjuIv_X8UDcQcKmIwnsY";
+const chain = CHAIN_ID === 31337 ? localhostChain : sepolia;
+
 const publicClient = createPublicClient({
-  chain: sepolia,
-  transport: http(process.env.NEXT_PUBLIC_RPC_URL || "https://eth-sepolia.g.alchemy.com/v2/JfjuIv_X8UDcQcKmIwnsY", {
+  chain,
+  transport: http(rpcUrl, {
     timeout: 10000,
     retryCount: 2,
   }),
@@ -28,6 +51,7 @@ const vaultABI = parseAbi([
 const factoryABI = parseAbi([
   "event VaultCreated(address indexed vault, address indexed admin, address indexed asset, string name, string symbol)",
   "function getVaultsByUser(address user) view returns (address[])",
+  "function getAllVaults() view returns (address[])",
   "function getUserVaultCount(address user) view returns (uint256)",
   "function getVaultOwner(address vault) view returns (address)",
   "function isVaultAdmin(address vault, address user) view returns (bool)",
@@ -54,41 +78,49 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Vault factory not deployed on this network" }, { status: 400 });
     }
 
-    // Get all vaults from factory
+    // Get ALL vaults from factory (not just user-created ones)
+    // This allows us to find vaults where the user has invested
     let allVaults: string[] = [];
 
     try {
-      // First try to get vaults created by the user
-      const userVaults = await publicClient.readContract({
+      // Get all vaults from factory
+      const allVaultsFromFactory = await publicClient.readContract({
         address: factoryAddress as `0x${string}`,
         abi: factoryABI,
-        functionName: "getVaultsByUser",
-        args: [userAddress as `0x${string}`],
+        functionName: "getAllVaults",
+        args: [],
       }) as string[];
       
-      allVaults = userVaults.filter(address => address && address !== "0x0000000000000000000000000000000000000000");
-      console.log(`Found ${allVaults.length} vaults created by user`);
+      allVaults = allVaultsFromFactory.filter(address => address && address !== "0x0000000000000000000000000000000000000000");
+      console.log(`Found ${allVaults.length} total vaults to check for membership`);
     } catch (error) {
-      console.log("Could not fetch user-created vaults, falling back to event scanning:", error);
-      // Continue to event scanning below
-    }
-
-    // If no user vaults found, return empty result instead of scanning all vaults
-    // This prevents the 500 error and provides a better user experience
-    if (allVaults.length === 0) {
-      console.log("No vaults found for user, returning empty result");
-      return NextResponse.json({
-        userAddress,
-        memberships: [],
-        summary: {
-          totalVaults: 0,
-          adminVaults: 0,
-          memberVaults: 0,
-          totalValueLocked: "0.00",
-        },
-        factoryAddress,
-        chainId: CHAIN_ID,
-      });
+      console.log("Could not fetch all vaults, trying user vaults:", error);
+      // Fallback: try to get vaults created by the user
+      try {
+        const userVaults = await publicClient.readContract({
+          address: factoryAddress as `0x${string}`,
+          abi: factoryABI,
+          functionName: "getVaultsByUser",
+          args: [userAddress as `0x${string}`],
+        }) as string[];
+        
+        allVaults = userVaults.filter(address => address && address !== "0x0000000000000000000000000000000000000000");
+        console.log(`Found ${allVaults.length} vaults created by user (fallback)`);
+      } catch (fallbackError) {
+        console.error("Could not fetch vaults:", fallbackError);
+        return NextResponse.json({
+          userAddress,
+          memberships: [],
+          summary: {
+            totalVaults: 0,
+            adminVaults: 0,
+            memberVaults: 0,
+            totalValueLocked: "0.00",
+          },
+          factoryAddress,
+          chainId: CHAIN_ID,
+        });
+      }
     }
 
     // Check membership for each vault

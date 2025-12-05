@@ -11,7 +11,6 @@ import {
 } from "@heroicons/react/24/outline";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import NestFiLogo from "~~/components/NestFiLogo";
-import { SettingsDropdown } from "~~/components/SettingsDropdown";
 
 const sidebarLinks = [
   { href: "/investor", label: "Browse Vaults", icon: MagnifyingGlassIcon },
@@ -29,7 +28,6 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
           <NestFiLogo size="md" />
         </Link>
         <div className="flex items-center gap-3">
-          <SettingsDropdown />
           <RainbowKitCustomConnectButton />
         </div>
       </header>

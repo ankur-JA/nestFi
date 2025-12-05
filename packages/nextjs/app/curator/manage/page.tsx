@@ -9,17 +9,18 @@ import {
   CurrencyDollarIcon,
   UserGroupIcon,
   ArrowTrendingUpIcon,
-  EllipsisHorizontalIcon
+  EllipsisHorizontalIcon,
+  ArrowPathIcon
 } from "@heroicons/react/24/outline";
-import { useVaultFactoryGraph } from "~~/hooks/useVaultFactoryGraph";
+import { useVaultFactory } from "~~/hooks/useVaultFactory";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 
 export default function ManageVaultsPage() {
   const { address, isConnected } = useAccount();
-  const { userVaults: allVaults, loading: isLoading } = useVaultFactoryGraph();
+  const { userVaults: allVaults, loading: isLoading, refreshVaults } = useVaultFactory();
 
-  // Filter vaults owned by this user
-  const myVaults = allVaults?.filter(v => v.owner?.toLowerCase() === address?.toLowerCase()) || [];
+  // Filter vaults owned by this user (admin vaults)
+  const myVaults = allVaults?.filter(v => v.isAdmin && v.owner?.toLowerCase() === address?.toLowerCase()) || [];
 
   // Not connected state
   if (!isConnected) {
@@ -58,16 +59,28 @@ export default function ManageVaultsPage() {
               View and manage all your created vaults.
             </p>
           </div>
-          <Link href="/curator">
+          <div className="flex items-center gap-3">
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="py-3 px-5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl flex items-center gap-2 transition-colors"
+              onClick={() => refreshVaults()}
+              disabled={isLoading}
+              className="py-3 px-5 bg-gray-800 hover:bg-gray-700 disabled:opacity-50 text-white font-medium rounded-xl flex items-center gap-2 transition-colors"
             >
-              <PlusCircleIcon className="h-5 w-5" />
-              Create Vault
+              <ArrowPathIcon className={`h-5 w-5 ${isLoading ? "animate-spin" : ""}`} />
+              Refresh
             </motion.button>
-          </Link>
+            <Link href="/curator">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="py-3 px-5 bg-emerald-500 hover:bg-emerald-600 text-white font-medium rounded-xl flex items-center gap-2 transition-colors"
+              >
+                <PlusCircleIcon className="h-5 w-5" />
+                Create Vault
+              </motion.button>
+            </Link>
+          </div>
         </motion.div>
 
         {/* Stats Overview */}
@@ -166,11 +179,11 @@ export default function ManageVaultsPage() {
                   </div>
                 </div>
 
-                <Link href={`/vaults/${vault.address}`} className="block mt-4">
+                <Link href={`/curator/vault/${vault.address}`} className="block mt-4">
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
-                    className="w-full py-2.5 bg-white/5 hover:bg-white/10 text-white text-sm font-medium rounded-lg transition-colors"
+                    className="w-full py-2.5 bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-sm font-medium rounded-lg transition-colors"
                   >
                     Manage Vault
                   </motion.button>

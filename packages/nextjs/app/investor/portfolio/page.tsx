@@ -13,15 +13,32 @@ import {
 } from "@heroicons/react/24/outline";
 import { useVaultMembership } from "~~/hooks/useVaultMembership";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
+import { useEffect } from "react";
 
 export default function InvestorPortfolioPage() {
   const { address, isConnected } = useAccount();
-  const { memberships: membershipData, loading: isLoading } = useVaultMembership();
+  const { memberVaults, loading: isLoading, refreshMemberships } = useVaultMembership();
 
-  // Calculate portfolio stats
-  const totalValue = membershipData?.reduce((sum, m) => sum + parseFloat(m.userBalance || "0") / 1e6, 0) || 0;
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    if (!isConnected) return;
+    
+    const interval = setInterval(() => {
+      refreshMemberships();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [isConnected, refreshMemberships]);
+
+  // Filter out admin vaults - only show vaults where user is an investor (not curator)
+  // memberVaults already filters for role === "member" (non-admin)
+  const investorVaults = memberVaults || [];
+
+  // Calculate portfolio stats - only for investor vaults
+  const totalValue = investorVaults.reduce((sum, m) => sum + parseFloat(m.userBalance || "0") / 1e6, 0) || 0;
   const totalEarnings = 0; // Earnings tracking not available yet
-  const activeVaults = membershipData?.length || 0;
+  const activeVaults = investorVaults.length;
 
   // Not connected state
   if (!isConnected) {
@@ -52,12 +69,24 @@ export default function InvestorPortfolioPage() {
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          className="mb-8 flex items-center justify-between"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">My Vaults</h1>
-          <p className="text-gray-400">
-            Track your investments and portfolio performance.
-          </p>
+          <div>
+            <h1 className="text-3xl font-bold text-white mb-2">My Vaults</h1>
+            <p className="text-gray-400">
+              Track your investments and portfolio performance.
+            </p>
+          </div>
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => refreshMemberships()}
+            disabled={isLoading}
+            className="p-3 bg-gray-800 hover:bg-gray-700 rounded-xl transition-colors disabled:opacity-50"
+            title="Refresh vaults"
+          >
+            <ArrowPathIcon className={`h-5 w-5 text-gray-400 ${isLoading ? "animate-spin" : ""}`} />
+          </motion.button>
         </motion.div>
 
         {/* Stats Overview */}
@@ -107,14 +136,14 @@ export default function InvestorPortfolioPage() {
               <div key={i} className="h-48 bg-[#12121a] border border-gray-800/50 rounded-xl animate-pulse" />
             ))}
           </div>
-        ) : membershipData && membershipData.length > 0 ? (
+        ) : investorVaults.length > 0 ? (
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
           >
-            {membershipData.map((membership, index) => (
+            {investorVaults.map((membership, index) => (
               <motion.div
                 key={membership.vaultAddress}
                 initial={{ opacity: 0, y: 20 }}
