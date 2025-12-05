@@ -95,8 +95,8 @@ export default function VaultDetails() {
     ],
     functionName: "allowance",
     args: [
-      userAddress || "0x0000000000000000000000000000000000000000",
-      vaultAddress || "0x0000000000000000000000000000000000000000",
+      (userAddress || "0x0000000000000000000000000000000000000000") as `0x${string}`,
+      (vaultAddress || "0x0000000000000000000000000000000000000000") as `0x${string}`,
     ],
     query: {
       enabled: !!userAddress && !!usdcAddress && !!vaultAddress,
