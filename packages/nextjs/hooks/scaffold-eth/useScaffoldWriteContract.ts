@@ -22,12 +22,12 @@ type ScaffoldWriteContractReturnType<TContractName extends ContractName> = Omit<
 > & {
   isMining: boolean;
   writeContractAsync: <
-    TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, "nonpayable" | "payable">,
+    TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, "nonpayable" | "payable">,
   >(
     variables: ScaffoldWriteContractVariables<TContractName, TFunctionName>,
     options?: ScaffoldWriteContractOptions,
   ) => Promise<WriteContractReturnType | undefined>;
-  writeContract: <TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, "nonpayable" | "payable">>(
+  writeContract: <TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, "nonpayable" | "payable">>(
     variables: ScaffoldWriteContractVariables<TContractName, TFunctionName>,
     options?: Omit<ScaffoldWriteContractOptions, "onBlockConfirmation" | "blockConfirmations">,
   ) => void;
@@ -85,7 +85,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
   });
 
   const sendContractWriteAsyncTx = async <
-    TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, "nonpayable" | "payable">,
+    TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, "nonpayable" | "payable">,
   >(
     variables: ScaffoldWriteContractVariables<TContractName, TFunctionName>,
     options?: ScaffoldWriteContractOptions,
@@ -143,7 +143,7 @@ export function useScaffoldWriteContract<TContractName extends ContractName>(
 
   const sendContractWriteTx = <
     TContractName extends ContractName,
-    TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, "nonpayable" | "payable">,
+    TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, "nonpayable" | "payable">,
   >(
     variables: ScaffoldWriteContractVariables<TContractName, TFunctionName>,
     options?: Omit<ScaffoldWriteContractOptions, "onBlockConfirmation" | "blockConfirmations">,

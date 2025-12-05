@@ -157,12 +157,12 @@ type OptionalTuple<T> = T extends readonly [infer H, ...infer R] ? readonly [H |
 
 type UseScaffoldArgsParam<
   TContractName extends ContractName,
-  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>>,
+  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi>,
 > =
   TFunctionName extends FunctionNamesWithInputs<TContractName>
     ? {
-        args: OptionalTuple<UnionToIntersection<AbiFunctionArguments<ContractAbi<TContractName>, TFunctionName>>>;
-        value?: ExtractAbiFunction<ContractAbi<TContractName>, TFunctionName>["stateMutability"] extends "payable"
+        args: OptionalTuple<UnionToIntersection<AbiFunctionArguments<ContractAbi<TContractName> & Abi, TFunctionName>>>;
+        value?: ExtractAbiFunction<ContractAbi<TContractName> & Abi, TFunctionName>["stateMutability"] extends "payable"
           ? bigint | undefined
           : undefined;
       }
@@ -184,7 +184,7 @@ export type UseScaffoldWriteConfig<TContractName extends ContractName> = {
 
 export type UseScaffoldReadConfig<
   TContractName extends ContractName,
-  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, ReadAbiStateMutability>,
+  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, ReadAbiStateMutability>,
 > = {
   contractName: TContractName;
   chainId?: AllowedChainIds;
@@ -199,7 +199,7 @@ export type UseScaffoldReadConfig<
 
 export type ScaffoldWriteContractVariables<
   TContractName extends ContractName,
-  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName>, WriteAbiStateMutability>,
+  TFunctionName extends ExtractAbiFunctionNames<ContractAbi<TContractName> & Abi, WriteAbiStateMutability>,
 > = IsContractDeclarationMissing<
   Partial<WriteContractParameters>,
   {
@@ -320,7 +320,7 @@ export type UseScaffoldEventHistoryData<
       {
         args: AbiParametersToPrimitiveTypes<TEvent["inputs"]> &
           GetEventArgs<
-            ContractAbi<TContractName>,
+            ContractAbi<TContractName> & Abi,
             TEventName,
             {
               IndexedOnly: false;
