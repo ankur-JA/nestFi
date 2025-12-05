@@ -225,9 +225,9 @@ export type ScaffoldWriteContractOptions = MutateOptions<
 
 export type UseScaffoldEventConfig<
   TContractName extends ContractName,
-  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName>>,
-  TEvent extends ExtractAbiEvent<ContractAbi<TContractName>, TEventName> = ExtractAbiEvent<
-    ContractAbi<TContractName>,
+  TEventName extends ExtractAbiEventNames<ContractAbi<TContractName> & Abi>,
+  TEvent extends ExtractAbiEvent<ContractAbi<TContractName> & Abi, TEventName> = ExtractAbiEvent<
+    ContractAbi<TContractName> & Abi,
     TEventName
   >,
 > = {
@@ -245,13 +245,13 @@ export type UseScaffoldEventConfig<
       >[],
     ) => void;
   },
-  Omit<UseWatchContractEventParameters<ContractAbi<TContractName>>, "onLogs" | "address" | "abi" | "eventName"> & {
+  Omit<UseWatchContractEventParameters<ContractAbi<TContractName> & Abi>, "onLogs" | "address" | "abi" | "eventName"> & {
     onLogs: (
       logs: Simplify<
         Omit<Log<bigint, number, false, TEvent, false, [TEvent], TEventName>, "args"> & {
           args: AbiParametersToPrimitiveTypes<TEvent["inputs"]> &
             GetEventArgs<
-              ContractAbi<TContractName>,
+              ContractAbi<TContractName> & Abi,
               TEventName,
               {
                 IndexedOnly: false;
