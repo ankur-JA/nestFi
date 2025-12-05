@@ -2,6 +2,7 @@
   "name": "se-2",
   "version": "0.0.1",
   "private": true,
+  "packageManager": "yarn@3.2.3",
   "workspaces": {
     "packages": [
       "packages/*"
