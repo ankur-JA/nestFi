@@ -30,20 +30,22 @@ const NewsletterForm = ({ isDark }: { isDark: boolean }) => {
     setStatus("loading");
 
     try {
-      // Store in localStorage for now
-      const existingEmails = JSON.parse(localStorage.getItem("nestfi_subscribers") || "[]");
-      if (existingEmails.includes(email)) {
-        setErrorMessage("You're already subscribed!");
+      const response = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        setErrorMessage(data.error || "Something went wrong. Please try again.");
         setStatus("error");
         setTimeout(() => setStatus("idle"), 3000);
         return;
       }
-      
-      existingEmails.push(email);
-      localStorage.setItem("nestfi_subscribers", JSON.stringify(existingEmails));
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
       
       setStatus("success");
       setEmail("");
