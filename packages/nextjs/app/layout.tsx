@@ -7,7 +7,7 @@ import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
 
 export const metadata = getMetadata({
   title: "NestFi",
-  description: "Built with 🏗 Scaffold-ETH 2",
+  description: "Decentralized Asset Management Protocol - Pool funds, deploy strategies, grow together.",
 });
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
