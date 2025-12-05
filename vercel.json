@@ -1,7 +1,7 @@
 {
-  "buildCommand": "cd ../.. && corepack enable && corepack prepare yarn@3.2.3 --activate && cd packages/nextjs && yarn build",
+  "buildCommand": "cd ../.. && corepack enable && corepack prepare yarn@3.2.3 --activate && cd packages/nextjs && corepack yarn build",
   "outputDirectory": ".next",
-  "installCommand": "cd ../.. && corepack enable && corepack prepare yarn@3.2.3 --activate && cd packages/nextjs && yarn install",
+  "installCommand": "cd ../.. && corepack enable && corepack prepare yarn@3.2.3 --activate && cd packages/nextjs && corepack yarn install",
   "framework": "nextjs",
   "rootDirectory": "packages/nextjs",
   "ignoreCommand": "test -z \"$(git diff --name-only HEAD^ HEAD packages/nextjs/ 2>/dev/null)\""
