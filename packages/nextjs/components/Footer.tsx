@@ -3,9 +3,10 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
-import { CheckCircleIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, EyeIcon } from "@heroicons/react/24/outline";
 import NestFiLogo from "~~/components/NestFiLogo";
 import { useTheme } from "~~/contexts/ThemeContext";
+import { usePageViews } from "~~/hooks/usePageViews";
 
 /**
  * Newsletter subscription component
@@ -156,6 +157,10 @@ const NewsletterForm = ({ isDark }: { isDark: boolean }) => {
 export const Footer = () => {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+  const { count, formatCount } = usePageViews();
+
+  // Get current month name
+  const currentMonth = new Date().toLocaleString("default", { month: "long" });
 
   return (
     <footer 
@@ -348,13 +353,24 @@ export const Footer = () => {
               </p>
             </div>
 
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-6 flex-wrap">
               <span 
                 className="flex items-center gap-2 text-sm"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                 All systems operational
+              </span>
+              <span style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
+              <span 
+                className="flex items-center gap-1.5 text-sm"
+                style={{ color: isDark ? '#6b7280' : '#64748b' }}
+              >
+                <EyeIcon className="w-4 h-4" />
+                <span>
+                  <span className="font-semibold text-emerald-500">{formatCount(count)}</span>
+                  {" "}views this {currentMonth}
+                </span>
               </span>
               <span style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
               <span 

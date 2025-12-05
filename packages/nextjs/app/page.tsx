@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { 
@@ -21,6 +21,25 @@ import { useTheme } from "~~/contexts/ThemeContext";
 export default function HomePage() {
   const { theme } = useTheme();
   const isDark = theme === "dark";
+
+  // Track page view on mount (only once per session)
+  useEffect(() => {
+    const hasTracked = sessionStorage.getItem("nestfi_landing_viewed");
+    
+    if (!hasTracked) {
+      // Track the page view
+      fetch("/api/pageviews/track", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ page: "landing" }),
+      }).catch(console.error);
+      
+      // Mark as tracked for this session
+      sessionStorage.setItem("nestfi_landing_viewed", "true");
+    }
+  }, []);
 
   return (
     <div 
