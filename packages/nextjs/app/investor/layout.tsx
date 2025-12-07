@@ -76,20 +76,14 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
         </AnimatePresence>
 
         {/* Sidebar */}
-        <AnimatePresence>
-          <motion.aside
-            initial={false}
-            animate={{
-              x: sidebarOpen ? 0 : '-100%',
-            }}
-            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className={`
-              fixed md:static
-              top-0 left-0 bottom-0
-              w-64 flex flex-col z-50
-              transition-colors duration-300
-              md:translate-x-0
-            `}
+        <aside
+          className={`
+            fixed md:static
+            top-0 left-0 bottom-0
+            w-64 flex flex-col z-50
+            transition-all duration-300
+            ${sidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          `}
             style={{
               background: isDark ? '#0f0f15' : '#f8fafc',
               borderRight: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
@@ -158,8 +152,7 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
                 </motion.div>
               </Link>
             </div>
-          </motion.aside>
-        </AnimatePresence>
+          </aside>
 
         {/* Main Content */}
         <main 
