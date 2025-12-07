@@ -61,7 +61,7 @@ const NewsletterForm = ({ isDark }: { isDark: boolean }) => {
   };
 
   return (
-    <div>
+    <div className="w-full min-w-0">
       <h3 
         className="text-xs font-semibold uppercase tracking-wider mb-4"
         style={{ color: isDark ? '#ffffff' : '#0f172a' }}
@@ -101,19 +101,19 @@ const NewsletterForm = ({ isDark }: { isDark: boolean }) => {
             exit={{ opacity: 0 }}
           >
             <p 
-              className="text-sm mb-3"
+              className="text-xs sm:text-sm mb-3"
               style={{ color: isDark ? '#6b7280' : '#64748b' }}
             >
               Get the latest updates
             </p>
-            <form onSubmit={handleSubscribe} className="flex gap-2">
+            <form onSubmit={handleSubscribe} className="flex gap-2 w-full min-w-0">
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Enter your email"
                 disabled={status === "loading"}
-                className="flex-1 px-3 py-2 rounded-lg text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50"
+                className="flex-1 min-w-0 px-2 sm:px-3 py-2 rounded-lg text-xs sm:text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50 disabled:opacity-50"
                 style={{
                   background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.03)',
                   border: `1px solid ${status === "error" ? '#ef4444' : isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'}`,
@@ -123,10 +123,10 @@ const NewsletterForm = ({ isDark }: { isDark: boolean }) => {
               <button 
                 type="submit"
                 disabled={status === "loading"}
-                className="px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-shrink-0 px-3 sm:px-4 py-2 bg-gradient-to-r from-teal-500 to-emerald-500 hover:from-teal-400 hover:to-emerald-400 text-white text-xs sm:text-sm font-medium rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {status === "loading" ? (
-                  <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5 animate-spin" viewBox="0 0 24 24">
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
@@ -331,7 +331,9 @@ export const Footer = () => {
             </div>
 
             {/* Newsletter */}
-            <NewsletterForm isDark={isDark} />
+            <div className="col-span-2 sm:col-span-3 md:col-span-1 w-full min-w-0">
+              <NewsletterForm isDark={isDark} />
+            </div>
           </div>
         </div>
 
