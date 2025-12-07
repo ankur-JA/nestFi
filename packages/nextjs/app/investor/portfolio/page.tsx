@@ -333,7 +333,7 @@ export default function InvestorPortfolioPage() {
             className="border rounded-xl p-12 text-center transition-colors duration-300"
             style={{
               background: isDark ? '#12121a' : '#ffffff',
-              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'},
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
             }}
           >
             <div 
