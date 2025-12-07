@@ -406,7 +406,7 @@ export default function InvestorVaultsPage() {
           <div 
             className="border rounded-xl overflow-hidden transition-colors duration-300"
             style={{
-              background: isDark ? '#12121a' : '#ffffff',
+              background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
             }}
           >
@@ -434,7 +434,7 @@ export default function InvestorVaultsPage() {
             transition={{ delay: 0.2 }}
             className="border rounded-xl overflow-hidden transition-colors duration-300"
             style={{
-              background: isDark ? '#12121a' : '#ffffff',
+              background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
             }}
           >
@@ -548,7 +548,7 @@ export default function InvestorVaultsPage() {
             animate={{ opacity: 1, y: 0 }}
             className="border rounded-xl p-12 text-center transition-colors duration-300"
             style={{
-              background: isDark ? '#12121a' : '#ffffff',
+              background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
               borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
             }}
           >
@@ -597,7 +597,7 @@ export default function InvestorVaultsPage() {
                 onClick={(e) => e.stopPropagation()}
                 className="border rounded-2xl p-6 max-w-md w-full transition-colors duration-300"
                 style={{
-                  background: isDark ? '#12121a' : '#ffffff',
+                  background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
                   borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
                 }}
               >

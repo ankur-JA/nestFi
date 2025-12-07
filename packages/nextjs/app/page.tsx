@@ -44,7 +44,7 @@ export default function HomePage() {
   return (
     <div 
       className="min-h-screen relative overflow-x-hidden transition-colors duration-300"
-      style={{ background: isDark ? '#030303' : '#fafafa' }}
+      style={{ background: isDark ? '#030303' : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)' }}
     >
       
       {/* Premium Gradient Background */}
@@ -54,7 +54,7 @@ export default function HomePage() {
           style={{ 
             background: isDark 
               ? 'linear-gradient(to bottom right, #020617, #030303, #020617)' 
-              : '#fafafa' 
+              : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)' 
           }}
         />
         
@@ -64,7 +64,7 @@ export default function HomePage() {
           style={{
             background: isDark 
               ? 'radial-gradient(circle, rgba(20,184,166,0.12) 0%, rgba(20,184,166,0.04) 40%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(59,130,246,0.05) 0%, rgba(59,130,246,0.02) 40%, transparent 70%)',
+              : 'radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(16,185,129,0.05) 40%, transparent 70%)',
           }}
           animate={{ scale: [1, 1.1, 1], opacity: [0.6, 0.8, 0.6] }}
           transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
@@ -76,7 +76,7 @@ export default function HomePage() {
           style={{
             background: isDark
               ? 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.03) 50%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, rgba(59,130,246,0.01) 50%, transparent 70%)',
+              : 'radial-gradient(circle, rgba(16,185,129,0.08) 0%, rgba(16,185,129,0.02) 50%, transparent 70%)',
           }}
           animate={{ x: [0, 40, 0], opacity: [0.4, 0.6, 0.4] }}
           transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
@@ -88,7 +88,7 @@ export default function HomePage() {
           style={{
             background: isDark
               ? 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 50%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(59,130,246,0.04) 0%, rgba(59,130,246,0.01) 50%, transparent 70%)',
+              : 'radial-gradient(circle, rgba(20,184,166,0.08) 0%, rgba(20,184,166,0.02) 50%, transparent 70%)',
           }}
           animate={{ x: [0, -40, 0], opacity: [0.4, 0.6, 0.4] }}
           transition={{ duration: 14, repeat: Infinity, ease: "easeInOut" }}
@@ -267,7 +267,7 @@ export default function HomePage() {
                   style={{
                     background: isDark 
                       ? 'linear-gradient(to bottom right, #0a0f14, #070a0d)' 
-                      : '#ffffff',
+                      : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
                     boxShadow: isDark ? 'none' : '0 4px 24px rgba(0,0,0,0.06)',
                   }}

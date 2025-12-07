@@ -208,7 +208,7 @@ export default function CreateVaultPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="rounded-2xl p-12 text-center max-w-md transition-colors duration-300"
           style={{
-            background: isDark ? '#12121a' : '#ffffff',
+            background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
           }}
         >
@@ -242,7 +242,7 @@ export default function CreateVaultPage() {
           animate={{ opacity: 1, scale: 1 }}
           className="rounded-2xl p-12 text-center max-w-md transition-colors duration-300"
           style={{
-            background: isDark ? '#12121a' : '#ffffff',
+            background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
           }}
         >
@@ -403,7 +403,7 @@ export default function CreateVaultPage() {
           animate={{ opacity: 1, y: 0 }}
           className="rounded-2xl overflow-hidden transition-colors duration-300"
           style={{
-            background: isDark ? '#12121a' : '#ffffff',
+            background: isDark ? '#12121a' : 'linear-gradient(to bottom right, #ffffff, #f0fdf4)',
             border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
           }}
         >

@@ -28,9 +28,9 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
 
   return (
     <div 
-      className="min-h-screen flex flex-col transition-colors duration-300"
+      className="min-h-screen flex flex-col transition-colors duration-300 relative"
       style={{ 
-        background: isDark ? '#0a0a0f' : '#ffffff',
+        background: isDark ? '#0a0a0f' : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)',
       }}
     >
       {/* Top Header - Full Width */}
@@ -156,9 +156,9 @@ export default function InvestorLayout({ children }: { children: React.ReactNode
 
         {/* Main Content */}
         <main 
-          className="flex-1 overflow-auto transition-colors duration-300 w-full min-w-0"
+          className="flex-1 overflow-auto transition-colors duration-300 w-full min-w-0 relative"
           style={{
-            background: isDark ? '#0a0a0f' : '#ffffff',
+            background: isDark ? '#0a0a0f' : 'transparent',
           }}
         >
           {children}
