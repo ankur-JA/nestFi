@@ -30,20 +30,26 @@ pnpm build
 pnpm start
 ```
 
-## Deployment
+## Deployment to Vercel
 
-### Vercel (Recommended)
+### Option 1: Deploy as Separate Project (Recommended)
 
-1. Push this directory to a separate repository or as a subdirectory
+1. Push the `docs-site` directory to a separate GitHub repository
 2. Import the project in Vercel
-3. Set the domain to `docs.nestfi.io`
-4. Deploy
+3. Vercel will automatically detect Next.js and configure it
+4. Add custom domain `docs.nestfi.io` in Vercel project settings
 
-### Manual Deployment
+### Option 2: Deploy from Monorepo
 
-1. Run `pnpm build`
-2. Deploy the `.next` folder to your hosting provider
-3. Configure DNS to point `docs.nestfi.io` to your hosting
+If deploying from the main repository:
+
+1. In Vercel project settings, set:
+   - **Root Directory**: `docs-site`
+   - **Build Command**: `pnpm install && pnpm build`
+   - **Output Directory**: `.next`
+   - **Install Command**: `pnpm install`
+
+2. Add custom domain `docs.nestfi.io`
 
 ## Features
 
