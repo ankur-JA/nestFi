@@ -553,15 +553,26 @@ export default function CreateVaultPage() {
                 exit={{ opacity: 0, x: -20 }}
                 className="p-8"
               >
-                <h3 className="text-lg font-semibold text-white mb-6">Investment Parameters</h3>
+                <h3 
+                  className="text-lg font-semibold mb-6 transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  Investment Parameters
+                </h3>
                 <div className="space-y-6">
                   {/* Deposit Cap */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label 
+                      className="block text-sm font-medium mb-2 transition-colors duration-300"
+                      style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                    >
                       Deposit Cap (USDC)
                     </label>
                     <div className="relative">
-                      <CurrencyDollarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                      <CurrencyDollarIcon 
+                        className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300"
+                        style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+                      />
                       <input
                         type="text"
                         value={formData.depositCap}
@@ -587,7 +598,12 @@ export default function CreateVaultPage() {
                         }}
                       />
                     </div>
-                    <p className="text-gray-500 text-xs mt-1">Maximum total assets the vault can accept</p>
+                    <p 
+                      className="text-xs mt-1 transition-colors duration-300"
+                      style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                    >
+                      Maximum total assets the vault can accept
+                    </p>
                     {validationErrors.depositCap && (
                       <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
                         <ExclamationTriangleIcon className="h-4 w-4" />
@@ -598,22 +614,48 @@ export default function CreateVaultPage() {
 
                   {/* Min Deposit */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label 
+                      className="block text-sm font-medium mb-2 transition-colors duration-300"
+                      style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                    >
                       Minimum Deposit (USDC)
                     </label>
                     <div className="relative">
-                      <CurrencyDollarIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+                      <CurrencyDollarIcon 
+                        className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300"
+                        style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+                      />
                       <input
                         type="text"
                         value={formData.minDeposit}
                         onChange={(e) => handleInputChange("minDeposit", e.target.value.replace(/[^0-9.]/g, ''))}
                         placeholder="50"
-                        className={`w-full pl-12 pr-4 py-3 bg-[#0a0a0f] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
-                          validationErrors.minDeposit ? "border-red-500" : "border-gray-800 focus:border-emerald-500"
+                        className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
+                          validationErrors.minDeposit ? "border-red-500" : ""
                         }`}
+                        style={{
+                          background: isDark ? '#0a0a0f' : '#f8fafc',
+                          color: isDark ? '#ffffff' : '#0f172a',
+                          borderColor: validationErrors.minDeposit ? '#ef4444' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'),
+                        }}
+                        onFocus={(e) => {
+                          if (!validationErrors.minDeposit) {
+                            e.currentTarget.style.borderColor = '#10b981';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!validationErrors.minDeposit) {
+                            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)';
+                          }
+                        }}
                       />
                     </div>
-                    <p className="text-gray-500 text-xs mt-1">Lowest amount an investor must deposit</p>
+                    <p 
+                      className="text-xs mt-1 transition-colors duration-300"
+                      style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                    >
+                      Lowest amount an investor must deposit
+                    </p>
                     {validationErrors.minDeposit && (
                       <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
                         <ExclamationTriangleIcon className="h-4 w-4" />
