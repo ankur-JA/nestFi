@@ -21,6 +21,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagm
 import { parseUnits } from "viem";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import deployedContracts from "~~/contracts/deployedContracts";
+import { useTheme } from "~~/contexts/ThemeContext";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
@@ -94,6 +95,8 @@ const WITHDRAW_MODELS = [
 export default function CreateVaultPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -203,13 +206,25 @@ export default function CreateVaultPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-[#12121a] border border-gray-800/50 rounded-2xl p-12 text-center max-w-md"
+          className="rounded-2xl p-12 text-center max-w-md transition-colors duration-300"
+          style={{
+            background: isDark ? '#12121a' : '#ffffff',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          }}
         >
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6">
-            <SparklesIcon className="h-8 w-8 text-emerald-400" />
+            <SparklesIcon className="h-8 w-8 text-emerald-500" />
           </div>
-          <h2 className="text-2xl font-bold text-white mb-3">Connect Wallet</h2>
-          <p className="text-gray-400 mb-8">
+          <h2 
+            className="text-2xl font-bold mb-3 transition-colors duration-300"
+            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+          >
+            Connect Wallet
+          </h2>
+          <p 
+            className="mb-8 transition-colors duration-300"
+            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+          >
             Connect your wallet to create and manage investment vaults.
           </p>
           <RainbowKitCustomConnectButton />
@@ -225,7 +240,11 @@ export default function CreateVaultPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="bg-[#12121a] border border-gray-800/50 rounded-2xl p-12 text-center max-w-md"
+          className="rounded-2xl p-12 text-center max-w-md transition-colors duration-300"
+          style={{
+            background: isDark ? '#12121a' : '#ffffff',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          }}
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -233,18 +252,49 @@ export default function CreateVaultPage() {
             transition={{ delay: 0.2, type: "spring" }}
             className="w-20 h-20 rounded-full bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center mx-auto mb-6"
           >
-            <CheckCircleIcon className="h-10 w-10 text-emerald-400" />
+            <CheckCircleIcon className="h-10 w-10 text-emerald-500" />
           </motion.div>
-          <h2 className="text-2xl font-bold text-white mb-3">Vault Created!</h2>
-          <p className="text-gray-400 mb-4">
-            Your vault <span className="text-white font-medium">{formData.name}</span> has been successfully created.
+          <h2 
+            className="text-2xl font-bold mb-3 transition-colors duration-300"
+            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+          >
+            Vault Created!
+          </h2>
+          <p 
+            className="mb-4 transition-colors duration-300"
+            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+          >
+            Your vault <span 
+              className="font-medium transition-colors duration-300"
+              style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+            >
+              {formData.name}
+            </span> has been successfully created.
           </p>
-          <div className="bg-black/20 rounded-xl p-4 mb-6 text-left">
-            <div className="flex items-center gap-2 text-sm text-gray-400 mb-2">
+          <div 
+            className="rounded-xl p-4 mb-6 text-left transition-colors duration-300"
+            style={{
+              background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+            }}
+          >
+            <div 
+              className="flex items-center gap-2 text-sm mb-2 transition-colors duration-300"
+              style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+            >
               {selectedModel && <selectedModel.icon className="h-4 w-4" />}
-              <span>Withdrawal Model: <span className="text-white">{selectedModel?.title}</span></span>
+              <span>
+                Withdrawal Model: <span 
+                  className="transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  {selectedModel?.title}
+                </span>
+              </span>
             </div>
-            <p className="text-xs text-gray-500">
+            <p 
+              className="text-xs transition-colors duration-300"
+              style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+            >
               ⚠️ This setting is permanent and cannot be changed.
             </p>
           </div>
@@ -257,7 +307,17 @@ export default function CreateVaultPage() {
                 setFormData({ name: "", symbol: "", depositCap: "", minDeposit: "", allowlistEnabled: false, withdrawModel: 0, withdrawConfig: 10 });
                 setStep(1);
               }}
-              className="flex-1 py-3 px-6 bg-gray-800 hover:bg-gray-700 text-white font-medium rounded-xl transition-colors"
+              className="flex-1 py-3 px-6 font-medium rounded-xl transition-colors"
+              style={{
+                background: isDark ? '#1f2937' : '#e5e7eb',
+                color: isDark ? '#ffffff' : '#0f172a',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = isDark ? '#374151' : '#d1d5db';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = isDark ? '#1f2937' : '#e5e7eb';
+              }}
             >
               Create Another
             </motion.button>
@@ -284,8 +344,16 @@ export default function CreateVaultPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">Create Vault</h1>
-          <p className="text-gray-400">
+          <h1 
+            className="text-3xl font-bold mb-2 transition-colors duration-300"
+            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+          >
+            Create Vault
+          </h1>
+          <p 
+            className="transition-colors duration-300"
+            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+          >
             Set up a new investment vault for your investors.
           </p>
         </motion.div>
@@ -295,16 +363,36 @@ export default function CreateVaultPage() {
           {[1, 2, 3].map((s, i) => (
             <React.Fragment key={s}>
               <div className="flex items-center gap-2">
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
-                  step >= s ? "bg-emerald-500 text-white" : "bg-gray-800 text-gray-400"
-                }`}>
+                <div 
+                  className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-colors ${
+                    step >= s ? "bg-emerald-500 text-white" : ""
+                  }`}
+                  style={step < s ? {
+                    background: isDark ? '#1f2937' : '#e5e7eb',
+                    color: isDark ? '#9ca3af' : '#64748b',
+                  } : {}}
+                >
                   {s}
                 </div>
-                <span className={`text-sm hidden sm:block ${step >= s ? "text-white" : "text-gray-500"}`}>
+                <span 
+                  className="text-sm hidden sm:block transition-colors duration-300"
+                  style={step >= s ? {
+                    color: isDark ? '#ffffff' : '#0f172a',
+                  } : {
+                    color: isDark ? '#6b7280' : '#94a3b8',
+                  }}
+                >
                   {s === 1 ? "Basic Info" : s === 2 ? "Settings" : "Withdrawal"}
                 </span>
               </div>
-              {i < 2 && <div className={`flex-1 h-0.5 ${step > s ? "bg-emerald-500" : "bg-gray-800"}`} />}
+              {i < 2 && (
+                <div 
+                  className="flex-1 h-0.5 transition-colors duration-300"
+                  style={{
+                    background: step > s ? '#10b981' : (isDark ? '#1f2937' : '#e5e7eb'),
+                  }}
+                />
+              )}
             </React.Fragment>
           ))}
         </div>
@@ -313,7 +401,11 @@ export default function CreateVaultPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-[#12121a] border border-gray-800/50 rounded-2xl overflow-hidden"
+          className="rounded-2xl overflow-hidden transition-colors duration-300"
+          style={{
+            background: isDark ? '#12121a' : '#ffffff',
+            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+          }}
         >
           <AnimatePresence mode="wait">
             {/* Step 1: Basic Info */}
@@ -325,11 +417,19 @@ export default function CreateVaultPage() {
                 exit={{ opacity: 0, x: -20 }}
                 className="p-8"
               >
-                <h3 className="text-lg font-semibold text-white mb-6">Basic Information</h3>
+                <h3 
+                  className="text-lg font-semibold mb-6 transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  Basic Information
+                </h3>
                 <div className="space-y-6">
                   {/* Name */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label 
+                      className="block text-sm font-medium mb-2 transition-colors duration-300"
+                      style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                    >
                       Vault Name
                     </label>
                     <input
@@ -337,9 +437,24 @@ export default function CreateVaultPage() {
                       value={formData.name}
                       onChange={(e) => handleInputChange("name", e.target.value)}
                       placeholder="e.g., Stable Yield Fund"
-                      className={`w-full px-4 py-3 bg-[#0a0a0f] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
-                        validationErrors.name ? "border-red-500" : "border-gray-800 focus:border-emerald-500"
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
+                        validationErrors.name ? "border-red-500" : ""
                       }`}
+                      style={{
+                        background: isDark ? '#0a0a0f' : '#f8fafc',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        borderColor: validationErrors.name ? '#ef4444' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'),
+                      }}
+                      onFocus={(e) => {
+                        if (!validationErrors.name) {
+                          e.currentTarget.style.borderColor = '#10b981';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (!validationErrors.name) {
+                          e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)';
+                        }
+                      }}
                     />
                     {validationErrors.name && (
                       <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
@@ -351,7 +466,10 @@ export default function CreateVaultPage() {
 
                   {/* Symbol */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                    <label 
+                      className="block text-sm font-medium mb-2 transition-colors duration-300"
+                      style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                    >
                       Vault Symbol
                     </label>
                     <input
@@ -360,9 +478,24 @@ export default function CreateVaultPage() {
                       onChange={(e) => handleInputChange("symbol", e.target.value.toUpperCase())}
                       placeholder="e.g., NVUSDC"
                       maxLength={10}
-                      className={`w-full px-4 py-3 bg-[#0a0a0f] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
-                        validationErrors.symbol ? "border-red-500" : "border-gray-800 focus:border-emerald-500"
+                      className={`w-full px-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
+                        validationErrors.symbol ? "border-red-500" : ""
                       }`}
+                      style={{
+                        background: isDark ? '#0a0a0f' : '#f8fafc',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        borderColor: validationErrors.symbol ? '#ef4444' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'),
+                      }}
+                      onFocus={(e) => {
+                        if (!validationErrors.symbol) {
+                          e.currentTarget.style.borderColor = '#10b981';
+                        }
+                      }}
+                      onBlur={(e) => {
+                        if (!validationErrors.symbol) {
+                          e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)';
+                        }
+                      }}
                     />
                     {validationErrors.symbol && (
                       <p className="text-red-400 text-sm mt-1 flex items-center gap-1">
@@ -389,7 +522,10 @@ export default function CreateVaultPage() {
                       onChange={(e) => handleInputChange("allowlistEnabled", e.target.checked)}
                       className="sr-only"
                     />
-                    <span className="text-gray-300 text-sm">
+                    <span 
+                      className="text-sm transition-colors duration-300"
+                      style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                    >
                       Enable allowlist (only approved addresses can deposit)
                     </span>
                   </label>
