@@ -613,7 +613,17 @@ export default function CreateVaultPage() {
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
                     onClick={() => setStep(1)}
-                    className="flex-1 py-4 px-6 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                    className="flex-1 py-4 px-6 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                    style={{
+                      background: isDark ? '#1f2937' : '#e5e7eb',
+                      color: isDark ? '#ffffff' : '#0f172a',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = isDark ? '#374151' : '#d1d5db';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = isDark ? '#1f2937' : '#e5e7eb';
+                    }}
                   >
                     <ArrowLeftIcon className="h-4 w-4" />
                     Back
@@ -643,8 +653,18 @@ export default function CreateVaultPage() {
               >
                 <div className="flex items-start gap-3 mb-6">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-white">Select Withdrawal Liquidity Model</h3>
-                    <p className="text-gray-400 text-sm mt-1">This setting is <span className="text-amber-400 font-medium">permanent</span> and cannot be changed after deployment.</p>
+                    <h3 
+                      className="text-lg font-semibold transition-colors duration-300"
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                    >
+                      Select Withdrawal Liquidity Model
+                    </h3>
+                    <p 
+                      className="text-sm mt-1 transition-colors duration-300"
+                      style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                    >
+                      This setting is <span className="text-amber-500 font-medium">permanent</span> and cannot be changed after deployment.
+                    </p>
                   </div>
                   <div className="flex items-center gap-1 px-2 py-1 bg-amber-500/10 border border-amber-500/20 rounded-lg">
                     <LockClosedIcon className="h-3 w-3 text-amber-400" />
@@ -715,7 +735,10 @@ export default function CreateVaultPage() {
                                 animate={{ opacity: 1, height: "auto" }}
                                 className="mt-4 pt-4 border-t border-gray-800"
                               >
-                                <label className="block text-sm font-medium text-gray-300 mb-2">
+                                <label 
+                                  className="block text-sm font-medium mb-2 transition-colors duration-300"
+                                  style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                                >
                                   {model.configLabel}
                                 </label>
                                 <div className="flex flex-wrap gap-2">
@@ -772,7 +795,10 @@ export default function CreateVaultPage() {
                     <InformationCircleIcon className="h-5 w-5 text-amber-400 flex-shrink-0 mt-0.5" />
                     <div>
                       <p className="text-amber-400 text-sm font-medium">Important</p>
-                      <p className="text-gray-400 text-xs mt-1">
+                      <p 
+                        className="text-xs mt-1 transition-colors duration-300"
+                        style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                      >
                         Once the vault is deployed, the withdrawal model cannot be changed. This protects investors from rugpulls or manipulation.
                       </p>
                     </div>
@@ -790,15 +816,25 @@ export default function CreateVaultPage() {
                 )}
 
                 <div className="flex gap-3 mt-8">
-                  <motion.button
-                    whileHover={{ scale: 1.01 }}
-                    whileTap={{ scale: 0.99 }}
-                    onClick={() => setStep(2)}
-                    className="flex-1 py-4 px-6 bg-gray-800 hover:bg-gray-700 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
-                  >
-                    <ArrowLeftIcon className="h-4 w-4" />
-                    Back
-                  </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.01 }}
+                      whileTap={{ scale: 0.99 }}
+                      onClick={() => setStep(2)}
+                      className="flex-1 py-4 px-6 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors"
+                      style={{
+                        background: isDark ? '#1f2937' : '#e5e7eb',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isDark ? '#374151' : '#d1d5db';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isDark ? '#1f2937' : '#e5e7eb';
+                      }}
+                    >
+                      <ArrowLeftIcon className="h-4 w-4" />
+                      Back
+                    </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.01 }}
                     whileTap={{ scale: 0.99 }}
@@ -829,25 +865,74 @@ export default function CreateVaultPage() {
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mt-6 p-4 bg-[#12121a] border border-gray-800/50 rounded-xl"
+            className="mt-6 p-4 rounded-xl transition-colors duration-300"
+            style={{
+              background: isDark ? '#12121a' : '#f8fafc',
+              border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
+            }}
           >
-            <h4 className="text-sm font-medium text-gray-400 mb-3">Vault Summary</h4>
+            <h4 
+              className="text-sm font-medium mb-3 transition-colors duration-300"
+              style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+            >
+              Vault Summary
+            </h4>
             <div className="grid grid-cols-2 gap-4 text-sm">
               <div>
-                <span className="text-gray-500">Name:</span>
-                <span className="text-white ml-2">{formData.name}</span>
+                <span 
+                  className="transition-colors duration-300"
+                  style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                >
+                  Name:
+                </span>
+                <span 
+                  className="ml-2 transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  {formData.name}
+                </span>
               </div>
               <div>
-                <span className="text-gray-500">Symbol:</span>
-                <span className="text-white ml-2">{formData.symbol}</span>
+                <span 
+                  className="transition-colors duration-300"
+                  style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                >
+                  Symbol:
+                </span>
+                <span 
+                  className="ml-2 transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  {formData.symbol}
+                </span>
               </div>
               <div>
-                <span className="text-gray-500">Deposit Cap:</span>
-                <span className="text-white ml-2">${formData.depositCap}</span>
+                <span 
+                  className="transition-colors duration-300"
+                  style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                >
+                  Deposit Cap:
+                </span>
+                <span 
+                  className="ml-2 transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  ${formData.depositCap}
+                </span>
               </div>
               <div>
-                <span className="text-gray-500">Min Deposit:</span>
-                <span className="text-white ml-2">${formData.minDeposit}</span>
+                <span 
+                  className="transition-colors duration-300"
+                  style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                >
+                  Min Deposit:
+                </span>
+                <span 
+                  className="ml-2 transition-colors duration-300"
+                  style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                >
+                  ${formData.minDeposit}
+                </span>
               </div>
             </div>
           </motion.div>
