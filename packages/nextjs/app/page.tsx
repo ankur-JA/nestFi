@@ -43,7 +43,7 @@ export default function HomePage() {
 
   return (
     <div 
-      className="min-h-screen relative overflow-hidden transition-colors duration-300"
+      className="min-h-screen relative overflow-x-hidden transition-colors duration-300"
       style={{ background: isDark ? '#030303' : '#fafafa' }}
     >
       
@@ -60,7 +60,7 @@ export default function HomePage() {
         
         {/* Top glow */}
         <motion.div 
-          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[900px] h-[600px] rounded-full"
+          className="absolute -top-40 left-1/2 -translate-x-1/2 w-[300px] h-[200px] sm:w-[500px] sm:h-[350px] md:w-[700px] md:h-[500px] lg:w-[900px] lg:h-[600px] rounded-full"
           style={{
             background: isDark 
               ? 'radial-gradient(circle, rgba(20,184,166,0.12) 0%, rgba(20,184,166,0.04) 40%, transparent 70%)'
@@ -72,7 +72,7 @@ export default function HomePage() {
         
         {/* Left glow */}
         <motion.div 
-          className="absolute top-1/4 -left-20 w-[600px] h-[600px] rounded-full"
+          className="absolute top-1/4 -left-10 sm:-left-16 md:-left-20 w-[200px] h-[200px] sm:w-[400px] sm:h-[400px] md:w-[600px] md:h-[600px] rounded-full"
           style={{
             background: isDark
               ? 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, rgba(59,130,246,0.03) 50%, transparent 70%)'
@@ -84,7 +84,7 @@ export default function HomePage() {
         
         {/* Right glow */}
         <motion.div 
-          className="absolute top-1/3 -right-20 w-[600px] h-[600px] rounded-full"
+          className="absolute top-1/3 -right-10 sm:-right-16 md:-right-20 w-[200px] h-[200px] sm:w-[400px] sm:h-[400px] md:w-[600px] md:h-[600px] rounded-full"
           style={{
             background: isDark
               ? 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.03) 50%, transparent 70%)'
@@ -102,26 +102,26 @@ export default function HomePage() {
       <div className="relative z-10">
         
         {/* Hero Section */}
-        <section className="px-6 lg:px-12 xl:px-20 pt-20 pb-16">
+        <section className="px-4 sm:px-6 lg:px-12 xl:px-20 pt-16 sm:pt-20 pb-12 sm:pb-16">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
+            <div className="text-center mb-12 sm:mb-16">
               {/* Badge */}
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5 }}
-                className="mb-8"
+                className="mb-6 sm:mb-8"
               >
                 <span 
-                  className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm backdrop-blur-sm"
+                  className="inline-flex items-center gap-2 px-4 py-2 sm:px-5 sm:py-2.5 rounded-full text-xs sm:text-sm backdrop-blur-sm"
                   style={{
                     background: isDark ? 'rgba(20,184,166,0.1)' : 'rgba(16,185,129,0.1)',
                     border: `1px solid ${isDark ? 'rgba(20,184,166,0.2)' : 'rgba(16,185,129,0.3)'}`,
                     color: isDark ? '#2dd4bf' : '#059669',
                   }}
                 >
-                  <SparklesIcon className="h-4 w-4" />
-                  The Future of DeFi Asset Management
+                  <SparklesIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="whitespace-nowrap">The Future of DeFi Asset Management</span>
                 </span>
               </motion.div>
 
@@ -130,7 +130,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.1 }}
-                className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-[1.1] tracking-tight"
+                className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold mb-4 sm:mb-6 leading-[1.1] tracking-tight px-2"
               >
                 <span style={{ color: isDark ? '#ffffff' : '#0f172a' }}>Invest together.</span>
                 <br />
@@ -144,7 +144,7 @@ export default function HomePage() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.2 }}
-                className="text-xl max-w-3xl mx-auto leading-relaxed"
+                className="text-base sm:text-lg md:text-xl max-w-3xl mx-auto leading-relaxed px-4"
                 style={{ color: isDark ? '#9ca3af' : '#64748b' }}
               >
                 Pool funds into curated DeFi vaults. Expert curators manage strategies, 
@@ -157,7 +157,7 @@ export default function HomePage() {
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, delay: 0.4 }}
-              className="grid lg:grid-cols-2 gap-8"
+              className="grid lg:grid-cols-2 gap-6 sm:gap-8"
             >
               {/* Investor Card */}
               <div className="relative group">
@@ -166,7 +166,7 @@ export default function HomePage() {
                   style={{ background: 'linear-gradient(to right, rgba(59,130,246,0.3), rgba(6,182,212,0.3))' }}
                 />
                 <div 
-                  className="relative rounded-3xl p-8 lg:p-10 transition-all duration-300 h-full"
+                  className="relative rounded-3xl p-6 sm:p-8 lg:p-10 transition-all duration-300 h-full"
                   style={{
                     background: isDark 
                       ? 'linear-gradient(to bottom right, #0a0f14, #070a0d)' 
@@ -177,55 +177,55 @@ export default function HomePage() {
                 >
                   
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-8">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-start justify-between mb-6 sm:mb-8">
+                    <div className="flex items-center gap-3 sm:gap-4">
                       <div 
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{
                           background: isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)',
                           border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.2)'}`,
                         }}
                       >
-                        <BanknotesIcon className="h-7 w-7 text-blue-500" />
+                        <BanknotesIcon className="h-6 w-6 sm:h-7 sm:w-7 text-blue-500" />
                       </div>
                       <div>
                         <h2 
-                          className="text-2xl font-bold"
+                          className="text-xl sm:text-2xl font-bold"
                           style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                         >
                           Investor
                         </h2>
-                        <p style={{ color: isDark ? '#6b7280' : '#64748b' }}>Deposit & Earn Yield</p>
+                        <p className="text-sm sm:text-base" style={{ color: isDark ? '#6b7280' : '#64748b' }}>Deposit & Earn Yield</p>
                       </div>
                     </div>
                     <div 
-                      className="px-3 py-1.5 rounded-full"
+                      className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex-shrink-0"
                       style={{
                         background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.1)',
                         border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.2)'}`,
                       }}
                     >
-                      <span className="text-xs font-medium text-blue-500">Passive Income</span>
+                      <span className="text-xs font-medium text-blue-500 whitespace-nowrap">Passive Income</span>
                     </div>
                   </div>
                   
                   {/* Description */}
                   <p 
-                    className="text-lg mb-8 leading-relaxed"
+                    className="text-base sm:text-lg mb-6 sm:mb-8 leading-relaxed"
                     style={{ color: isDark ? '#9ca3af' : '#64748b' }}
                   >
                     Deposit USDC into vaults managed by expert curators. Sit back and watch your investment grow with professional DeFi strategies.
                   </p>
                   
                   {/* Features Grid */}
-                  <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                     {[
                       "Browse vault strategies",
                       "Deposit any amount",
                       "Earn DeFi yields",
                       "Withdraw anytime"
                     ].map((feature) => (
-                      <div key={feature} className="flex items-center gap-3">
+                      <div key={feature} className="flex items-center gap-2 sm:gap-3">
                         <div 
                           className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                           style={{ background: isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)' }}
@@ -233,7 +233,7 @@ export default function HomePage() {
                           <CheckIcon className="h-3 w-3 text-blue-500" />
                         </div>
                         <span 
-                          className="text-sm"
+                          className="text-xs sm:text-sm"
                           style={{ color: isDark ? '#9ca3af' : '#64748b' }}
                         >
                           {feature}
@@ -247,7 +247,7 @@ export default function HomePage() {
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
-                      className="w-full py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25"
+                      className="w-full py-3 sm:py-4 bg-gradient-to-r from-blue-500 to-cyan-500 hover:from-blue-600 hover:to-cyan-600 text-white font-semibold text-sm sm:text-base rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-blue-500/25"
                     >
                       Start Investing
                       <ArrowRightIcon className="h-4 w-4" />
@@ -263,7 +263,7 @@ export default function HomePage() {
                   style={{ background: 'linear-gradient(to right, rgba(16,185,129,0.3), rgba(20,184,166,0.3))' }}
                 />
                 <div 
-                  className="relative rounded-3xl p-8 lg:p-10 transition-all duration-300 h-full"
+                  className="relative rounded-3xl p-6 sm:p-8 lg:p-10 transition-all duration-300 h-full"
                   style={{
                     background: isDark 
                       ? 'linear-gradient(to bottom right, #0a0f14, #070a0d)' 
@@ -274,55 +274,55 @@ export default function HomePage() {
                 >
                   
                   {/* Header */}
-                  <div className="flex items-start justify-between mb-8">
-                    <div className="flex items-center gap-4">
+                  <div className="flex items-start justify-between mb-6 sm:mb-8">
+                    <div className="flex items-center gap-3 sm:gap-4">
                       <div 
-                        className="w-14 h-14 rounded-2xl flex items-center justify-center"
+                        className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{
                           background: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)',
                           border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.2)'}`,
                         }}
                       >
-                        <CogIcon className="h-7 w-7 text-emerald-500" />
+                        <CogIcon className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-500" />
                       </div>
                       <div>
                         <h2 
-                          className="text-2xl font-bold"
+                          className="text-xl sm:text-2xl font-bold"
                           style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                         >
                           Curator
                         </h2>
-                        <p style={{ color: isDark ? '#6b7280' : '#64748b' }}>Manage & Earn Fees</p>
+                        <p className="text-sm sm:text-base" style={{ color: isDark ? '#6b7280' : '#64748b' }}>Manage & Earn Fees</p>
                       </div>
                     </div>
                     <div 
-                      className="px-3 py-1.5 rounded-full"
+                      className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex-shrink-0"
                       style={{
                         background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.1)',
                         border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.2)'}`,
                       }}
                     >
-                      <span className="text-xs font-medium text-emerald-500">Active Income</span>
+                      <span className="text-xs font-medium text-emerald-500 whitespace-nowrap">Active Income</span>
                     </div>
                   </div>
                   
                   {/* Description */}
                   <p 
-                    className="text-lg mb-8 leading-relaxed"
+                    className="text-base sm:text-lg mb-6 sm:mb-8 leading-relaxed"
                     style={{ color: isDark ? '#9ca3af' : '#64748b' }}
                   >
                     Create vaults, deploy strategies across DeFi protocols, and earn management fees. Build your reputation as a fund manager.
                   </p>
                   
                   {/* Features Grid */}
-                  <div className="grid grid-cols-2 gap-4 mb-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-6 sm:mb-8">
                     {[
                       "Create investment vaults",
                       "Multi-protocol strategies",
                       "Earn management fees",
                       "On-chain reputation"
                     ].map((feature) => (
-                      <div key={feature} className="flex items-center gap-3">
+                      <div key={feature} className="flex items-center gap-2 sm:gap-3">
                         <div 
                           className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                           style={{ background: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)' }}
@@ -330,7 +330,7 @@ export default function HomePage() {
                           <CheckIcon className="h-3 w-3 text-emerald-500" />
                         </div>
                         <span 
-                          className="text-sm"
+                          className="text-xs sm:text-sm"
                           style={{ color: isDark ? '#9ca3af' : '#64748b' }}
                         >
                           {feature}
@@ -344,7 +344,7 @@ export default function HomePage() {
                     <motion.button
                       whileHover={{ scale: 1.01 }}
                       whileTap={{ scale: 0.99 }}
-                      className="w-full py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/25"
+                      className="w-full py-3 sm:py-4 bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white font-semibold text-sm sm:text-base rounded-xl flex items-center justify-center gap-2 transition-all shadow-lg shadow-emerald-500/25"
                     >
                       Create a Vault
                       <ArrowRightIcon className="h-4 w-4" />
@@ -357,13 +357,13 @@ export default function HomePage() {
         </section>
 
         {/* Why NestFi - Simple & Clean */}
-        <section className="px-6 lg:px-12 xl:px-20 py-20">
+        <section className="px-4 sm:px-6 lg:px-12 xl:px-20 py-12 sm:py-16 md:py-20">
           <div className="max-w-5xl mx-auto">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              className="grid md:grid-cols-3 gap-8 text-center"
+              className="grid sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8 text-center"
             >
               {[
                 { 
@@ -388,16 +388,16 @@ export default function HomePage() {
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true }}
                   transition={{ delay: i * 0.1 }}
-                  className="p-6"
+                  className="p-4 sm:p-6"
                 >
-                  <div className="text-4xl mb-4">{item.emoji}</div>
+                  <div className="text-3xl sm:text-4xl mb-3 sm:mb-4">{item.emoji}</div>
                   <h3 
-                    className="text-xl font-bold mb-2"
+                    className="text-lg sm:text-xl font-bold mb-2"
                     style={{ color: isDark ? '#ffffff' : '#0f172a' }}
                   >
                     {item.title}
                   </h3>
-                  <p style={{ color: isDark ? '#6b7280' : '#64748b' }}>{item.desc}</p>
+                  <p className="text-sm sm:text-base" style={{ color: isDark ? '#6b7280' : '#64748b' }}>{item.desc}</p>
                 </motion.div>
               ))}
             </motion.div>
@@ -406,11 +406,11 @@ export default function HomePage() {
 
         {/* Trust Indicators */}
         <section 
-          className="px-6 lg:px-12 xl:px-20 py-16"
+          className="px-4 sm:px-6 lg:px-12 xl:px-20 py-12 sm:py-16"
           style={{ borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.06)'}` }}
         >
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-wrap items-center justify-center gap-x-12 gap-y-6">
+            <div className="flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-12 gap-y-4 sm:gap-y-6">
               {[
                 { icon: ShieldCheckIcon, label: "ERC-4626 Standard" },
                 { icon: ChartBarIcon, label: "Multi-Strategy Support" },
@@ -419,11 +419,11 @@ export default function HomePage() {
               ].map((item) => (
                 <div 
                   key={item.label} 
-                  className="flex items-center gap-3"
+                  className="flex items-center gap-2 sm:gap-3"
                   style={{ color: isDark ? '#6b7280' : '#64748b' }}
                 >
-                  <item.icon className="h-5 w-5" style={{ color: isDark ? 'rgba(20,184,166,0.7)' : '#10b981' }} />
-                  <span className="text-sm font-medium">{item.label}</span>
+                  <item.icon className="h-4 w-4 sm:h-5 sm:w-5" style={{ color: isDark ? 'rgba(20,184,166,0.7)' : '#10b981' }} />
+                  <span className="text-xs sm:text-sm font-medium">{item.label}</span>
                 </div>
               ))}
             </div>

@@ -28,8 +28,8 @@ export const Header = () => {
         borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
       }}
     >
-      <div className="w-full px-6">
-        <div className="flex items-center h-16">
+      <div className="w-full px-4 sm:px-6">
+        <div className="flex items-center h-14 sm:h-16">
           {/* Logo - Fixed left */}
           <div className="flex-shrink-0">
             <Link href="/">
@@ -67,7 +67,7 @@ export const Header = () => {
           )}
 
           {/* Right side - Fixed right */}
-          <div className="flex items-center gap-3 flex-shrink-0">
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <RainbowKitCustomConnectButton />
           </div>
         </div>

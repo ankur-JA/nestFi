@@ -182,21 +182,21 @@ export const Footer = () => {
       
       <div className="relative">
         {/* Main Footer Content */}
-        <div className="px-8 lg:px-16 xl:px-24 py-16">
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-8 lg:gap-12">
+        <div className="px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 py-12 sm:py-16">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6 sm:gap-8 lg:gap-12">
             
             {/* Brand Section */}
-            <div className="col-span-2">
+            <div className="col-span-2 sm:col-span-3 md:col-span-2">
               <NestFiLogo size="md" animated={false} />
               <p 
-                className="mt-4 text-sm max-w-xs leading-relaxed"
+                className="mt-4 text-xs sm:text-sm max-w-xs leading-relaxed"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
                 The decentralized asset management protocol. Pool funds, deploy strategies, and grow together.
               </p>
               
               {/* Social Links */}
-              <div className="flex items-center gap-3 mt-6">
+              <div className="flex items-center gap-2 sm:gap-3 mt-4 sm:mt-6">
                 {[
                   { href: "https://x.com/nestfi_defi", icon: (
                     <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -337,44 +337,44 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div 
-          className="px-8 lg:px-16 xl:px-24 py-6"
+          className="px-4 sm:px-6 md:px-8 lg:px-16 xl:px-24 py-4 sm:py-6"
           style={{
             borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}`,
             background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
           }}
         >
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <div className="flex items-center gap-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-3 sm:gap-4">
+            <div className="flex items-center gap-4 sm:gap-6">
               <p 
-                className="text-sm"
+                className="text-xs sm:text-sm text-center md:text-left"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
                 © 2025 NestFi Foundation. All rights reserved.
               </p>
             </div>
 
-            <div className="flex items-center gap-6 flex-wrap">
+            <div className="flex items-center gap-3 sm:gap-4 md:gap-6 flex-wrap justify-center md:justify-end">
               <span 
-                className="flex items-center gap-2 text-sm"
+                className="flex items-center gap-2 text-xs sm:text-sm"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                All systems operational
+                <span className="whitespace-nowrap">All systems operational</span>
               </span>
-              <span style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
+              <span className="hidden sm:inline" style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
               <span 
-                className="flex items-center gap-1.5 text-sm"
+                className="flex items-center gap-1.5 text-xs sm:text-sm"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
-                <EyeIcon className="w-4 h-4" />
-                <span>
+                <EyeIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+                <span className="whitespace-nowrap">
                   <span className="font-semibold text-emerald-500">{formatCount(count)}</span>
                   {" "}views this {currentMonth}
                 </span>
               </span>
-              <span style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
+              <span className="hidden sm:inline" style={{ color: isDark ? '#374151' : '#cbd5e1' }}>|</span>
               <span 
-                className="text-sm"
+                className="text-xs sm:text-sm whitespace-nowrap"
                 style={{ color: isDark ? '#6b7280' : '#64748b' }}
               >
                 Built on <span className="text-emerald-500">Ethereum</span>
