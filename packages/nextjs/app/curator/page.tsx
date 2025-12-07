@@ -567,9 +567,24 @@ export default function CreateVaultPage() {
                         value={formData.depositCap}
                         onChange={(e) => handleInputChange("depositCap", e.target.value.replace(/[^0-9.]/g, ''))}
                         placeholder="50000"
-                        className={`w-full pl-12 pr-4 py-3 bg-[#0a0a0f] border rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
-                          validationErrors.depositCap ? "border-red-500" : "border-gray-800 focus:border-emerald-500"
+                        className={`w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/50 transition-all ${
+                          validationErrors.depositCap ? "border-red-500" : ""
                         }`}
+                        style={{
+                          background: isDark ? '#0a0a0f' : '#f8fafc',
+                          color: isDark ? '#ffffff' : '#0f172a',
+                          borderColor: validationErrors.depositCap ? '#ef4444' : (isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)'),
+                        }}
+                        onFocus={(e) => {
+                          if (!validationErrors.depositCap) {
+                            e.currentTarget.style.borderColor = '#10b981';
+                          }
+                        }}
+                        onBlur={(e) => {
+                          if (!validationErrors.depositCap) {
+                            e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)';
+                          }
+                        }}
                       />
                     </div>
                     <p className="text-gray-500 text-xs mt-1">Maximum total assets the vault can accept</p>
