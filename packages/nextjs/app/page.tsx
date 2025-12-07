@@ -182,8 +182,8 @@ export default function HomePage() {
                       <div 
                         className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{
-                          background: isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.1)',
-                          border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                          background: isDark ? 'rgba(59,130,246,0.15)' : 'rgba(59,130,246,0.08)',
+                          border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)'}`,
                         }}
                       >
                         <BanknotesIcon className="h-6 w-6 sm:h-7 sm:w-7 text-blue-500" />
@@ -201,8 +201,8 @@ export default function HomePage() {
                     <div 
                       className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex-shrink-0"
                       style={{
-                        background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.1)',
-                        border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.2)'}`,
+                        background: isDark ? 'rgba(59,130,246,0.1)' : 'rgba(59,130,246,0.08)',
+                        border: `1px solid ${isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)'}`,
                       }}
                     >
                       <span className="text-xs font-medium text-blue-500 whitespace-nowrap">Passive Income</span>
@@ -228,7 +228,7 @@ export default function HomePage() {
                       <div key={feature} className="flex items-center gap-2 sm:gap-3">
                         <div 
                           className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.15)' }}
+                          style={{ background: isDark ? 'rgba(59,130,246,0.2)' : 'rgba(59,130,246,0.08)' }}
                         >
                           <CheckIcon className="h-3 w-3 text-blue-500" />
                         </div>
@@ -267,7 +267,7 @@ export default function HomePage() {
                   style={{
                     background: isDark 
                       ? 'linear-gradient(to bottom right, #0a0f14, #070a0d)' 
-                      : 'linear-gradient(to bottom right, #ffffff, #f8fafc)',
+                      : '#ffffff',
                     border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
                     boxShadow: isDark ? 'none' : '0 4px 24px rgba(0,0,0,0.06)',
                   }}
@@ -279,8 +279,8 @@ export default function HomePage() {
                       <div 
                         className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center flex-shrink-0"
                         style={{
-                          background: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.1)',
-                          border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                          background: isDark ? 'rgba(16,185,129,0.15)' : 'rgba(16,185,129,0.08)',
+                          border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)'}`,
                         }}
                       >
                         <CogIcon className="h-6 w-6 sm:h-7 sm:w-7 text-emerald-500" />
@@ -298,8 +298,8 @@ export default function HomePage() {
                     <div 
                       className="px-2 py-1 sm:px-3 sm:py-1.5 rounded-full flex-shrink-0"
                       style={{
-                        background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.1)',
-                        border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.2)'}`,
+                        background: isDark ? 'rgba(16,185,129,0.1)' : 'rgba(16,185,129,0.08)',
+                        border: `1px solid ${isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)'}`,
                       }}
                     >
                       <span className="text-xs font-medium text-emerald-500 whitespace-nowrap">Active Income</span>
@@ -325,7 +325,7 @@ export default function HomePage() {
                       <div key={feature} className="flex items-center gap-2 sm:gap-3">
                         <div 
                           className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                          style={{ background: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.15)' }}
+                          style={{ background: isDark ? 'rgba(16,185,129,0.2)' : 'rgba(16,185,129,0.08)' }}
                         >
                           <CheckIcon className="h-3 w-3 text-emerald-500" />
                         </div>
