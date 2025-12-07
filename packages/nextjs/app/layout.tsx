@@ -1,6 +1,5 @@
 import "@rainbow-me/rainbowkit/styles.css";
 import { ScaffoldEthAppWithProviders } from "~~/components/ScaffoldEthAppWithProviders";
-import { ThemeProvider } from "~~/components/ThemeProvider";
 import "~~/styles/globals.css";
 import "./globals-init";
 import { getMetadata } from "~~/utils/scaffold-eth/getMetadata";
@@ -19,11 +18,31 @@ export const viewport: Viewport = {
 
 const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
   return (
-    <html suppressHydrationWarning className={``}>
+    <html suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const theme = localStorage.getItem('nestfi-theme') || 'dark';
+                  const html = document.documentElement;
+                  html.setAttribute('data-theme', theme);
+                  if (theme === 'light') {
+                    html.classList.remove('dark');
+                    html.classList.add('light');
+                  } else {
+                    html.classList.remove('light');
+                    html.classList.add('dark');
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body>
-        <ThemeProvider enableSystem>
-          <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
-        </ThemeProvider>
+        <ScaffoldEthAppWithProviders>{children}</ScaffoldEthAppWithProviders>
       </body>
     </html>
   );

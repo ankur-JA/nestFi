@@ -39,6 +39,10 @@ export function ThemeContextProvider({ children }: { children: ReactNode }) {
     if (!mounted) return;
     
     const root = document.documentElement;
+    const html = document.documentElement;
+    
+    // Set data-theme attribute for consistent theming
+    html.setAttribute("data-theme", theme);
     
     if (theme === "light") {
       root.classList.remove("dark");
