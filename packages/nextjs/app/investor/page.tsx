@@ -14,6 +14,7 @@ import {
   ExclamationTriangleIcon,
 } from "@heroicons/react/24/outline";
 import deployedContracts from "~~/contracts/deployedContracts";
+import { useTheme } from "~~/contexts/ThemeContext";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
@@ -28,6 +29,8 @@ interface VaultInfo {
 export default function InvestorVaultsPage() {
   const { address, isConnected } = useAccount();
   const publicClient = usePublicClient();
+  const { theme } = useTheme();
+  const isDark = theme === "dark";
   const factoryAddress = (deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address;
   const [allVaults, setAllVaults] = useState<VaultInfo[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -351,8 +354,16 @@ export default function InvestorVaultsPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-white mb-2">Discover Vaults</h1>
-          <p className="text-gray-400">
+          <h1 
+            className="text-3xl font-bold mb-2 transition-colors duration-300"
+            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+          >
+            Discover Vaults
+          </h1>
+          <p 
+            className="transition-colors duration-300"
+            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+          >
             Browse and invest in curated DeFi vaults.
           </p>
         </motion.div>
@@ -365,24 +376,54 @@ export default function InvestorVaultsPage() {
           className="mb-8"
         >
           <div className="relative max-w-md">
-            <MagnifyingGlassIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-500" />
+            <MagnifyingGlassIcon 
+              className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 transition-colors duration-300"
+              style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+            />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder="Search vault by symbol..."
-              className="w-full pl-12 pr-4 py-3 bg-[#12121a] border border-gray-800 rounded-xl text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all"
+              className="w-full pl-12 pr-4 py-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+              style={{
+                background: isDark ? '#12121a' : '#f8fafc',
+                color: isDark ? '#ffffff' : '#0f172a',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = '#3b82f6';
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)';
+              }}
             />
           </div>
         </motion.div>
 
         {/* Vaults Table */}
         {isLoading ? (
-          <div className="bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden">
+          <div 
+            className="border rounded-xl overflow-hidden transition-colors duration-300"
+            style={{
+              background: isDark ? '#12121a' : '#ffffff',
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            }}
+          >
             <div className="animate-pulse">
-              <div className="h-14 bg-gray-800/50" />
+              <div 
+                className="h-14 transition-colors duration-300"
+                style={{ background: isDark ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.05)' }}
+              />
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-20 border-t border-gray-800/50 bg-gray-800/20" />
+                <div 
+                  key={i} 
+                  className="h-20 border-t transition-colors duration-300"
+                  style={{
+                    borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                    background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.02)',
+                  }}
+                />
               ))}
             </div>
           </div>
@@ -391,10 +432,21 @@ export default function InvestorVaultsPage() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="bg-[#12121a] border border-gray-800/50 rounded-xl overflow-hidden"
+            className="border rounded-xl overflow-hidden transition-colors duration-300"
+            style={{
+              background: isDark ? '#12121a' : '#ffffff',
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            }}
           >
             {/* Table Header */}
-            <div className="grid grid-cols-12 gap-4 px-6 py-4 bg-[#0f0f15] border-b border-gray-800/50 text-sm font-medium text-gray-500">
+            <div 
+              className="grid grid-cols-12 gap-4 px-6 py-4 border-b text-sm font-medium transition-colors duration-300"
+              style={{
+                background: isDark ? '#0f0f15' : '#f8fafc',
+                borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                color: isDark ? '#6b7280' : '#64748b',
+              }}
+            >
               <div className="col-span-4">Vault Name</div>
               <div className="col-span-2 text-center">Symbol</div>
               <div className="col-span-2 text-center">TVL</div>
@@ -409,32 +461,61 @@ export default function InvestorVaultsPage() {
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.03 }}
-                className="grid grid-cols-12 gap-4 px-6 py-5 border-b border-gray-800/30 last:border-b-0 hover:bg-white/[0.02] transition-colors items-center"
+                className="grid grid-cols-12 gap-4 px-6 py-5 border-b last:border-b-0 transition-colors items-center"
+                style={{
+                  borderColor: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.06)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = isDark ? 'rgba(255,255,255,0.02)' : 'rgba(0,0,0,0.02)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                }}
               >
                 <div className="col-span-4">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-purple-500/20 border border-blue-500/20 flex items-center justify-center">
-                      <span className="text-sm font-bold text-blue-400">
+                      <span className="text-sm font-bold text-blue-500">
                         {vault.symbol?.slice(0, 2) || "V"}
                       </span>
                     </div>
                     <div>
-                      <div className="font-medium text-white">{vault.name || "Unnamed Vault"}</div>
-                      <div className="text-xs text-gray-500 truncate max-w-[200px]">
+                      <div 
+                        className="font-medium transition-colors duration-300"
+                        style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                      >
+                        {vault.name || "Unnamed Vault"}
+                      </div>
+                      <div 
+                        className="text-xs truncate max-w-[200px] transition-colors duration-300"
+                        style={{ color: isDark ? '#6b7280' : '#94a3b8' }}
+                      >
                         {vault.address?.slice(0, 10)}...{vault.address?.slice(-8)}
                       </div>
                     </div>
                   </div>
                 </div>
                 <div className="col-span-2 text-center">
-                  <span className="px-3 py-1 bg-gray-800/50 rounded-full text-sm font-medium text-gray-300">
+                  <span 
+                    className="px-3 py-1 rounded-full text-sm font-medium transition-colors duration-300"
+                    style={{
+                      background: isDark ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.05)',
+                      color: isDark ? '#d1d5db' : '#374151',
+                    }}
+                  >
                     {vault.symbol || "—"}
                   </span>
                 </div>
                 <div className="col-span-2 text-center">
                   <div className="flex items-center justify-center gap-1">
-                    <CurrencyDollarIcon className="h-4 w-4 text-gray-500" />
-                    <span className="text-white font-medium">
+                    <CurrencyDollarIcon 
+                      className="h-4 w-4 transition-colors duration-300"
+                      style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+                    />
+                    <span 
+                      className="font-medium transition-colors duration-300"
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                    >
                       {parseFloat(vault.totalAssets || "0").toLocaleString()}
                     </span>
                   </div>
@@ -465,15 +546,33 @@ export default function InvestorVaultsPage() {
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-[#12121a] border border-gray-800/50 rounded-xl p-12 text-center"
+            className="border rounded-xl p-12 text-center transition-colors duration-300"
+            style={{
+              background: isDark ? '#12121a' : '#ffffff',
+              borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            }}
           >
-            <div className="w-16 h-16 rounded-2xl bg-gray-800/50 flex items-center justify-center mx-auto mb-6">
-              <MagnifyingGlassIcon className="h-8 w-8 text-gray-500" />
+            <div 
+              className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-colors duration-300"
+              style={{
+                background: isDark ? 'rgba(31,41,55,0.5)' : 'rgba(0,0,0,0.05)',
+              }}
+            >
+              <MagnifyingGlassIcon 
+                className="h-8 w-8 transition-colors duration-300"
+                style={{ color: isDark ? '#6b7280' : '#9ca3af' }}
+              />
             </div>
-            <h3 className="text-xl font-semibold text-white mb-2">
+            <h3 
+              className="text-xl font-semibold mb-2 transition-colors duration-300"
+              style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+            >
               {searchTerm ? "No vaults found" : "No vaults available"}
             </h3>
-            <p className="text-gray-400">
+            <p 
+              className="transition-colors duration-300"
+              style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+            >
               {searchTerm 
                 ? "Try a different search term." 
                 : "Check back later for new investment opportunities."}
@@ -496,16 +595,37 @@ export default function InvestorVaultsPage() {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.95, opacity: 0 }}
                 onClick={(e) => e.stopPropagation()}
-                className="bg-[#12121a] border border-gray-800/50 rounded-2xl p-6 max-w-md w-full"
+                className="border rounded-2xl p-6 max-w-md w-full transition-colors duration-300"
+                style={{
+                  background: isDark ? '#12121a' : '#ffffff',
+                  borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+                }}
               >
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h2 className="text-xl font-bold text-white">Deposit to Vault</h2>
-                    <p className="text-sm text-gray-400 mt-1">{selectedVault.name}</p>
+                    <h2 
+                      className="text-xl font-bold transition-colors duration-300"
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                    >
+                      Deposit to Vault
+                    </h2>
+                    <p 
+                      className="text-sm mt-1 transition-colors duration-300"
+                      style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                    >
+                      {selectedVault.name}
+                    </p>
                   </div>
                   <button
                     onClick={() => setShowDepositModal(false)}
-                    className="text-gray-400 hover:text-white transition-colors"
+                    className="transition-colors duration-300"
+                    style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = isDark ? '#ffffff' : '#0f172a';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = isDark ? '#9ca3af' : '#64748b';
+                    }}
                   >
                     <XMarkIcon className="h-6 w-6" />
                   </button>
@@ -524,16 +644,37 @@ export default function InvestorVaultsPage() {
                 )}
 
                 {/* Vault Info */}
-                <div className="mb-6 p-4 bg-black/20 rounded-xl">
+                <div 
+                  className="mb-6 p-4 rounded-xl transition-colors duration-300"
+                  style={{
+                    background: isDark ? 'rgba(0,0,0,0.2)' : 'rgba(0,0,0,0.03)',
+                  }}
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <span className="text-gray-400 text-sm">Total Value Locked</span>
-                    <span className="text-white font-semibold">
+                    <span 
+                      className="text-sm transition-colors duration-300"
+                      style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                    >
+                      Total Value Locked
+                    </span>
+                    <span 
+                      className="font-semibold transition-colors duration-300"
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                    >
                       ${parseFloat(selectedVault.totalAssets || "0").toLocaleString()}
                     </span>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-gray-400 text-sm">Your USDC Balance</span>
-                    <span className="text-white font-semibold">
+                    <span 
+                      className="text-sm transition-colors duration-300"
+                      style={{ color: isDark ? '#9ca3af' : '#64748b' }}
+                    >
+                      Your USDC Balance
+                    </span>
+                    <span 
+                      className="font-semibold transition-colors duration-300"
+                      style={{ color: isDark ? '#ffffff' : '#0f172a' }}
+                    >
                       {userBalanceUsdc.toLocaleString(undefined, { maximumFractionDigits: 2 })} USDC
                     </span>
                   </div>
@@ -541,7 +682,10 @@ export default function InvestorVaultsPage() {
 
                 {/* Deposit Amount */}
                 <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-300 mb-2">
+                  <label 
+                    className="block text-sm font-medium mb-2 transition-colors duration-300"
+                    style={{ color: isDark ? '#d1d5db' : '#374151' }}
+                  >
                     Deposit Amount (USDC)
                   </label>
                   <div className="flex gap-2">
@@ -552,11 +696,32 @@ export default function InvestorVaultsPage() {
                       placeholder="0.00"
                       step="0.01"
                       min="0"
-                      className="flex-1 px-4 py-3 bg-black/30 border border-gray-800 rounded-xl text-white focus:outline-none focus:border-emerald-500 placeholder:text-gray-600"
+                      className="flex-1 px-4 py-3 border rounded-xl focus:outline-none focus:border-emerald-500 transition-colors duration-300"
+                      style={{
+                        background: isDark ? 'rgba(0,0,0,0.3)' : '#f8fafc',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                        borderColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)',
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderColor = '#10b981';
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.1)';
+                      }}
                     />
                     <button
                       onClick={() => setDepositAmount(userBalanceUsdc.toString())}
-                      className="px-4 py-3 bg-gray-800 hover:bg-gray-700 text-white text-sm font-medium rounded-xl transition-colors"
+                      className="px-4 py-3 text-sm font-medium rounded-xl transition-colors"
+                      style={{
+                        background: isDark ? '#1f2937' : '#e5e7eb',
+                        color: isDark ? '#ffffff' : '#0f172a',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isDark ? '#374151' : '#d1d5db';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isDark ? '#1f2937' : '#e5e7eb';
+                      }}
                     >
                       Max
                     </button>
