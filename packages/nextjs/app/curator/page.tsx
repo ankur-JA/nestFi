@@ -21,7 +21,6 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagm
 import { parseUnits } from "viem";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import deployedContracts from "~~/contracts/deployedContracts";
-import { useTheme } from "~~/contexts/ThemeContext";
 
 const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
@@ -95,8 +94,6 @@ const WITHDRAW_MODELS = [
 export default function CreateVaultPage() {
   const router = useRouter();
   const { address, isConnected } = useAccount();
-  const { theme } = useTheme();
-  const isDark = theme === "dark";
   
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -206,25 +203,13 @@ export default function CreateVaultPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-2xl p-12 text-center max-w-md transition-colors duration-300"
-          style={{
-            background: isDark ? '#12121a' : '#f8fafc',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-          }}
+          className="bg-[#12121a] border border-gray-800/50 rounded-2xl p-12 text-center max-w-md"
         >
           <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mx-auto mb-6">
             <SparklesIcon className="h-8 w-8 text-emerald-400" />
           </div>
-          <h2 
-            className="text-2xl font-bold mb-3 transition-colors duration-300"
-            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-          >
-            Connect Wallet
-          </h2>
-          <p 
-            className="mb-8 transition-colors duration-300"
-            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
-          >
+          <h2 className="text-2xl font-bold text-white mb-3">Connect Wallet</h2>
+          <p className="text-gray-400 mb-8">
             Connect your wallet to create and manage investment vaults.
           </p>
           <RainbowKitCustomConnectButton />
@@ -240,11 +225,7 @@ export default function CreateVaultPage() {
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="rounded-2xl p-12 text-center max-w-md transition-colors duration-300"
-          style={{
-            background: isDark ? '#12121a' : '#f8fafc',
-            border: `1px solid ${isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'}`,
-          }}
+          className="bg-[#12121a] border border-gray-800/50 rounded-2xl p-12 text-center max-w-md"
         >
           <motion.div
             initial={{ scale: 0 }}
@@ -254,16 +235,8 @@ export default function CreateVaultPage() {
           >
             <CheckCircleIcon className="h-10 w-10 text-emerald-400" />
           </motion.div>
-          <h2 
-            className="text-2xl font-bold mb-3 transition-colors duration-300"
-            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-          >
-            Vault Created!
-          </h2>
-          <p 
-            className="mb-4 transition-colors duration-300"
-            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
-          >
+          <h2 className="text-2xl font-bold text-white mb-3">Vault Created!</h2>
+          <p className="text-gray-400 mb-4">
             Your vault <span className="text-white font-medium">{formData.name}</span> has been successfully created.
           </p>
           <div className="bg-black/20 rounded-xl p-4 mb-6 text-left">
@@ -311,16 +284,8 @@ export default function CreateVaultPage() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 
-            className="text-3xl font-bold mb-2 transition-colors duration-300"
-            style={{ color: isDark ? '#ffffff' : '#0f172a' }}
-          >
-            Create Vault
-          </h1>
-          <p 
-            className="transition-colors duration-300"
-            style={{ color: isDark ? '#9ca3af' : '#64748b' }}
-          >
+          <h1 className="text-3xl font-bold text-white mb-2">Create Vault</h1>
+          <p className="text-gray-400">
             Set up a new investment vault for your investors.
           </p>
         </motion.div>
