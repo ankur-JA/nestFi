@@ -9,7 +9,12 @@ const Privacy: NextPage = () => {
   const isDark = theme === "dark";
 
   return (
-    <div className="flex items-center justify-center min-h-[70vh] px-4">
+    <div 
+      className="flex items-center justify-center min-h-[70vh] px-4 transition-colors duration-300"
+      style={{ 
+        background: isDark ? '#030303' : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)',
+      }}
+    >
       <div className="text-center max-w-md">
         {/* Icon */}
         <div

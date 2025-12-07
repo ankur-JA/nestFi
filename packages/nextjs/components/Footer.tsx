@@ -166,7 +166,7 @@ export const Footer = () => {
     <footer 
       className="relative transition-colors duration-300"
       style={{ 
-        background: isDark ? '#050507' : '#f8fafc',
+        background: isDark ? '#050507' : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)',
         borderTop: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.08)'}`,
       }}
     >

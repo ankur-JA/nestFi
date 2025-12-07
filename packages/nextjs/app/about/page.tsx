@@ -125,7 +125,12 @@ export default function About() {
   const isDark = theme === "dark";
 
   return (
-    <div className="relative min-h-screen">
+    <div 
+      className="relative min-h-screen transition-colors duration-300"
+      style={{ 
+        background: isDark ? '#030303' : 'linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 25%, #f0fdfa 50%, #ecfeff 75%, #f0f9ff 100%)',
+      }}
+    >
       {/* Background Effects */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div
