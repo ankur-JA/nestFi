@@ -31,11 +31,11 @@ import {ISwapRouter} from "./interfaces/uniswap/ISwapRouter.sol";
  * - VaultManager is UUPS upgradeable
  */
 contract VaultManager is 
-    Initializable, 
+    Initializable,
     OwnableUpgradeable, 
     UUPSUpgradeable,
     ReentrancyGuardUpgradeable,
-    IVaultManager 
+    IVaultManager
 {
     using SafeERC20 for IERC20;
 

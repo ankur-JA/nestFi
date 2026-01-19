@@ -6,6 +6,7 @@ import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {GroupVault} from "./GroupVault.sol";
 import {IPermit2} from "./interfaces/IPermit2.sol";
 import {IVaultManager} from "./interfaces/IVaultManager.sol";
+import {CuratorStaking} from "./CruatorStaking.sol";
 
 /**
  * @title VaultFactory
@@ -15,21 +16,19 @@ import {IVaultManager} from "./interfaces/IVaultManager.sol";
  * - Creates minimal proxy clones of GroupVault implementation
  * - Configures vault with VaultManager for strategy/withdrawal logic
  * - VaultManager can be upgraded independently
- * 
- * Withdrawal Models (configured via VaultManager):
- * 0 = INSTANT: 8-15% idle buffer for instant withdrawals
- * 1 = SCHEDULED: Queue-based, processed during rebalances
- * 2 = EPOCH: Withdraw only after epoch (7 or 30 days)
- * 3 = CURATOR_MANAGED: Manual unwind by curator
  */
 contract VaultFactory {
     GroupVault public immutable implementation;
     IPermit2 public immutable permit2;
     IVaultManager public vaultManager;
+    CuratorStaking public curatorstaking;
     
     // Track vault ownership
     mapping(address => address) public vaultOwner;
     mapping(address => address[]) public userVaults;
+
+    // Owner of this contract
+    address public owner;
     
     // Track all vaults
     address[] public allVaults;
@@ -48,19 +47,31 @@ contract VaultFactory {
         uint256 withdrawConfig
     );
     
+
     event VaultManagerSet(address indexed manager);
 
-    constructor(GroupVault _implementation, address _permit2, address _vaultManager) {
+    constructor(GroupVault _implementation, address _permit2, address _vaultManager, address _curatorStaking) {
         implementation = _implementation;
         permit2 = IPermit2(_permit2);
         vaultManager = IVaultManager(_vaultManager);
+        curatorstaking = CuratorStaking(_curatorStaking);
+        owner = msg.sender;
     }
-    
+
+
+
+    // ============ MODIFIERS ============
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Not owner");
+        _;
+    }
+
+
     /**
      * @dev Set the vault manager (for upgrades)
      */
-    function setVaultManager(address _manager) external {
-        require(msg.sender == address(this) || vaultManager == IVaultManager(address(0)), "Not authorized");
+    function setVaultManager(address _manager) external onlyOwner {
+        require(_manager != address(0), "Not authorized");
         vaultManager = IVaultManager(_manager);
         emit VaultManagerSet(_manager);
     }
@@ -74,12 +85,6 @@ contract VaultFactory {
      * @param allowlistEnabled Whether allowlist is enabled
      * @param depositCap Maximum total deposits
      * @param minDeposit Minimum deposit amount
-     * @param withdrawModel Withdrawal liquidity model (0-3)
-     * @param withdrawConfig Configuration for the withdrawal model:
-     *        - INSTANT (0): idle buffer percent (8-15)
-     *        - SCHEDULED (1): 0 (not used)
-     *        - EPOCH (2): epoch length in seconds (604800 for 7 days, 2592000 for 30 days)
-     *        - CURATOR_MANAGED (3): 0 (not used)
      */
     function createVault(
         address asset,
@@ -89,15 +94,17 @@ contract VaultFactory {
         bool allowlistEnabled,
         uint256 depositCap,
         uint256 minDeposit,
-        uint8 withdrawModel,
-        uint256 withdrawConfig
     ) external returns (address vault) {
-        require(withdrawModel <= 3, "Invalid withdraw model");
         require(address(vaultManager) != address(0), "Manager not set");
         
         // Clone the implementation
         vault = Clones.clone(address(implementation));
-        
+
+        // Stake USDC before initializing the vault
+        uint256 memory stakeAmount = depositCap * 0.02;
+        curatorstaking.stake(stakeAmount);
+
+
         // Initialize the vault with manager
         GroupVault(vault).initialize(
             IERC20(asset),
