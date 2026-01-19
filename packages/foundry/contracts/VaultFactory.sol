@@ -14,14 +14,15 @@ import {CuratorStaking} from "./CruatorStaking.sol";
  * 
  * Architecture:
  * - Creates minimal proxy clones of GroupVault implementation
- * - Configures vault with VaultManager for strategy/withdrawal logic
+ * - Configures vault with VaultManager for strategy logic
  * - VaultManager can be upgraded independently
  */
 contract VaultFactory {
     GroupVault public immutable implementation;
+    CuratorStaking public immutable curatorstaking;
     IPermit2 public immutable permit2;
     IVaultManager public vaultManager;
-    CuratorStaking public curatorstaking;
+    
     
     // Track vault ownership
     mapping(address => address) public vaultOwner;
@@ -43,8 +44,7 @@ contract VaultFactory {
         bool allowlistEnabled,
         uint256 depositCap,
         uint256 minDeposit,
-        uint8 withdrawModel,
-        uint256 withdrawConfig
+        uint256 stakeAmount
     );
     
 
@@ -96,12 +96,16 @@ contract VaultFactory {
         uint256 minDeposit,
     ) external returns (address vault) {
         require(address(vaultManager) != address(0), "Manager not set");
+        require(depositCap > 0, "Deposit cap must be greater than 0");
+        require(minDeposit > 0, "Min Deposit must be greater than 0");
+        
         
         // Clone the implementation
         vault = Clones.clone(address(implementation));
 
         // Stake USDC before initializing the vault
-        uint256 memory stakeAmount = depositCap * 0.02;
+        uint256 memory stakeAmount = (depositCap * 2) / 100;
+        if(stakeAmount > 0) {}
         curatorstaking.stake(stakeAmount);
 
 
@@ -135,8 +139,7 @@ contract VaultFactory {
             allowlistEnabled,
             depositCap,
             minDeposit,
-            withdrawModel,
-            withdrawConfig
+            stakeAmount
         );
     }
 
