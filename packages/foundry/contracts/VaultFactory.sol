@@ -88,7 +88,6 @@ contract VaultFactory {
      */
     function createVault(
         address asset,
-        address admin,
         string memory name,
         string memory symbol,
         bool allowlistEnabled,
@@ -112,7 +111,7 @@ contract VaultFactory {
         // Initialize the vault with manager
         GroupVault(vault).initialize(
             IERC20(asset),
-            admin,
+            msg.sender,
             name,
             symbol,
             allowlistEnabled,
@@ -123,8 +122,8 @@ contract VaultFactory {
         );
         
         // Configure withdrawal model in manager (pass admin as curator)
-        vaultManager.configureVault(vault, admin, withdrawModel, withdrawConfig);
-        
+        vaultManager.configureVault(vault, msg.sender, stakeAmount);
+                    
         // Track ownership
         vaultOwner[vault] = msg.sender;
         userVaults[msg.sender].push(vault);
