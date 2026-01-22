@@ -32,12 +32,32 @@ import {ISwapRouter} from "./interfaces/uniswap/ISwapRouter.sol";
  */
 contract VaultManager is 
     Initializable,
-    OwnableUpgradeable, 
+    ERC4626Upgradeable, 
+    OwnableUpgradeable,
+    PausableUpgradeable, 
+    ReentrancyGuardUpgradeable 
     UUPSUpgradeable,
-    ReentrancyGuardUpgradeable,
     IVaultManager
 {
     using SafeERC20 for IERC20;
+
+    // ============ STORAGE ============
+    
+    // External contracts
+    IPermit2 public permit2;
+    IVaultManager public vaultManager;
+    
+    // Allowlist management
+    mapping(address => bool) public allowlist;
+    bool public allowlistEnabled;
+    
+    // Deposit limits
+    uint256 public depositCap;
+    uint256 public minDeposit;
+    
+    // Track additional tokens held by vault (from swaps)
+    mapping(address => bool) public supportedTokens;
+    address[] public tokenList;
 
     // ============ STORAGE ============
     
@@ -482,47 +502,9 @@ contract VaultManager is
         }
     }
     
-    /**
-     * @dev Process all pending withdrawals (for CURATOR_MANAGED model)
-     */
-    function processAllWithdrawals(
-        address vault
-    ) external override onlyCurator(vault) vaultConfigured(vault) nonReentrant {
-        VaultConfig memory config = vaultConfigs[vault];
-        require(config.withdrawModel == WithdrawModel.CURATOR_MANAGED, "Not curator managed");
-        
-        WithdrawRequest[] storage queue = withdrawQueues[vault];
-        
-        for (uint256 i = 0; i < queue.length; i++) {
-            WithdrawRequest storage request = queue[i];
-            if (request.processed) continue;
-            
-            uint256 assets = request.shares;
-            
-            pendingWithdrawShares[vault][request.user] -= request.shares;
-            totalPendingShares[vault] -= request.shares;
-            
-            request.processed = true;
-            
-            emit WithdrawProcessed(vault, request.user, request.shares, assets);
-        }
-    }
     
-    /**
-     * @dev Advance to next epoch (for EPOCH model)
-     */
-    function advanceEpoch(
-        address vault
-    ) external override onlyCurator(vault) vaultConfigured(vault) {
-        VaultConfig storage config = vaultConfigs[vault];
-        require(config.withdrawModel == WithdrawModel.EPOCH, "Not epoch model");
-        require(block.timestamp >= config.currentEpochStart + config.epochLength, "Epoch not ended");
-        
-        config.epochNumber++;
-        config.currentEpochStart = block.timestamp;
-        
-        emit EpochAdvanced(vault, config.epochNumber, block.timestamp);
-    }
+    
+    
 
     // ============ VIEW FUNCTIONS ============
     
@@ -550,11 +532,6 @@ contract VaultManager is
         return config.idleBufferPercent;
     }
     
-    function getEpochEndTime(address vault) external view override returns (uint256) {
-        VaultConfig memory config = vaultConfigs[vault];
-        if (config.withdrawModel != WithdrawModel.EPOCH) return 0;
-        return config.currentEpochStart + config.epochLength;
-    }
     
     function canWithdrawNow(address vault) external view override returns (bool) {
         VaultConfig memory config = vaultConfigs[vault];
@@ -567,14 +544,6 @@ contract VaultManager is
         return false;
     }
     
-    function getWithdrawModelName(address vault) external view override returns (string memory) {
-        VaultConfig memory config = vaultConfigs[vault];
-        if (config.withdrawModel == WithdrawModel.INSTANT) return "Instant";
-        if (config.withdrawModel == WithdrawModel.SCHEDULED) return "Scheduled";
-        if (config.withdrawModel == WithdrawModel.EPOCH) return "Epoch";
-        if (config.withdrawModel == WithdrawModel.CURATOR_MANAGED) return "Curator Managed";
-        return "Unknown";
-    }
     
     /**
      * @dev Get vault's supported tokens

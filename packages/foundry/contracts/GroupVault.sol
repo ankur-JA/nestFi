@@ -18,6 +18,8 @@ import {IVaultManager} from "./interfaces/IVaultManager.sol";
  * Architecture:
  * - GroupVault: Handles deposits, withdrawals, share accounting (ERC4626)
  * - VaultManager: Handles strategies, swaps, withdrawal models (upgradeable)
+ * - Withdrawal model = queued, but execution is delegated
+ * 
  * 
  * This separation allows:
  * - VaultManager to be upgraded without affecting vault funds
@@ -34,8 +36,18 @@ contract GroupVault is
 {
     using SafeERC20 for IERC20;
 
-    // ============ STORAGE ============
-    
+    // ============ Protocol parameters ============
+    address public constant USDC = 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85;
+    string public constant shareTokenName = "NestFi Vault Shares";
+    string public constant ShareTokensSymbol = "aNestFi";  
+
+    // ============ STATE VARIABLES ============
+    string public name;
+    string public symbol;
+    uint256 public vaultID;
+
+
+
     // External contracts
     IPermit2 public permit2;
     IVaultManager public vaultManager;
@@ -48,9 +60,6 @@ contract GroupVault is
     uint256 public depositCap;
     uint256 public minDeposit;
     
-    // Track additional tokens held by vault (from swaps)
-    mapping(address => bool) public supportedTokens;
-    address[] public tokenList;
 
     // ============ EVENTS ============
     
@@ -102,7 +111,7 @@ contract GroupVault is
      * @param _vaultManager VaultManager contract address
      */
     function initialize(
-        IERC20 _asset,
+        uint256 _id
         address _admin,
         string memory _name,
         string memory _symbol,
@@ -112,13 +121,12 @@ contract GroupVault is
         address _permit2,
         address _vaultManager
     ) public initializer {
-        require(address(_asset) != address(0), "Invalid asset");
         require(_admin != address(0), "Invalid admin");
         require(_permit2 != address(0), "Invalid permit2");
         require(_vaultManager != address(0), "Invalid manager");
         
-        __ERC4626_init(_asset);
-        __ERC20_init(_name, _symbol);
+        __ERC4626_init(IERC20(USDC));
+        __ERC20_init(sharesTokenName, ShareTokensSymbol);
         __Ownable_init(_admin);
         __Pausable_init();
         __ReentrancyGuard_init();
@@ -128,6 +136,10 @@ contract GroupVault is
         allowlistEnabled = _allowlistEnabled;
         depositCap = _depositCap;
         minDeposit = _minDeposit;
+
+        name = _name;
+        symbol = _symbol;
+        vaultID = _id;
         
         // Add admin to allowlist if enabled
         if (_allowlistEnabled) {
@@ -151,37 +163,8 @@ contract GroupVault is
         emit VaultManagerSet(_manager);
     }
 
-    /**
-     * @dev Approve manager to spend vault tokens for swaps/investments
-     */
-    function approveManager(address token, uint256 amount) external onlyOwner {
-        IERC20(token).approve(address(vaultManager), amount);
-    }
-
-    /**
-     * @dev Approve manager to spend all vault tokens (max approval)
-     */
-    function approveManagerMax(address token) external onlyOwner {
-        IERC20(token).approve(address(vaultManager), type(uint256).max);
-    }
-
     // ============ CURATOR FUNCTIONS (delegated to manager) ============
-    
-    /**
-     * @dev Add a strategy via manager
-     */
-    function addStrategy(string memory name, address strategy) external onlyOwner {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.addStrategy(address(this), name, strategy);
-    }
-    
-    /**
-     * @dev Remove a strategy via manager
-     */
-    function removeStrategy(string memory name) external onlyOwner {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.removeStrategy(address(this), name);
-    }
+
     
     /**
      * @dev Invest vault assets into a strategy
@@ -228,21 +211,6 @@ contract GroupVault is
         vaultManager.processWithdrawQueue(address(this), maxToProcess);
     }
     
-    /**
-     * @dev Process all withdrawals (for CURATOR_MANAGED model)
-     */
-    function processAllWithdrawals() external onlyOwner whenNotPaused {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.processAllWithdrawals(address(this));
-    }
-    
-    /**
-     * @dev Advance epoch (for EPOCH model)
-     */
-    function advanceEpoch() external onlyOwner {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.advanceEpoch(address(this));
-    }
 
     // ============ ADMIN FUNCTIONS ============
     
@@ -251,19 +219,11 @@ contract GroupVault is
         emit AllowlistUpdated(user, allowed);
     }
 
-    function setDepositCap(uint256 cap) external onlyOwner {
-        depositCap = cap;
-        emit DepositCapSet(cap);
-    }
-
-    function setMinDeposit(uint256 min) external onlyOwner {
-        minDeposit = min;
-        emit MinDepositSet(min);
-    }
 
     function pause() external onlyOwner {
         _pause();
     }
+
 
     function unpause() external onlyOwner {
         _unpause();

@@ -22,11 +22,15 @@ contract VaultFactory {
     CuratorStaking public immutable curatorstaking;
     IPermit2 public immutable permit2;
     IVaultManager public vaultManager;
+
+    // state variable 
+    uint public nextVaultId;
     
     
     // Track vault ownership
     mapping(address => address) public vaultOwner;
     mapping(address => address[]) public userVaults;
+    mapping(address => uint256) public vaultById;
 
     // Owner of this contract
     address public owner;
@@ -87,9 +91,8 @@ contract VaultFactory {
      * @param minDeposit Minimum deposit amount
      */
     function createVault(
-        address asset,
-        string memory name,
-        string memory symbol,
+        string calldata name,
+        string calldata symbol,
         bool allowlistEnabled,
         uint256 depositCap,
         uint256 minDeposit,
@@ -107,10 +110,11 @@ contract VaultFactory {
         if(stakeAmount > 0) {}
         curatorstaking.stake(stakeAmount);
 
+        uint256 id = ++nextVaultId;
 
         // Initialize the vault with manager
         GroupVault(vault).initialize(
-            IERC20(asset),
+            id,
             msg.sender,
             name,
             symbol,
@@ -127,7 +131,9 @@ contract VaultFactory {
         // Track ownership
         vaultOwner[vault] = msg.sender;
         userVaults[msg.sender].push(vault);
+        vaultById[vault] = id;
         allVaults.push(vault);
+
         
         emit VaultCreated(
             vault,
