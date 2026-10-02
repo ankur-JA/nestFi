@@ -4,8 +4,7 @@ pragma solidity ^0.8.23;
 import "./DeployHelpers.s.sol";
 import {GroupVault} from "../contracts/GroupVault.sol";
 import {VaultFactory} from "../contracts/VaultFactory.sol";
-import {VaultManager} from "../contracts/VaultManager.sol";
-import {ERC1967Proxy} from "@openzeppelin/contracts/proxy/ERC1967/ERC1967Proxy.sol";
+import {CuratorStaking} from "../contracts/CuratorStaking.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {AaveV3Strategy} from "../contracts/strategies/AaveV3Strategy.sol";
 import {IPool} from "../contracts/interfaces/aave/IPool.sol";
@@ -16,87 +15,62 @@ import {IERC4626} from "@openzeppelin/contracts/interfaces/IERC4626.sol";
 import {IVelodromeGauge} from "../contracts/interfaces/velodrome/IVelodromeGauge.sol";
 
 /**
- * @notice Deploy script for NestFi contracts
- * @dev Deploys VaultManager (UUPS proxy), GroupVault implementation, and VaultFactory
+ * @notice Production/testnet deployment for NestFi.
+ * @dev Deploys CuratorStaking, GroupVault implementation, VaultFactory, and
+ *      optionally the DeFi strategy adapters when their env vars are present.
  *
  * Required env vars:
- *   USDC - USDC token address
- *   PERMIT2 - Permit2 contract address
- *   SWAP_ROUTER - Uniswap V3 SwapRouter address
+ *   USDC    - USDC token address on target chain
+ *   PERMIT2 - Permit2 contract (or address(0) to disable)
  *
- * Example: yarn deploy --file DeployNestFi.s.sol
+ * Optional strategy env vars (deployed only if set):
+ *   AAVE_V3_POOL
+ *   BEEFY_VAULT
+ *   VELODROME_LP_VAULT + VELODROME_GAUGE
  */
 contract DeployNestFi is ScaffoldETHDeploy {
-    function run() external {
-        vm.startBroadcast();
-
-        // Use real USDC & Permit2 from env
+    function run() external ScaffoldEthDeployerRunner {
         address usdc = vm.envAddress("USDC");
-        address permit2Address = vm.envAddress("PERMIT2");
-        address swapRouterAddress = vm.envOr("SWAP_ROUTER", address(0));
+        address permit2 = vm.envOr("PERMIT2", address(0));
 
-        // Deploy VaultManager with UUPS proxy
-        VaultManager managerImpl = new VaultManager();
-        console.log("VaultManager implementation deployed at:", address(managerImpl));
-        
-        bytes memory initData = abi.encodeWithSelector(
-            VaultManager.initialize.selector,
-            msg.sender // owner
-        );
-        ERC1967Proxy managerProxy = new ERC1967Proxy(
-            address(managerImpl),
-            initData
-        );
-        VaultManager vaultManager = VaultManager(address(managerProxy));
-        console.log("VaultManager proxy deployed at:", address(vaultManager));
+        // 1) CuratorStaking
+        CuratorStaking staking = new CuratorStaking(usdc);
+        console.log("CuratorStaking :", address(staking));
 
-        // Configure VaultManager
-        if (swapRouterAddress != address(0)) {
-            vaultManager.setSwapRouter(swapRouterAddress);
-            console.log("SwapRouter set to:", swapRouterAddress);
-        }
-        vaultManager.setDefaultSwapFee(3000); // 0.3%
+        // 2) GroupVault implementation
+        GroupVault impl = new GroupVault();
+        console.log("GroupVault impl:", address(impl));
 
-        // Deploy GroupVault implementation
-        GroupVault implementation = new GroupVault();
-        console.log("GroupVault implementation deployed at:", address(implementation));
+        // 3) Factory, wired to staking
+        VaultFactory factory = new VaultFactory(impl, staking, usdc, permit2);
+        console.log("VaultFactory   :", address(factory));
 
-        // Deploy VaultFactory with implementation, Permit2, and VaultManager
-        VaultFactory factory = new VaultFactory(implementation, permit2Address, address(vaultManager));
-        console.log("VaultFactory deployed at:", address(factory));
+        // One-time wire: tell staking which factory can call stakeFor
+        staking.setFactory(address(factory));
 
-        // Optionally deploy AaveV3Strategy (requires AAVE_V3_POOL env var)
-        address poolAddr = vm.envOr("AAVE_V3_POOL", address(0));
-        if (poolAddr != address(0)) {
-            AaveV3Strategy strategy = new AaveV3Strategy(IERC20(usdc), IPool(poolAddr));
-            console.log("AaveV3Strategy deployed at:", address(strategy));
-        } else {
-            console.log("Skipping AaveV3Strategy deployment (no AAVE_V3_POOL env var)");
+        // 4) Optional strategies — adapters are created but not pre-registered
+        //    (curators register them per-vault via GroupVault.addStrategy).
+        address pool = vm.envOr("AAVE_V3_POOL", address(0));
+        if (pool != address(0)) {
+            AaveV3Strategy strat = new AaveV3Strategy(IERC20(usdc), IPool(pool));
+            console.log("AaveV3Strategy :", address(strat));
         }
 
-        // Optionally deploy BeefyStrategy (requires BEEFY_VAULT env var)
-        address beefyVaultAddr = vm.envOr("BEEFY_VAULT", address(0));
-        if (beefyVaultAddr != address(0)) {
-            BeefyStrategy beefyStrategy = new BeefyStrategy(IERC20(usdc), IBeefyVault(beefyVaultAddr));
-            console.log("BeefyStrategy deployed at:", address(beefyStrategy));
-        } else {
-            console.log("Skipping BeefyStrategy deployment (no BEEFY_VAULT env var)");
+        address beefy = vm.envOr("BEEFY_VAULT", address(0));
+        if (beefy != address(0)) {
+            BeefyStrategy strat = new BeefyStrategy(IERC20(usdc), IBeefyVault(beefy));
+            console.log("BeefyStrategy  :", address(strat));
         }
 
-        // Optionally deploy VelodromeStrategy (requires VELODROME_LP_VAULT and VELODROME_GAUGE env vars)
-        address velodromeLpVaultAddr = vm.envOr("VELODROME_LP_VAULT", address(0));
-        address velodromeGaugeAddr = vm.envOr("VELODROME_GAUGE", address(0));
-        if (velodromeLpVaultAddr != address(0) && velodromeGaugeAddr != address(0)) {
-            VelodromeStrategy velodromeStrategy = new VelodromeStrategy(
+        address veloLp = vm.envOr("VELODROME_LP_VAULT", address(0));
+        address veloGauge = vm.envOr("VELODROME_GAUGE", address(0));
+        if (veloLp != address(0) && veloGauge != address(0)) {
+            VelodromeStrategy strat = new VelodromeStrategy(
                 IERC20(usdc),
-                IERC4626(velodromeLpVaultAddr),
-                IVelodromeGauge(velodromeGaugeAddr)
+                IERC4626(veloLp),
+                IVelodromeGauge(veloGauge)
             );
-            console.log("VelodromeStrategy deployed at:", address(velodromeStrategy));
-        } else {
-            console.log("Skipping VelodromeStrategy deployment (no VELODROME_LP_VAULT or VELODROME_GAUGE env var)");
+            console.log("VelodromeStrategy:", address(strat));
         }
-
-        vm.stopBroadcast();
     }
 }

@@ -1,1001 +1,263 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useAccount, useWriteContract, useReadContract, usePublicClient } from "wagmi";
-import { parseUnits, formatUnits, parseAbi } from "viem";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatUnits, parseUnits } from "viem";
+import { useAccount, usePublicClient, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
+import deployedContracts from "../contracts/deployedContracts";
 
-// GroupVault ABI - the functions we need for curator management
-const VAULT_ABI = [
-  // View functions
-  {
-    name: "totalAssets",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "uint256" }],
-  },
-  {
-    name: "asset",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "address" }],
-  },
-  {
-    name: "owner",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "address" }],
-  },
-  {
-    name: "paused",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "bool" }],
-  },
-  {
-    name: "strategy",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "address" }],
-  },
-  {
-    name: "getVaultTokenBalances",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [
-      { name: "tokens", type: "address[]" },
-      { name: "balances", type: "uint256[]" },
-    ],
-  },
-  {
-    name: "getStrategyNames",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "string[]" }],
-  },
-  {
-    name: "getStrategy",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "name", type: "string" }],
-    outputs: [{ type: "address" }],
-  },
-  {
-    name: "getStrategyAssets",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "name", type: "string" }],
-    outputs: [{ type: "uint256" }],
-  },
-  {
-    name: "getVaultState",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [
-      { name: "totalAssetsAmount", type: "uint256" },
-      { name: "assetsInVault", type: "uint256" },
-      { name: "assetsInStrategies", type: "uint256" },
-      { name: "isPaused", type: "bool" },
-      { name: "currentDepositCap", type: "uint256" },
-      { name: "currentMinDeposit", type: "uint256" },
-      { name: "isAllowlistEnabled", type: "bool" },
-      { name: "manager", type: "address" },
-    ],
-  },
-  {
-    name: "getTokenBalance",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "token", type: "address" }],
-    outputs: [{ type: "uint256" }],
-  },
-  {
-    name: "swapRouter",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "address" }],
-  },
-  // Write functions
-  {
-    name: "swapTokens",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "tokenIn", type: "address" },
-      { name: "tokenOut", type: "address" },
-      { name: "amountIn", type: "uint256" },
-      { name: "amountOutMin", type: "uint256" },
-      { name: "fee", type: "uint24" },
-    ],
-    outputs: [{ type: "uint256" }],
-  },
-  {
-    name: "setSwapRouter",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "_router", type: "address" }],
-    outputs: [],
-  },
-  {
-    name: "setDefaultSwapFee",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "_fee", type: "uint24" }],
-    outputs: [],
-  },
-  {
-    name: "addStrategy",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "name", type: "string" },
-      { name: "_strategy", type: "address" },
-    ],
-    outputs: [],
-  },
-  {
-    name: "invest",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "assets", type: "uint256" }],
-    outputs: [],
-  },
-  {
-    name: "investInStrategy",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "name", type: "string" },
-      { name: "token", type: "address" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [],
-  },
-  {
-    name: "divest",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "assets", type: "uint256" }],
-    outputs: [],
-  },
-  {
-    name: "divestFromStrategy",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [
-      { name: "name", type: "string" },
-      { name: "amount", type: "uint256" },
-    ],
-    outputs: [],
-  },
-  {
-    name: "setStrategy",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "_strategy", type: "address" }],
-    outputs: [],
-  },
-  {
-    name: "addSupportedToken",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [{ name: "_token", type: "address" }],
-    outputs: [],
-  },
-  {
-    name: "pause",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [],
-    outputs: [],
-  },
-  {
-    name: "unpause",
-    type: "function",
-    stateMutability: "nonpayable",
-    inputs: [],
-    outputs: [],
-  },
-] as const;
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
-// ERC20 ABI for token info
-const ERC20_ABI = [
-  {
-    name: "symbol",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "string" }],
-  },
-  {
-    name: "decimals",
-    type: "function",
-    stateMutability: "view",
-    inputs: [],
-    outputs: [{ type: "uint8" }],
-  },
-  {
-    name: "balanceOf",
-    type: "function",
-    stateMutability: "view",
-    inputs: [{ name: "account", type: "address" }],
-    outputs: [{ type: "uint256" }],
-  },
-] as const;
-
-export interface TokenBalance {
+export interface StrategyRow {
+  name: string;
   address: string;
-  symbol: string;
+  assets: string;
+}
+
+export interface TokenBalanceRow {
+  token: string;
+  address: string;        // alias of `token`
   balance: string;
-  balanceRaw: bigint;
-  decimals: number;
+  symbol: string;         // populated for known tokens; "" otherwise
   source?: "vault" | "strategy";
   strategyName?: string;
 }
 
-// Known base tokens that should always be shown (even with 0 balance)
-// These addresses should match the deployed token addresses
-// Note: USDC address might vary, so we'll use the vault's asset as the primary USDC
-const KNOWN_BASE_TOKENS: Record<string, { symbol: string; decimals: number }> = {
-  "0x68194a729C2450ad26072b3D33ADaCbcef39D574": { symbol: "DAI", decimals: 18 },
-};
-
-export interface StrategyInfo {
-  name: string;
-  address: string;
-  assets: string;
-  assetsRaw: bigint;
-}
-
-export interface VaultState {
+export interface VaultStateView {
   totalAssets: string;
-  assetsInVault: string;
-  assetsInStrategy: string;
-  isPaused: boolean;
-  currentStrategy: string;
+  idleAssets: string;
+  investedAssets: string;
+  assetsInVault: string;     // legacy alias for idleAssets
+  assetsInStrategy: string;  // legacy alias for investedAssets
+  requiredIdle: string;
+  idleBufferBps: number;
   depositCap: string;
   minDeposit: string;
+  isPaused: boolean;
   allowlistEnabled: boolean;
-  swapRouter: string;
+  strategyCount: number;
+  swapRouter: string;        // deprecated; always zero-address
 }
 
-export const useVaultManagement = (vaultAddress: string) => {
+/**
+ * Curator-side vault management: strategy registry + invest/divest + admin.
+ */
+export const useVaultManagement = (vaultAddress?: string) => {
   const { address: userAddress } = useAccount();
   const publicClient = usePublicClient();
+
+  const deployed = (deployedContracts as any)[CHAIN_ID] || {};
+  const vaultAbi = deployed.GroupVault?.abi ?? [];
+
+  const vault = vaultAddress as `0x${string}` | undefined;
+
+  const [isOwner, setIsOwner] = useState(false);
+  const [strategies, setStrategies] = useState<StrategyRow[]>([]);
+  const [vaultState, setVaultState] = useState<VaultStateView | null>(null);
+  const [tokenBalances, setTokenBalances] = useState<TokenBalanceRow[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isOwner, setIsOwner] = useState(false);
-  const [tokenBalances, setTokenBalances] = useState<TokenBalance[]>([]);
-  const [strategies, setStrategies] = useState<StrategyInfo[]>([]);
-  const [vaultState, setVaultState] = useState<VaultState | null>(null);
 
-  const { writeContract, isPending: isWritePending } = useWriteContract();
+  const { writeContractAsync, isPending: isWritePending } = useWriteContract();
+  const [actionHash, setActionHash] = useState<`0x${string}` | undefined>();
+  const { isSuccess } = useWaitForTransactionReceipt({ hash: actionHash, query: { enabled: !!actionHash } });
 
-  // Check if user is owner
-  const checkOwnership = useCallback(async () => {
-    if (!publicClient || !vaultAddress || !userAddress) return;
-
-    try {
-      const owner = await publicClient.readContract({
-        address: vaultAddress as `0x${string}`,
-        abi: VAULT_ABI,
-        functionName: "owner",
-      });
-      setIsOwner(owner.toLowerCase() === userAddress.toLowerCase());
-    } catch (err) {
-      console.error("Error checking ownership:", err);
-    }
-  }, [publicClient, vaultAddress, userAddress]);
-
-  // Fetch vault state
-  const fetchVaultState = useCallback(async () => {
-    if (!publicClient || !vaultAddress) return;
-
-    try {
-      // First check if contract exists and is initialized
-      const code = await publicClient.getBytecode({
-        address: vaultAddress as `0x${string}`,
-      });
-      
-      if (!code || code === "0x") {
-        console.error("Vault contract does not exist at address:", vaultAddress);
-        setVaultState({
-          totalAssets: "0",
-          assetsInVault: "0",
-          assetsInStrategy: "0",
-          isPaused: false,
-          depositCap: "0",
-          minDeposit: "0",
-          allowlistEnabled: false,
-          swapRouter: "0x0000000000000000000000000000000000000000",
-          currentStrategy: "0x0000000000000000000000000000000000000000",
-        });
-        return;
-      }
-
-      // Get vault state from GroupVault with better error handling
-      const state = await publicClient.readContract({
-        address: vaultAddress as `0x${string}`,
-        abi: VAULT_ABI,
-        functionName: "getVaultState",
-      }).catch((err) => {
-        console.error("Error calling getVaultState:", err);
-        // Return null to indicate failure
-        return null;
-      });
-
-      if (!state) {
-        // If getVaultState failed, set default state
-        setVaultState({
-          totalAssets: "0",
-          assetsInVault: "0",
-          assetsInStrategy: "0",
-          isPaused: false,
-          depositCap: "0",
-          minDeposit: "0",
-          allowlistEnabled: false,
-          swapRouter: "0x0000000000000000000000000000000000000000",
-          currentStrategy: "0x0000000000000000000000000000000000000000",
-        });
-        return;
-      }
-
-      // getVaultState returns: (totalAssetsAmount, assetsInVault, assetsInStrategies, isPaused, currentDepositCap, currentMinDeposit, isAllowlistEnabled, manager)
-      // viem returns tuples as arrays when using readContract
-      const stateArray = Array.isArray(state) ? state : [
-        (state as any).totalAssetsAmount,
-        (state as any).assetsInVault,
-        (state as any).assetsInStrategies,
-        (state as any).isPaused,
-        (state as any).currentDepositCap,
-        (state as any).currentMinDeposit,
-        (state as any).isAllowlistEnabled,
-        (state as any).manager,
-      ];
-      
-      const managerAddress = stateArray[7] as string;
-        
-        // Fetch swapRouter from VaultManager
-        let swapRouterAddr = "0x0000000000000000000000000000000000000000";
-        if (managerAddress && managerAddress !== "0x0000000000000000000000000000000000000000") {
-          try {
-            swapRouterAddr = await publicClient.readContract({
-              address: managerAddress as `0x${string}`,
-              abi: [
-                {
-                  name: "swapRouter",
-                  type: "function",
-                  stateMutability: "view",
-                  inputs: [],
-                  outputs: [{ type: "address" }],
-                },
-              ],
-              functionName: "swapRouter",
-            }) as string;
-          } catch (err) {
-            console.log("Could not fetch swapRouter from manager:", err);
-          }
-        }
-        
-        // Get first strategy if any
-        let currentStrategy = "0x0000000000000000000000000000000000000000";
-        try {
-          const strategyNames = await publicClient.readContract({
-            address: vaultAddress as `0x${string}`,
-            abi: VAULT_ABI,
-            functionName: "getStrategyNames",
-          }) as string[];
-          
-          if (strategyNames && strategyNames.length > 0) {
-            const firstStrategyAddr = await publicClient.readContract({
-              address: vaultAddress as `0x${string}`,
-              abi: VAULT_ABI,
-              functionName: "getStrategy",
-              args: [strategyNames[0]],
-            }) as string;
-            currentStrategy = firstStrategyAddr || "0x0000000000000000000000000000000000000000";
-          }
-        } catch (err) {
-          console.log("Could not fetch strategies:", err);
-        }
-        
-        setVaultState({
-          totalAssets: formatUnits(stateArray[0] as bigint, 6),
-          assetsInVault: formatUnits(stateArray[1] as bigint, 6),
-          assetsInStrategy: formatUnits(stateArray[2] as bigint, 6),
-          isPaused: Boolean(stateArray[3]),
-          currentStrategy: currentStrategy,
-          depositCap: formatUnits(stateArray[4] as bigint, 6),
-          minDeposit: formatUnits(stateArray[5] as bigint, 6),
-          allowlistEnabled: Boolean(stateArray[6]),
-          swapRouter: swapRouterAddr,
-        });
-    } catch (err) {
-      console.error("Error fetching vault state:", err);
-    }
-  }, [publicClient, vaultAddress]);
-
-  // Fetch token balances - always show all possible tokens even with zero balance
-  const fetchTokenBalances = useCallback(async () => {
-    if (!publicClient || !vaultAddress) return;
-
-    try {
-      const allTokensMap = new Map<string, {
-        address: string;
-        symbol: string;
-        balance: string;
-        balanceRaw: bigint;
-        decimals: number;
-        source: "vault" | "strategy";
-        strategyName?: string;
-      }>();
-
-      // Helper function to get or create token entry
-      const getOrCreateToken = (address: string, symbol: string, decimals: number, source: "vault" | "strategy", strategyName?: string) => {
-        const key = address.toLowerCase();
-        if (!allTokensMap.has(key)) {
-          allTokensMap.set(key, {
-            address,
-            symbol,
-            balance: "0",
-            balanceRaw: 0n,
-            decimals,
-            source,
-            strategyName,
-          });
-        }
-        return allTokensMap.get(key)!;
-      };
-
-      // Helper function to update token balance
-      const updateTokenBalance = (address: string, amount: bigint, decimals: number) => {
-        const key = address.toLowerCase();
-        const token = allTokensMap.get(key);
-        if (token) {
-          const currentBalance = parseUnits(token.balance || "0", token.decimals);
-          token.balance = formatUnits(currentBalance + amount, token.decimals);
-          token.balanceRaw = currentBalance + amount;
-        }
-      };
-
-      // 1. Get the vault's asset (primary token, usually USDC)
-      let vaultAsset: { address: string; symbol: string; decimals: number } | null = null;
-      try {
-        const assetAddr = await publicClient.readContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "asset",
-        });
-
-        const [symbol, decimals] = await Promise.all([
-          publicClient.readContract({
-            address: assetAddr as `0x${string}`,
-            abi: ERC20_ABI,
-            functionName: "symbol",
-          }).catch(() => "???"),
-          publicClient.readContract({
-            address: assetAddr as `0x${string}`,
-            abi: ERC20_ABI,
-            functionName: "decimals",
-          }).catch(() => 18),
-        ]);
-
-        vaultAsset = {
-          address: assetAddr,
-          symbol,
-          decimals,
-        };
-
-        // Add vault asset token (always show, even with 0 balance)
-        const assetBalance = await publicClient.readContract({
-          address: assetAddr as `0x${string}`,
-          abi: ERC20_ABI,
-          functionName: "balanceOf",
-          args: [vaultAddress as `0x${string}`],
-        }).catch(() => 0n);
-
-        getOrCreateToken(assetAddr, symbol, decimals, "vault");
-        if (assetBalance > 0n) {
-          updateTokenBalance(assetAddr, assetBalance, decimals);
-        }
-      } catch (err) {
-        console.log("Error fetching vault asset:", err);
-      }
-
-      // 2. Always include other known base tokens (DAI, etc.) - but skip if same as vault asset
-      for (const [address, info] of Object.entries(KNOWN_BASE_TOKENS)) {
-        // Skip if this is the same as vault asset (already added)
-        if (vaultAsset && address.toLowerCase() === vaultAsset.address.toLowerCase()) {
-          continue;
-        }
-
-        try {
-          const balance = await publicClient.readContract({
-            address: address as `0x${string}`,
-            abi: ERC20_ABI,
-            functionName: "balanceOf",
-            args: [vaultAddress as `0x${string}`],
-          }).catch(() => 0n);
-
-          getOrCreateToken(address, info.symbol, info.decimals, "vault");
-          if (balance > 0n) {
-            updateTokenBalance(address, balance, info.decimals);
-          }
-        } catch (err) {
-          // Still add token even if we can't get balance
-          getOrCreateToken(address, info.symbol, info.decimals, "vault");
-        }
-      }
-
-      // 3. Get tokens directly held by the vault (from getVaultTokenBalances)
-      const vaultResult = await publicClient.readContract({
-        address: vaultAddress as `0x${string}`,
-        abi: VAULT_ABI,
-        functionName: "getVaultTokenBalances",
-      }).catch(() => null);
-
-      if (vaultResult) {
-        const [tokens, balances] = vaultResult;
-        for (let i = 0; i < tokens.length; i++) {
-          const tokenAddr = tokens[i];
-          const tokenKey = tokenAddr.toLowerCase();
-          
-          // Skip if this token already exists in our map (from vault asset or known tokens)
-          if (allTokensMap.has(tokenKey)) {
-            // Just update the balance if needed
-            if (balances[i] > 0n) {
-              const existingToken = allTokensMap.get(tokenKey)!;
-              updateTokenBalance(tokenAddr, balances[i], existingToken.decimals);
-            }
-            continue;
-          }
-
-          // Skip if this is the same as vault asset (already added)
-          if (vaultAsset && tokenKey === vaultAsset.address.toLowerCase()) {
-            // Update balance if needed
-            if (balances[i] > 0n) {
-              updateTokenBalance(tokenAddr, balances[i], vaultAsset.decimals);
-            }
-            continue;
-          }
-
-          // Only fetch token info if it's a new token
-          try {
-            const [symbol, decimals] = await Promise.all([
-              publicClient.readContract({
-                address: tokenAddr as `0x${string}`,
-                abi: ERC20_ABI,
-                functionName: "symbol",
-              }).catch(() => "???"),
-              publicClient.readContract({
-                address: tokenAddr as `0x${string}`,
-                abi: ERC20_ABI,
-                functionName: "decimals",
-              }).catch(() => 18),
-            ]);
-
-            // Double-check: if symbol is USDC and we already have a USDC (vault asset), skip it
-            if (vaultAsset && symbol.toUpperCase() === "USDC" && vaultAsset.symbol.toUpperCase() === "USDC") {
-              // This is a duplicate USDC, skip it
-              continue;
-            }
-
-            const token = getOrCreateToken(tokenAddr, symbol, decimals, "vault");
-            if (balances[i] > 0n) {
-              updateTokenBalance(tokenAddr, balances[i], decimals);
-            }
-          } catch {
-            // Skip if we can't get token info
-          }
-        }
-      }
-
-      // 4. Get tokens from strategies (LP tokens, aTokens, etc.) - always show even with 0 balance
-      try {
-        const strategyNames = await publicClient.readContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "getStrategyNames",
-        }).catch(() => [] as string[]);
-
-        for (const strategyName of strategyNames) {
-          try {
-            const strategyAddr = await publicClient.readContract({
-              address: vaultAddress as `0x${string}`,
-              abi: VAULT_ABI,
-              functionName: "getStrategy",
-              args: [strategyName],
-            }).catch(() => "0x0000000000000000000000000000000000000000" as `0x${string}`);
-
-            if (strategyAddr && strategyAddr !== "0x0000000000000000000000000000000000000000") {
-              // Get the strategy's asset token (this could be LP token, aToken, etc.)
-              try {
-                const strategyAssetAddr = await publicClient.readContract({
-                  address: strategyAddr as `0x${string}`,
-                  abi: [
-                    {
-                      name: "asset",
-                      type: "function",
-                      stateMutability: "view",
-                      inputs: [],
-                      outputs: [{ type: "address" }],
-                    },
-                  ],
-                  functionName: "asset",
-                });
-
-                // Get strategy assets (even if 0)
-                const strategyAssets = await publicClient.readContract({
-                  address: vaultAddress as `0x${string}`,
-                  abi: VAULT_ABI,
-                  functionName: "getStrategyAssets",
-                  args: [strategyName],
-                }).catch(() => 0n);
-
-                // Get token info
-                try {
-                  const [symbol, decimals] = await Promise.all([
-                    publicClient.readContract({
-                      address: strategyAssetAddr as `0x${string}`,
-                      abi: ERC20_ABI,
-                      functionName: "symbol",
-                    }),
-                    publicClient.readContract({
-                      address: strategyAssetAddr as `0x${string}`,
-                      abi: ERC20_ABI,
-                      functionName: "decimals",
-                    }),
-                  ]);
-
-                  // Always add strategy token, even with 0 balance
-                  const token = getOrCreateToken(strategyAssetAddr, symbol, decimals, "strategy", strategyName);
-                  if (strategyAssets > 0n) {
-                    updateTokenBalance(strategyAssetAddr, strategyAssets, decimals);
-                  }
-                } catch {
-                  // If we can't get symbol/decimals, skip
-                }
-              } catch {
-                // If strategy doesn't have asset() function, skip
-              }
-            }
-          } catch (err) {
-            console.log(`Error fetching tokens from strategy ${strategyName}:`, err);
-          }
-        }
-      } catch (err) {
-        console.log("Error fetching strategy tokens:", err);
-      }
-
-      // Convert map to array and sort: vault tokens first, then strategy tokens
-      const allTokens = Array.from(allTokensMap.values()).sort((a, b) => {
-        if (a.source !== b.source) {
-          return a.source === "vault" ? -1 : 1;
-        }
-        return a.symbol.localeCompare(b.symbol);
-      });
-
-      setTokenBalances(allTokens);
-    } catch (err) {
-      console.error("Error fetching token balances:", err);
-    }
-  }, [publicClient, vaultAddress]);
-
-  // Fetch strategies
-  const fetchStrategies = useCallback(async () => {
-    if (!publicClient || !vaultAddress) return;
-
-    try {
-      const names = await publicClient.readContract({
-        address: vaultAddress as `0x${string}`,
-        abi: VAULT_ABI,
-        functionName: "getStrategyNames",
-      }).catch(() => [] as string[]);
-
-      const strategyPromises = names.map(async (name) => {
-        try {
-          const [addr, assets] = await Promise.all([
-            publicClient.readContract({
-              address: vaultAddress as `0x${string}`,
-              abi: VAULT_ABI,
-              functionName: "getStrategy",
-              args: [name],
-            }),
-            publicClient.readContract({
-              address: vaultAddress as `0x${string}`,
-              abi: VAULT_ABI,
-              functionName: "getStrategyAssets",
-              args: [name],
-            }),
-          ]);
-
-          return {
-            name,
-            address: addr,
-            assets: formatUnits(assets, 6),
-            assetsRaw: assets,
-          };
-        } catch {
-          return {
-            name,
-            address: "0x0000000000000000000000000000000000000000",
-            assets: "0",
-            assetsRaw: 0n,
-          };
-        }
-      });
-
-      const strategyInfos = await Promise.all(strategyPromises);
-      setStrategies(strategyInfos.filter((s) => s.address !== "0x0000000000000000000000000000000000000000"));
-    } catch (err) {
-      console.error("Error fetching strategies:", err);
-    }
-  }, [publicClient, vaultAddress]);
-
-  // Refresh all data
   const refreshData = useCallback(async () => {
+    if (!publicClient || !vault) return;
     setLoading(true);
+    setError(null);
     try {
-      await Promise.all([checkOwnership(), fetchVaultState(), fetchTokenBalances(), fetchStrategies()]);
+      const [owner, strategyNames, idleAssets, investedAssets, totalAssets, requiredIdle, idleBps, depositCap, minDeposit, isPaused, allowlistEnabled, assetAddr] = await Promise.all([
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "owner" } as any) as Promise<`0x${string}`>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "getStrategyNames" } as any) as Promise<string[]>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "idleAssets" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "investedAssets" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "totalAssets" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "requiredIdleBuffer" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "idleBufferBps" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "depositCap" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "minDeposit" } as any) as Promise<bigint>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "paused" } as any) as Promise<boolean>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "allowlistEnabled" } as any) as Promise<boolean>,
+        publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "asset" } as any) as Promise<`0x${string}`>,
+      ]);
+
+      setIsOwner(userAddress != null && owner.toLowerCase() === userAddress.toLowerCase());
+
+      const stratRows: StrategyRow[] = await Promise.all(
+        (strategyNames as string[]).map(async name => {
+          const [addr, assets] = await Promise.all([
+            publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "getStrategy", args: [name] } as any) as Promise<`0x${string}`>,
+            publicClient.readContract<any, any, any>({ address: vault, abi: vaultAbi, functionName: "getStrategyAssets", args: [name] } as any) as Promise<bigint>,
+          ]);
+          return { name, address: addr, assets: formatUnits(assets, 6) };
+        }),
+      );
+      setStrategies(stratRows);
+
+      setVaultState({
+        totalAssets: formatUnits(totalAssets, 6),
+        idleAssets: formatUnits(idleAssets, 6),
+        investedAssets: formatUnits(investedAssets, 6),
+        assetsInVault: formatUnits(idleAssets, 6),
+        assetsInStrategy: formatUnits(investedAssets, 6),
+        requiredIdle: formatUnits(requiredIdle, 6),
+        idleBufferBps: Number(idleBps),
+        depositCap: formatUnits(depositCap, 6),
+        minDeposit: formatUnits(minDeposit, 6),
+        isPaused,
+        allowlistEnabled,
+        strategyCount: stratRows.length,
+        swapRouter: "0x0000000000000000000000000000000000000000",
+      });
+
+      setTokenBalances([
+        {
+          token: assetAddr,
+          address: assetAddr,
+          balance: formatUnits(idleAssets, 6),
+          symbol: "USDC",
+          source: "vault",
+        },
+      ]);
+    } catch (err: any) {
+      console.error(err);
+      setError(err?.shortMessage || err?.message || "Refresh failed");
     } finally {
       setLoading(false);
     }
-  }, [checkOwnership, fetchVaultState, fetchTokenBalances, fetchStrategies]);
+  }, [publicClient, vault, vaultAbi, userAddress]);
 
-  // Initial load
   useEffect(() => {
-    if (vaultAddress && publicClient) {
-      refreshData();
-    }
-  }, [vaultAddress, publicClient, refreshData]);
+    refreshData();
+  }, [refreshData, isSuccess]);
 
-  // ============ WRITE FUNCTIONS ============
-
-  // Swap tokens
-  const swapTokens = useCallback(
-    async (tokenIn: string, tokenOut: string, amountIn: string, amountOutMin: string, fee: number = 3000) => {
-      if (!vaultAddress) return;
-      setError(null);
-
+  const run = useCallback(
+    async (fn: string, args: readonly unknown[]) => {
+      if (!vault) throw new Error("No vault");
       try {
-        // Get decimals for input token
-        const decimals = tokenBalances.find((t) => t.address.toLowerCase() === tokenIn.toLowerCase())?.decimals || 6;
-
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "swapTokens",
-          args: [
-            tokenIn as `0x${string}`,
-            tokenOut as `0x${string}`,
-            parseUnits(amountIn, decimals),
-            parseUnits(amountOutMin, decimals),
-            fee,
-          ],
-        });
-      } catch (err) {
-        console.error("Swap error:", err);
-        setError("Failed to swap tokens");
+        const h = await writeContractAsync({ address: vault, abi: vaultAbi, functionName: fn, args });
+        setActionHash(h);
+        return h;
+      } catch (err: any) {
+        setError(err?.shortMessage || err?.message || "Action failed");
+        throw err;
       }
     },
-    [vaultAddress, writeContract, tokenBalances]
+    [vault, vaultAbi, writeContractAsync],
   );
 
-  // Set swap router
-  const setSwapRouter = useCallback(
-    async (routerAddress: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "setSwapRouter",
-          args: [routerAddress as `0x${string}`],
-        });
-      } catch (err) {
-        console.error("Set router error:", err);
-        setError("Failed to set swap router");
-      }
-    },
-    [vaultAddress, writeContract]
-  );
-
-  // Set default swap fee
-  const setSwapFee = useCallback(
-    async (fee: number) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "setDefaultSwapFee",
-          args: [fee],
-        });
-      } catch (err) {
-        console.error("Set fee error:", err);
-        setError("Failed to set swap fee");
-      }
-    },
-    [vaultAddress, writeContract]
-  );
-
-  // Add strategy
   const addStrategy = useCallback(
-    async (name: string, strategyAddress: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "addStrategy",
-          args: [name, strategyAddress as `0x${string}`],
-        });
-      } catch (err) {
-        console.error("Add strategy error:", err);
-        setError("Failed to add strategy");
-      }
-    },
-    [vaultAddress, writeContract]
+    (name: string, address: `0x${string}`) => run("addStrategy", [name, address]),
+    [run],
   );
 
-  // Invest in primary strategy
+  const removeStrategy = useCallback((name: string) => run("removeStrategy", [name]), [run]);
+
   const invest = useCallback(
-    async (amount: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "invest",
-          args: [parseUnits(amount, 6)],
-        });
-      } catch (err) {
-        console.error("Invest error:", err);
-        setError("Failed to invest");
-      }
-    },
-    [vaultAddress, writeContract]
+    (name: string, humanAmount: string) => run("invest", [name, parseUnits(humanAmount, 6)]),
+    [run],
   );
 
-  // Invest in named strategy
+  // Legacy signature was (name, token, amount) — token is ignored since
+  // GroupVault only operates on its single asset (USDC).
   const investInStrategy = useCallback(
-    async (strategyName: string, token: string, amount: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        const decimals = tokenBalances.find((t) => t.address.toLowerCase() === token.toLowerCase())?.decimals || 6;
-
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "investInStrategy",
-          args: [strategyName, token as `0x${string}`, parseUnits(amount, decimals)],
-        });
-      } catch (err) {
-        console.error("Invest in strategy error:", err);
-        setError("Failed to invest in strategy");
-      }
+    (name: string, tokenOrAmount: string, maybeAmount?: string) => {
+      const amt = maybeAmount == null ? tokenOrAmount : maybeAmount;
+      return run("invest", [name, parseUnits(amt, 6)]);
     },
-    [vaultAddress, writeContract, tokenBalances]
+    [run],
   );
 
-  // Divest from primary strategy
   const divest = useCallback(
-    async (amount: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "divest",
-          args: [parseUnits(amount, 6)],
-        });
-      } catch (err) {
-        console.error("Divest error:", err);
-        setError("Failed to divest");
-      }
-    },
-    [vaultAddress, writeContract]
+    (name: string, humanAmount: string) => run("divest", [name, parseUnits(humanAmount, 6)]),
+    [run],
   );
 
-  // Divest from named strategy
   const divestFromStrategy = useCallback(
-    async (strategyName: string, amount: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "divestFromStrategy",
-          args: [strategyName, parseUnits(amount, 6)],
-        });
-      } catch (err) {
-        console.error("Divest from strategy error:", err);
-        setError("Failed to divest from strategy");
-      }
+    (name: string, tokenOrAmount: string, maybeAmount?: string) => {
+      const amt = maybeAmount == null ? tokenOrAmount : maybeAmount;
+      return run("divest", [name, parseUnits(amt, 6)]);
     },
-    [vaultAddress, writeContract]
+    [run],
   );
 
-  // Pause/unpause vault
   const togglePause = useCallback(async () => {
-    if (!vaultAddress || !vaultState) return;
-    setError(null);
+    if (!vault || !publicClient) return;
+    const paused = (await publicClient.readContract<any, any, any>({
+      address: vault,
+      abi: vaultAbi,
+      functionName: "paused",
+    } as any)) as boolean;
+    return run(paused ? "unpause" : "pause", []);
+  }, [vault, publicClient, vaultAbi, run]);
 
-    try {
-      writeContract({
-        address: vaultAddress as `0x${string}`,
-        abi: VAULT_ABI,
-        functionName: vaultState.isPaused ? "unpause" : "pause",
-      });
-    } catch (err) {
-      console.error("Toggle pause error:", err);
-      setError("Failed to toggle pause state");
-    }
-  }, [vaultAddress, writeContract, vaultState]);
-
-  // Add supported token
-  const addSupportedToken = useCallback(
-    async (tokenAddress: string) => {
-      if (!vaultAddress) return;
-      setError(null);
-
-      try {
-        writeContract({
-          address: vaultAddress as `0x${string}`,
-          abi: VAULT_ABI,
-          functionName: "addSupportedToken",
-          args: [tokenAddress as `0x${string}`],
-        });
-      } catch (err) {
-        console.error("Add token error:", err);
-        setError("Failed to add token");
-      }
-    },
-    [vaultAddress, writeContract]
+  const setIdleBufferBps = useCallback((bps: number) => run("setIdleBufferBps", [BigInt(bps)]), [run]);
+  const setDepositCap = useCallback(
+    (humanCap: string) => run("setDepositCap", [parseUnits(humanCap, 6)]),
+    [run],
+  );
+  const setMinDeposit = useCallback(
+    (humanMin: string) => run("setMinDeposit", [parseUnits(humanMin, 6)]),
+    [run],
+  );
+  const setAllowlist = useCallback(
+    (user: `0x${string}`, allowed: boolean) => run("setAllowlist", [user, allowed]),
+    [run],
   );
 
-  return {
-    // State
-    isOwner,
-    loading: loading || isWritePending,
-    error,
-    tokenBalances,
-    strategies,
-    vaultState,
-    // Actions
-    refreshData,
-    swapTokens,
-    setSwapRouter,
-    setSwapFee,
-    addStrategy,
-    invest,
-    investInStrategy,
-    divest,
-    divestFromStrategy,
-    togglePause,
-    addSupportedToken,
-  };
-};
+  // Legacy no-ops / stubs retained for compatibility with older UI.
+  // These used to call VaultManager.swapTokens etc.; in Path B the vault
+  // doesn't do swaps internally — strategies handle any conversions.
+  const swapTokens = async (..._args: unknown[]) => undefined;
+  const setSwapRouter = async (..._args: unknown[]) => undefined;
+  const setSwapFee = async (..._args: unknown[]) => undefined;
+  const addSupportedToken = async (..._args: unknown[]) => undefined;
 
+  return useMemo(
+    () => ({
+      isOwner,
+      loading: loading || isWritePending,
+      error,
+      tokenBalances,
+      strategies,
+      vaultState,
+      refreshData,
+      addStrategy,
+      removeStrategy,
+      invest,
+      investInStrategy,
+      divest,
+      divestFromStrategy,
+      togglePause,
+      setIdleBufferBps,
+      setDepositCap,
+      setMinDeposit,
+      setAllowlist,
+      swapTokens,
+      setSwapRouter,
+      setSwapFee,
+      addSupportedToken,
+    }),
+    [
+      isOwner,
+      loading,
+      isWritePending,
+      error,
+      tokenBalances,
+      strategies,
+      vaultState,
+      refreshData,
+      addStrategy,
+      removeStrategy,
+      invest,
+      investInStrategy,
+      divest,
+      divestFromStrategy,
+      togglePause,
+      setIdleBufferBps,
+      setDepositCap,
+      setMinDeposit,
+      setAllowlist,
+    ],
+  );
+};

@@ -2,12 +2,10 @@
 
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  SparklesIcon, 
-  CheckCircleIcon, 
+import {
+  SparklesIcon,
+  CheckCircleIcon,
   ExclamationTriangleIcon,
-  EyeIcon,
-  EyeSlashIcon,
   CurrencyDollarIcon,
   ChartBarIcon,
   ShieldCheckIcon
@@ -22,14 +20,12 @@ export const CreateVaultForm = () => {
     symbol: "",
     depositCap: "",
     minDeposit: "",
-    allowlistEnabled: false
+    allowlistEnabled: false,
+    idleBufferBps: 1000, // 10%
   });
 
-  const [showPassword, setShowPassword] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
-
-  const asset = process.env.NEXT_PUBLIC_USDC_ADDRESS || "";
 
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -62,24 +58,28 @@ export const CreateVaultForm = () => {
     if (!formData.minDeposit || parseFloat(formData.minDeposit) <= 0) {
       errors.minDeposit = "Minimum deposit must be greater than 0";
     }
-    
+
+    if (formData.idleBufferBps < 800 || formData.idleBufferBps > 1500) {
+      errors.idleBufferBps = "Idle buffer must be between 8% and 15%";
+    }
+
     setValidationErrors(errors);
     return Object.keys(errors).length === 0;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) return;
-    
+
     try {
-      createVault({
-        asset,
+      await createVault({
         name: formData.name,
         symbol: formData.symbol,
         allowlistEnabled: formData.allowlistEnabled,
         depositCap: formData.depositCap,
         minDeposit: formData.minDeposit,
+        idleBufferBps: formData.idleBufferBps,
       });
     } catch (err) {
       console.error("Error creating vault:", err);
@@ -409,6 +409,38 @@ export const CreateVaultForm = () => {
                   </motion.div>
                 </div>
 
+                {/* Idle Buffer */}
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.6, delay: 0.3 }}
+                >
+                  <label className="block text-lg font-semibold text-white mb-3">
+                    Idle Buffer: {(formData.idleBufferBps / 100).toFixed(1)}%
+                  </label>
+                  <p className="text-sm text-gray-400 mb-3">
+                    Fraction of total assets kept liquid in the vault so investors can withdraw instantly (8-15%).
+                  </p>
+                  <input
+                    type="range"
+                    min={800}
+                    max={1500}
+                    step={50}
+                    value={formData.idleBufferBps}
+                    onChange={(e) =>
+                      setFormData((p) => ({ ...p, idleBufferBps: Number(e.target.value) }))
+                    }
+                    className="w-full accent-red-500"
+                  />
+                  <div className="flex justify-between text-xs text-gray-500 mt-1">
+                    <span>8%</span>
+                    <span>15%</span>
+                  </div>
+                  {validationErrors.idleBufferBps && (
+                    <p className="text-red-400 text-sm mt-2">{validationErrors.idleBufferBps}</p>
+                  )}
+                </motion.div>
+
                 <div className="flex justify-between">
                   <button
                     type="button"
@@ -479,6 +511,21 @@ export const CreateVaultForm = () => {
                         <div className="flex justify-between items-center">
                           <span className="text-gray-400">Min Deposit:</span>
                           <span className="text-white font-medium">{formData.minDeposit} USDC</span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Idle Buffer:</span>
+                          <span className="text-white font-medium">
+                            {(formData.idleBufferBps / 100).toFixed(1)}%
+                          </span>
+                        </div>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-400">Curator Stake (2%):</span>
+                          <span className="text-white font-medium">
+                            {formData.depositCap
+                              ? (parseFloat(formData.depositCap) * 0.02).toFixed(2)
+                              : "0.00"}{" "}
+                            USDC
+                          </span>
                         </div>
                       </div>
                     </div>

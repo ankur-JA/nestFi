@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { useAccount } from "wagmi";
-import { graphqlClient } from "../lib/graphql";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatUnits } from "viem";
+import { useAccount, usePublicClient } from "wagmi";
+import deployedContracts from "../contracts/deployedContracts";
+
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
 export interface VaultInfo {
   address: string;
@@ -22,171 +25,120 @@ export interface VaultInfo {
   isMember: boolean;
 }
 
+/**
+ * On-chain replacement for the (now removed) subgraph-backed hook.
+ * Walks VaultFactory.getAllVaults() and returns everything the dashboards need.
+ */
 export const useVaultFactoryGraph = () => {
   const { address: userAddress } = useAccount();
+  const publicClient = usePublicClient();
   const [userVaults, setUserVaults] = useState<VaultInfo[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Fetch all user vaults (admin + member)
+  const deployed = (deployedContracts as any)[CHAIN_ID] || {};
+  const factoryAddress = deployed.VaultFactory?.address as `0x${string}` | undefined;
+  const factoryAbi = deployed.VaultFactory?.abi ?? [];
+  const vaultAbi = deployed.GroupVault?.abi ?? [];
+
   const fetchUserVaults = useCallback(async () => {
-    if (!userAddress) {
+    if (!publicClient || !factoryAddress) {
       setUserVaults([]);
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
-      // Fetch vaults where user is admin (owner)
-      const adminVaults = await graphqlClient.getUserVaults(userAddress);
-      
-      // Fetch vaults where user is a member (has shares or is on allowlist)
-      const memberVaults = await graphqlClient.getUserMemberships(userAddress);
-      const allowlistVaults = await graphqlClient.getUserAllowlistMemberships(userAddress);
+      const vaults = (await publicClient.readContract<any, any, any>({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "getAllVaults",
+      } as any)) as `0x${string}`[];
 
-      // Combine all vaults
-      const allVaults: VaultInfo[] = [];
+      const results = await Promise.all(
+        vaults.map(async (v): Promise<VaultInfo | null> => {
+          try {
+            const [owner, asset, name, symbol, allowlistEnabled, depositCap, minDeposit, totalAssets, totalSupply, isPaused] = await Promise.all([
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "owner" } as any) as Promise<`0x${string}`>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "asset" } as any) as Promise<`0x${string}`>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "name" } as any) as Promise<string>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "symbol" } as any) as Promise<string>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "allowlistEnabled" } as any) as Promise<boolean>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "depositCap" } as any) as Promise<bigint>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "minDeposit" } as any) as Promise<bigint>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "totalAssets" } as any) as Promise<bigint>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "totalSupply" } as any) as Promise<bigint>,
+              publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "paused" } as any) as Promise<boolean>,
+            ]);
 
-      // Add admin vaults
-      adminVaults.forEach((vault: any) => {
-        allVaults.push({
-          address: vault.address,
-          owner: vault.owner,
-          asset: vault.asset,
-          name: vault.name || "Investment Vault",
-          symbol: vault.symbol || "INV",
-          allowlistEnabled: vault.allowlistEnabled,
-          depositCap: vault.depositCap,
-          minDeposit: vault.minDeposit,
-          totalAssets: vault.totalAssets,
-          totalSupply: vault.totalSupply,
-          userBalance: "0", // Admin doesn't need balance for admin vaults
-          userShares: "0",
-          isPaused: vault.isPaused,
-          isAdmin: true,
-          isMember: true, // Admin is always a member
-        });
-      });
+            let userShares = 0n;
+            let userBalance = 0n;
+            if (userAddress) {
+              userShares = (await publicClient.readContract<any, any, any>({
+                address: v,
+                abi: vaultAbi,
+                functionName: "balanceOf",
+                args: [userAddress],
+              } as any)) as bigint;
+              if (userShares > 0n) {
+                userBalance = (await publicClient.readContract<any, any, any>({
+                  address: v,
+                  abi: vaultAbi,
+                  functionName: "convertToAssets",
+                  args: [userShares],
+                } as any)) as bigint;
+              }
+            }
 
-      // Add member vaults (with shares)
-      memberVaults.forEach((membership: any) => {
-        const vault = membership.vault;
-        allVaults.push({
-          address: vault.address,
-          owner: vault.owner,
-          asset: vault.asset,
-          name: vault.name || "Investment Vault",
-          symbol: vault.symbol || "INV",
-          allowlistEnabled: vault.allowlistEnabled,
-          depositCap: vault.depositCap,
-          minDeposit: vault.minDeposit,
-          totalAssets: vault.totalAssets,
-          totalSupply: vault.totalSupply,
-          userBalance: membership.balance,
-          userShares: membership.shares,
-          isPaused: vault.isPaused,
-          isAdmin: vault.owner.toLowerCase() === userAddress.toLowerCase(),
-          isMember: true,
-        });
-      });
+            const isAdmin = userAddress != null && owner.toLowerCase() === userAddress.toLowerCase();
+            const isMember = isAdmin || userShares > 0n;
 
-      // Add allowlist-only vaults (no shares yet)
-      allowlistVaults.forEach((membership: any) => {
-        const vault = membership.vault;
-        
-        // Check if this vault is already in the list (avoid duplicates)
-        const exists = allVaults.some(v => v.address.toLowerCase() === vault.address.toLowerCase());
-        if (!exists && membership.isAllowed) {
-          allVaults.push({
-            address: vault.address,
-            owner: vault.owner,
-            asset: vault.asset,
-            name: vault.name || "Investment Vault",
-            symbol: vault.symbol || "INV",
-            allowlistEnabled: vault.allowlistEnabled,
-            depositCap: vault.depositCap,
-            minDeposit: vault.minDeposit,
-            totalAssets: vault.totalAssets,
-            totalSupply: vault.totalSupply,
-            userBalance: "0",
-            userShares: "0",
-            isPaused: vault.isPaused,
-            isAdmin: vault.owner.toLowerCase() === userAddress.toLowerCase(),
-            isMember: membership.isAllowed,
-          });
-        }
-      });
-
-      // Remove duplicates based on vault address
-      const uniqueVaults = allVaults.filter((vault, index, self) => 
-        index === self.findIndex(v => v.address.toLowerCase() === vault.address.toLowerCase())
+            return {
+              address: v,
+              owner,
+              asset,
+              name,
+              symbol,
+              allowlistEnabled,
+              depositCap: formatUnits(depositCap, 6),
+              minDeposit: formatUnits(minDeposit, 6),
+              totalAssets: formatUnits(totalAssets, 6),
+              totalSupply: totalSupply.toString(),
+              userBalance: formatUnits(userBalance, 6),
+              userShares: userShares.toString(),
+              isPaused,
+              isAdmin,
+              isMember,
+            };
+          } catch {
+            return null;
+          }
+        }),
       );
 
-      setUserVaults(uniqueVaults);
+      setUserVaults(results.filter((v): v is VaultInfo => v !== null));
     } catch (err: any) {
-      console.error("Error fetching user vaults:", err);
-      setError(err.message || "Failed to fetch vaults");
+      console.error(err);
+      setError(err?.message || "Failed to load vaults");
+      setUserVaults([]);
     } finally {
       setLoading(false);
     }
-  }, [userAddress]);
+  }, [publicClient, factoryAddress, factoryAbi, vaultAbi, userAddress]);
 
-  // Fetch vault details for a specific vault
-  const fetchVaultDetails = useCallback(async (vaultAddress: string): Promise<VaultInfo | null> => {
-    if (!userAddress) return null;
-
-    try {
-      const vault = await graphqlClient.getVaultDetails(vaultAddress);
-      if (!vault) return null;
-
-      // Get user membership
-      const membership = await graphqlClient.getUserVaultMembership(vaultAddress, userAddress);
-
-      return {
-        address: vault.address,
-        owner: vault.owner,
-        asset: vault.asset,
-        name: vault.name || "Investment Vault",
-        symbol: vault.symbol || "INV",
-        allowlistEnabled: vault.allowlistEnabled,
-        depositCap: vault.depositCap,
-        minDeposit: vault.minDeposit,
-        totalAssets: vault.totalAssets,
-        totalSupply: vault.totalSupply,
-        userBalance: membership?.balance || "0",
-        userShares: membership?.shares || "0",
-        isPaused: vault.isPaused,
-        isAdmin: vault.owner.toLowerCase() === userAddress.toLowerCase(),
-        isMember: membership?.isAllowed || false,
-      };
-    } catch (err: any) {
-      console.error("Error fetching vault details:", err);
-      return null;
-    }
-  }, [userAddress]);
-
-  // Refresh vaults
-  const refetchVaults = useCallback(() => {
+  useEffect(() => {
     fetchUserVaults();
+    const t = setInterval(fetchUserVaults, 15_000);
+    return () => clearInterval(t);
   }, [fetchUserVaults]);
 
-  // Load vaults when user connects
-  useEffect(() => {
-    if (userAddress) {
-      fetchUserVaults();
-    } else {
-      setUserVaults([]);
-      setLoading(false);
-    }
-  }, [userAddress, fetchUserVaults]);
-
-  return {
-    userVaults,
-    loading,
-    error,
-    refetchVaults,
-    fetchVaultDetails,
-  };
+  return useMemo(
+    () => ({
+      userVaults,
+      loading,
+      error,
+      refetch: fetchUserVaults,
+    }),
+    [userVaults, loading, error, fetchUserVaults],
+  );
 };

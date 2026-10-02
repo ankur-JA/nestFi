@@ -2,246 +2,247 @@
 pragma solidity ^0.8.23;
 
 import {ERC4626Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/extensions/ERC4626Upgradeable.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import {ERC20Upgradeable} from "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import {IERC20, IERC20Metadata} from "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {Initializable} from "@openzeppelin/contracts-upgradeable/proxy/utils/Initializable.sol";
 import {OwnableUpgradeable} from "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import {PausableUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/PausableUpgradeable.sol";
 import {ReentrancyGuardUpgradeable} from "@openzeppelin/contracts-upgradeable/utils/ReentrancyGuardUpgradeable.sol";
 import {IPermit2} from "./interfaces/IPermit2.sol";
-import {IVaultManager} from "./interfaces/IVaultManager.sol";
+import {IStrategy} from "./interfaces/IStrategy.sol";
 
 /**
  * @title GroupVault
- * @dev Minimal ERC-4626 vault that delegates strategy and withdrawal logic to VaultManager
- * 
- * Architecture:
- * - GroupVault: Handles deposits, withdrawals, share accounting (ERC4626)
- * - VaultManager: Handles strategies, swaps, withdrawal models (upgradeable)
- * - Withdrawal model = queued, but execution is delegated
- * 
- * 
- * This separation allows:
- * - VaultManager to be upgraded without affecting vault funds
- * - New strategies to be added via manager upgrades
- * - Withdrawal model improvements over time
- * - Shared manager across multiple vaults
+ * @dev ERC-4626 vault that invests directly in DeFi strategies.
+ *
+ *      Design (post-manager refactor):
+ *      - This contract holds the underlying asset and shares accounting.
+ *      - The curator (owner) registers strategies and invests/divests directly.
+ *      - An idle buffer (bps of totalAssets) must be preserved as liquid balance
+ *        so investors can withdraw without a divest step.
+ *      - If a withdrawal exceeds idle balance, it reverts; the curator must
+ *        divest first (keeps strategy slippage/MEV out of the user path).
  */
-contract GroupVault is 
+contract GroupVault is
     Initializable,
-    ERC4626Upgradeable, 
+    ERC4626Upgradeable,
     OwnableUpgradeable,
-    PausableUpgradeable, 
-    ReentrancyGuardUpgradeable 
+    PausableUpgradeable,
+    ReentrancyGuardUpgradeable
 {
     using SafeERC20 for IERC20;
 
-    // ============ Protocol parameters ============
-    address public constant USDC = 0x0b2C639c533813f4Aa9D7837CAf62653d097Ff85;
-    string public constant shareTokenName = "NestFi Vault Shares";
-    string public constant ShareTokensSymbol = "aNestFi";  
+    // ============ Constants ============
+    uint256 public constant BPS_DENOMINATOR = 10_000;
+    uint256 public constant MIN_IDLE_BPS = 800;   // 8%
+    uint256 public constant MAX_IDLE_BPS = 1_500; // 15%
 
-    // ============ STATE VARIABLES ============
-    string public name;
-    string public symbol;
+    // ============ Storage ============
     uint256 public vaultID;
 
-
-
-    // External contracts
     IPermit2 public permit2;
-    IVaultManager public vaultManager;
-    
-    // Allowlist management
+
+    // Allowlist
     mapping(address => bool) public allowlist;
     bool public allowlistEnabled;
-    
-    // Deposit limits
+
+    // Limits
     uint256 public depositCap;
     uint256 public minDeposit;
-    
 
-    // ============ EVENTS ============
-    
+    // Idle buffer target (basis points of totalAssets)
+    uint256 public idleBufferBps;
+
+    // Strategy registry: name => strategy address
+    mapping(string => address) private _strategyByName;
+    string[] public strategyNames;
+    mapping(string => bool) private _strategyExists;
+
+    // ============ Events ============
     event AllowlistUpdated(address indexed user, bool allowed);
     event DepositCapSet(uint256 cap);
     event MinDepositSet(uint256 minDeposit);
-    event VaultManagerSet(address indexed manager);
-    event TokenAdded(address indexed token);
+    event IdleBufferSet(uint256 bps);
+    event StrategyAdded(string name, address indexed strategy);
+    event StrategyRemoved(string name, address indexed strategy);
+    event Invested(string name, address indexed strategy, uint256 assets);
+    event Divested(string name, address indexed strategy, uint256 assets);
 
-    // ============ ERRORS ============
-    
+    // ============ Errors ============
     error NotAllowed();
     error DepositCapExceeded();
     error MinDepositNotMet();
-    error ManagerNotSet();
-    error WithdrawNotAllowed(string reason);
+    error IdleBufferOutOfRange();
+    error StrategyNotFound();
+    error StrategyAlreadyRegistered();
+    error StrategyAssetMismatch();
+    error InsufficientIdle(uint256 requested, uint256 idle);
+    error IdleBufferBreached();
 
-    // ============ MODIFIERS ============
-    
+    // ============ Modifiers ============
     modifier onlyAllowed(address user) {
-        if (allowlistEnabled && !allowlist[user]) {
-            revert NotAllowed();
-        }
-        _;
-    }
-    
-    modifier onlyManager() {
-        require(msg.sender == address(vaultManager), "Only manager");
+        if (allowlistEnabled && !allowlist[user]) revert NotAllowed();
         _;
     }
 
-    // ============ INITIALIZER ============
-    
+    // ============ Init ============
     /// @custom:oz-upgrades-unsafe-allow constructor
     constructor() {
         _disableInitializers();
     }
 
-    /**
-     * @dev Initialize the vault
-     * @param _asset The underlying asset (e.g., USDC)
-     * @param _admin The curator/admin address
-     * @param _name Vault name
-     * @param _symbol Vault share token symbol
-     * @param _allowlistEnabled Whether allowlist is enabled
-     * @param _depositCap Maximum total deposits
-     * @param _minDeposit Minimum deposit amount
-     * @param _permit2 Permit2 contract address
-     * @param _vaultManager VaultManager contract address
-     */
-    function initialize(
-        uint256 _id
-        address _admin,
-        string memory _name,
-        string memory _symbol,
-        bool _allowlistEnabled,
-        uint256 _depositCap,
-        uint256 _minDeposit,
-        address _permit2,
-        address _vaultManager
-    ) public initializer {
-        require(_admin != address(0), "Invalid admin");
-        require(_permit2 != address(0), "Invalid permit2");
-        require(_vaultManager != address(0), "Invalid manager");
-        
-        __ERC4626_init(IERC20(USDC));
-        __ERC20_init(sharesTokenName, ShareTokensSymbol);
-        __Ownable_init(_admin);
+    struct InitParams {
+        uint256 id;
+        address asset;
+        address admin;
+        string name;
+        string symbol;
+        bool allowlistEnabled;
+        uint256 depositCap;
+        uint256 minDeposit;
+        uint256 idleBufferBps;
+        address permit2;
+    }
+
+    function initialize(InitParams calldata p) external initializer {
+        require(p.admin != address(0), "Invalid admin");
+        require(p.asset != address(0), "Invalid asset");
+        require(p.depositCap > 0, "Cap=0");
+        if (p.idleBufferBps < MIN_IDLE_BPS || p.idleBufferBps > MAX_IDLE_BPS) {
+            revert IdleBufferOutOfRange();
+        }
+
+        __ERC4626_init(IERC20(p.asset));
+        __ERC20_init(p.name, p.symbol);
+        __Ownable_init(p.admin);
         __Pausable_init();
         __ReentrancyGuard_init();
-        
-        permit2 = IPermit2(_permit2);
-        vaultManager = IVaultManager(_vaultManager);
-        allowlistEnabled = _allowlistEnabled;
-        depositCap = _depositCap;
-        minDeposit = _minDeposit;
 
-        name = _name;
-        symbol = _symbol;
-        vaultID = _id;
-        
-        // Add admin to allowlist if enabled
-        if (_allowlistEnabled) {
-            allowlist[_admin] = true;
-        }
-        
-        // Add primary asset to supported tokens
-        supportedTokens[address(_asset)] = true;
-        tokenList.push(address(_asset));
-    }
+        vaultID = p.id;
+        permit2 = IPermit2(p.permit2);
+        allowlistEnabled = p.allowlistEnabled;
+        depositCap = p.depositCap;
+        minDeposit = p.minDeposit;
+        idleBufferBps = p.idleBufferBps;
 
-    // ============ VAULT MANAGER FUNCTIONS ============
-    
-    /**
-     * @dev Set the vault manager (can only be done by owner)
-     * This allows upgrading to a new manager if needed
-     */
-    function setVaultManager(address _manager) external onlyOwner {
-        require(_manager != address(0), "Invalid manager");
-        vaultManager = IVaultManager(_manager);
-        emit VaultManagerSet(_manager);
-    }
-
-    // ============ CURATOR FUNCTIONS (delegated to manager) ============
-
-    
-    /**
-     * @dev Invest vault assets into a strategy
-     */
-    function invest(string memory strategyName, uint256 assets) external onlyOwner whenNotPaused {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.invest(address(this), strategyName, assets);
-    }
-    
-    /**
-     * @dev Divest assets from a strategy
-     */
-    function divest(string memory strategyName, uint256 assets) external onlyOwner whenNotPaused {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.divest(address(this), strategyName, assets);
-    }
-    
-    /**
-     * @dev Swap tokens via manager
-     */
-    function swapTokens(
-        address tokenIn,
-        address tokenOut,
-        uint256 amountIn,
-        uint256 amountOutMin,
-        uint24 fee
-    ) external onlyOwner whenNotPaused returns (uint256 amountOut) {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        amountOut = vaultManager.swapTokens(address(this), tokenIn, tokenOut, amountIn, amountOutMin, fee);
-        
-        // Track new token
-        if (!supportedTokens[tokenOut]) {
-            supportedTokens[tokenOut] = true;
-            tokenList.push(tokenOut);
-            emit TokenAdded(tokenOut);
+        if (p.allowlistEnabled) {
+            allowlist[p.admin] = true;
         }
     }
-    
-    /**
-     * @dev Process withdrawal queue (for SCHEDULED model)
-     */
-    function processWithdrawQueue(uint256 maxToProcess) external onlyOwner whenNotPaused {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        vaultManager.processWithdrawQueue(address(this), maxToProcess);
-    }
-    
 
-    // ============ ADMIN FUNCTIONS ============
-    
+    // ============ Admin ============
     function setAllowlist(address user, bool allowed) external onlyOwner {
         allowlist[user] = allowed;
         emit AllowlistUpdated(user, allowed);
     }
 
+    function setAllowlistEnabled(bool enabled) external onlyOwner {
+        allowlistEnabled = enabled;
+    }
+
+    function setDepositCap(uint256 cap) external onlyOwner {
+        require(cap > 0, "Cap=0");
+        depositCap = cap;
+        emit DepositCapSet(cap);
+    }
+
+    function setMinDeposit(uint256 _min) external onlyOwner {
+        minDeposit = _min;
+        emit MinDepositSet(_min);
+    }
+
+    function setIdleBufferBps(uint256 bps) external onlyOwner {
+        if (bps < MIN_IDLE_BPS || bps > MAX_IDLE_BPS) revert IdleBufferOutOfRange();
+        idleBufferBps = bps;
+        emit IdleBufferSet(bps);
+    }
 
     function pause() external onlyOwner {
         _pause();
     }
 
-
     function unpause() external onlyOwner {
         _unpause();
     }
-    
-    /**
-     * @dev Add a supported token
-     */
-    function addSupportedToken(address token) external onlyOwner {
-        if (!supportedTokens[token]) {
-            supportedTokens[token] = true;
-            tokenList.push(token);
-            emit TokenAdded(token);
-        }
+
+    // ============ Strategy Registry ============
+    function addStrategy(string calldata name, address strategy) external onlyOwner {
+        require(strategy != address(0), "Zero strategy");
+        require(bytes(name).length > 0, "Empty name");
+        if (_strategyExists[name]) revert StrategyAlreadyRegistered();
+        if (IStrategy(strategy).asset() != asset()) revert StrategyAssetMismatch();
+
+        _strategyByName[name] = strategy;
+        _strategyExists[name] = true;
+        strategyNames.push(name);
+        emit StrategyAdded(name, strategy);
     }
 
-    // ============ DEPOSIT FUNCTIONS ============
-    
+    function removeStrategy(string calldata name) external onlyOwner {
+        if (!_strategyExists[name]) revert StrategyNotFound();
+        address strat = _strategyByName[name];
+        require(IStrategy(strat).totalAssets() == 0, "Strategy has assets");
+
+        _strategyExists[name] = false;
+        delete _strategyByName[name];
+
+        // Remove name from array (swap-and-pop)
+        uint256 len = strategyNames.length;
+        for (uint256 i = 0; i < len; i++) {
+            if (keccak256(bytes(strategyNames[i])) == keccak256(bytes(name))) {
+                strategyNames[i] = strategyNames[len - 1];
+                strategyNames.pop();
+                break;
+            }
+        }
+        emit StrategyRemoved(name, strat);
+    }
+
+    function getStrategy(string calldata name) external view returns (address) {
+        return _strategyByName[name];
+    }
+
+    function getStrategyNames() external view returns (string[] memory) {
+        return strategyNames;
+    }
+
+    function getStrategyAssets(string calldata name) external view returns (uint256) {
+        address strat = _strategyByName[name];
+        if (strat == address(0)) return 0;
+        return IStrategy(strat).totalAssets();
+    }
+
+    // ============ Invest / Divest ============
+    /// @dev Curator moves idle assets into a strategy. Must leave idle buffer intact.
+    function invest(string calldata name, uint256 assets) external onlyOwner whenNotPaused nonReentrant {
+        if (!_strategyExists[name]) revert StrategyNotFound();
+        address strat = _strategyByName[name];
+
+        uint256 idleBefore = _idle();
+        require(assets > 0 && assets <= idleBefore, "Invalid amount");
+
+        uint256 requiredIdle = (totalAssets() * idleBufferBps) / BPS_DENOMINATOR;
+        if (idleBefore - assets < requiredIdle) revert IdleBufferBreached();
+
+        IERC20(asset()).forceApprove(strat, assets);
+        IStrategy(strat).deposit(assets);
+        IERC20(asset()).forceApprove(strat, 0);
+
+        emit Invested(name, strat, assets);
+    }
+
+    /// @dev Pull assets back from a strategy into the vault.
+    function divest(string calldata name, uint256 assets) external onlyOwner whenNotPaused nonReentrant {
+        if (!_strategyExists[name]) revert StrategyNotFound();
+        address strat = _strategyByName[name];
+        require(assets > 0, "Zero");
+
+        IStrategy(strat).withdraw(assets);
+        emit Divested(name, strat, assets);
+    }
+
+    // ============ Deposits ============
     function _enforceDepositPolicies(uint256 assets) internal view {
         if (depositCap > 0 && totalAssets() + assets > depositCap) {
             revert DepositCapExceeded();
@@ -251,17 +252,25 @@ contract GroupVault is
         }
     }
 
-    function deposit(uint256 assets, address receiver) 
-        public virtual override whenNotPaused onlyAllowed(receiver) returns (uint256 shares) 
+    function deposit(uint256 assets, address receiver)
+        public
+        override
+        whenNotPaused
+        onlyAllowed(receiver)
+        returns (uint256 shares)
     {
         _enforceDepositPolicies(assets);
         return super.deposit(assets, receiver);
     }
 
-    function mint(uint256 shares, address receiver) 
-        public virtual override whenNotPaused onlyAllowed(receiver) returns (uint256 assets) 
+    function mint(uint256 shares, address receiver)
+        public
+        override
+        whenNotPaused
+        onlyAllowed(receiver)
+        returns (uint256 assets)
     {
-        assets = convertToAssets(shares);
+        assets = previewMint(shares);
         _enforceDepositPolicies(assets);
         return super.mint(shares, receiver);
     }
@@ -273,248 +282,109 @@ contract GroupVault is
         IPermit2.Signature calldata sig
     ) external nonReentrant whenNotPaused onlyAllowed(receiver) returns (uint256 shares) {
         require(assets > 0, "Zero");
-        require(p.token == address(asset()), "Wrong token");
+        require(address(permit2) != address(0), "No permit2");
+        require(p.token == asset(), "Wrong token");
         require(p.spender == address(this), "Spender!=vault");
         _enforceDepositPolicies(assets);
-        
+
         permit2.permit(msg.sender, p, sig);
-        permit2.transferFrom(msg.sender, address(this), uint160(assets), address(asset()));
-        
-        shares = convertToShares(assets);
+        permit2.transferFrom(msg.sender, address(this), uint160(assets), asset());
+
+        shares = previewDeposit(assets);
         require(shares > 0, "Zero shares");
         _mint(receiver, shares);
-        
+
         emit Deposit(msg.sender, receiver, assets, shares);
     }
 
-    // ============ WITHDRAWAL FUNCTIONS ============
-    
-    /**
-     * @dev Override withdraw to check with manager for withdrawal model rules
-     */
-    function withdraw(uint256 assets, address receiver, address owner) 
-        public virtual override whenNotPaused returns (uint256 shares) 
+    // ============ Withdrawals ============
+    /// @dev Withdrawals are served from idle balance only. If idle is insufficient,
+    ///      the curator must divest first.
+    function withdraw(uint256 assets, address receiver, address owner_)
+        public
+        override
+        whenNotPaused
+        returns (uint256 shares)
     {
-        if (address(vaultManager) != address(0)) {
-            (bool allowed, string memory reason) = vaultManager.canWithdraw(address(this), owner, assets);
-            if (!allowed) {
-                revert WithdrawNotAllowed(reason);
-            }
-        }
-        return super.withdraw(assets, receiver, owner);
+        uint256 idle = _idle();
+        if (assets > idle) revert InsufficientIdle(assets, idle);
+        return super.withdraw(assets, receiver, owner_);
     }
 
-    /**
-     * @dev Override redeem to check with manager for withdrawal model rules
-     */
-    function redeem(uint256 shares, address receiver, address owner) 
-        public virtual override whenNotPaused returns (uint256 assets) 
+    function redeem(uint256 shares, address receiver, address owner_)
+        public
+        override
+        whenNotPaused
+        returns (uint256 assets)
     {
-        assets = convertToAssets(shares);
-        if (address(vaultManager) != address(0)) {
-            (bool allowed, string memory reason) = vaultManager.canWithdraw(address(this), owner, assets);
-            if (!allowed) {
-                revert WithdrawNotAllowed(reason);
+        assets = previewRedeem(shares);
+        uint256 idle = _idle();
+        if (assets > idle) revert InsufficientIdle(assets, idle);
+        return super.redeem(shares, receiver, owner_);
+    }
+
+    // ============ Views ============
+    /// @dev Total assets = idle balance in vault + sum of all strategy balances.
+    function totalAssets() public view override returns (uint256 total) {
+        total = _idle();
+        uint256 len = strategyNames.length;
+        for (uint256 i = 0; i < len; i++) {
+            address strat = _strategyByName[strategyNames[i]];
+            if (strat != address(0)) {
+                total += IStrategy(strat).totalAssets();
             }
-        }
-        return super.redeem(shares, receiver, owner);
-    }
-    
-    /**
-     * @dev Request a withdrawal (for SCHEDULED and CURATOR_MANAGED models)
-     */
-    function requestWithdraw(uint256 shares) external whenNotPaused returns (uint256 requestId) {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        require(shares > 0, "Zero shares");
-        require(balanceOf(msg.sender) >= shares, "Insufficient shares");
-        
-        // Lock shares by transferring to vault
-        _transfer(msg.sender, address(this), shares);
-        
-        // Register with manager
-        requestId = vaultManager.requestWithdraw(address(this), msg.sender, shares);
-    }
-    
-    /**
-     * @dev Cancel a withdrawal request
-     */
-    function cancelWithdrawRequest(uint256 requestId) external {
-        if (address(vaultManager) == address(0)) revert ManagerNotSet();
-        
-        // Get pending shares before cancellation
-        (uint256 pendingShares,) = vaultManager.getPendingWithdraws(address(this), msg.sender);
-        
-        // Cancel in manager
-        vaultManager.cancelWithdrawRequest(address(this), msg.sender, requestId);
-        
-        // Return shares to user (simplified - in production would track exact amounts)
-        if (pendingShares > 0) {
-            _transfer(address(this), msg.sender, pendingShares);
         }
     }
 
-    // ============ VIEW FUNCTIONS ============
-    
+    function _idle() internal view returns (uint256) {
+        return IERC20(asset()).balanceOf(address(this));
+    }
+
+    function idleAssets() external view returns (uint256) {
+        return _idle();
+    }
+
+    function investedAssets() external view returns (uint256 invested) {
+        uint256 len = strategyNames.length;
+        for (uint256 i = 0; i < len; i++) {
+            address strat = _strategyByName[strategyNames[i]];
+            if (strat != address(0)) {
+                invested += IStrategy(strat).totalAssets();
+            }
+        }
+    }
+
+    function requiredIdleBuffer() external view returns (uint256) {
+        return (totalAssets() * idleBufferBps) / BPS_DENOMINATOR;
+    }
+
     function isAllowed(address user) external view returns (bool) {
         return !allowlistEnabled || allowlist[user];
     }
 
-    /**
-     * @dev Returns total assets including those invested via manager
-     */
-    function totalAssets() public view override returns (uint256) {
-        uint256 inVault = IERC20(asset()).balanceOf(address(this));
-        
-        if (address(vaultManager) != address(0)) {
-            inVault += vaultManager.getTotalInvestedAssets(address(this));
-        }
-        
-        return inVault;
-    }
-    
-    /**
-     * @dev Get idle assets in vault (not invested)
-     */
-    function idleAssets() public view returns (uint256) {
-        return IERC20(asset()).balanceOf(address(this));
-    }
-    
-    /**
-     * @dev Get invested assets via manager
-     */
-    function investedAssets() public view returns (uint256) {
-        if (address(vaultManager) == address(0)) return 0;
-        return vaultManager.getTotalInvestedAssets(address(this));
+    struct VaultState {
+        uint256 totalAssetsAmount;
+        uint256 assetsInVault;
+        uint256 assetsInStrategies;
+        uint256 requiredIdle;
+        uint256 idleBps;
+        bool isPaused;
+        uint256 currentDepositCap;
+        uint256 currentMinDeposit;
+        bool isAllowlistEnabled;
+        uint256 strategyCount;
     }
 
-    /**
-     * @dev Get all token balances held by the vault
-     */
-    function getVaultTokenBalances() external view returns (
-        address[] memory tokens,
-        uint256[] memory balances
-    ) {
-        uint256 count = tokenList.length;
-        tokens = new address[](count);
-        balances = new uint256[](count);
-        
-        for (uint256 i = 0; i < count; i++) {
-            tokens[i] = tokenList[i];
-            balances[i] = IERC20(tokenList[i]).balanceOf(address(this));
-        }
-    }
-
-    /**
-     * @dev Get a specific token balance
-     */
-    function getTokenBalance(address token) external view returns (uint256) {
-        return IERC20(token).balanceOf(address(this));
-    }
-
-    /**
-     * @dev Get all supported tokens
-     */
-    function getSupportedTokens() external view returns (address[] memory) {
-        return tokenList;
-    }
-    
-    /**
-     * @dev Get strategy names from manager
-     */
-    function getStrategyNames() external view returns (string[] memory) {
-        if (address(vaultManager) == address(0)) return new string[](0);
-        return vaultManager.getStrategyNames(address(this));
-    }
-    
-    /**
-     * @dev Get strategy address by name
-     */
-    function getStrategy(string memory name) external view returns (address) {
-        if (address(vaultManager) == address(0)) return address(0);
-        return vaultManager.getStrategy(address(this), name);
-    }
-    
-    /**
-     * @dev Get assets invested in a strategy
-     */
-    function getStrategyAssets(string memory name) external view returns (uint256) {
-        if (address(vaultManager) == address(0)) return 0;
-        return vaultManager.getStrategyAssets(address(this), name);
-    }
-
-    /**
-     * @dev Get comprehensive vault state
-     */
-    function getVaultState() external view returns (
-        uint256 totalAssetsAmount,
-        uint256 assetsInVault,
-        uint256 assetsInStrategies,
-        bool isPaused,
-        uint256 currentDepositCap,
-        uint256 currentMinDeposit,
-        bool isAllowlistEnabled,
-        address manager
-    ) {
-        totalAssetsAmount = totalAssets();
-        assetsInVault = idleAssets();
-        assetsInStrategies = investedAssets();
-        isPaused = paused();
-        currentDepositCap = depositCap;
-        currentMinDeposit = minDeposit;
-        isAllowlistEnabled = allowlistEnabled;
-        manager = address(vaultManager);
-    }
-    
-    /**
-     * @dev Get withdrawal model info from manager
-     */
-    function getWithdrawModelConfig() external view returns (
-        uint8 model,
-        uint256 bufferPercent,
-        uint256 epochLengthSeconds,
-        uint256 epochEndTime,
-        uint256 currentEpoch,
-        uint256 queueLength,
-        uint256 totalPending,
-        bool withdrawsAllowedNow
-    ) {
-        if (address(vaultManager) == address(0)) {
-            return (0, 0, 0, 0, 0, 0, 0, true);
-        }
-        
-        IVaultManager.VaultConfig memory config = vaultManager.getVaultConfig(address(this));
-        
-        model = uint8(config.withdrawModel);
-        bufferPercent = config.idleBufferPercent;
-        epochLengthSeconds = config.epochLength;
-        epochEndTime = vaultManager.getEpochEndTime(address(this));
-        currentEpoch = config.epochNumber;
-        queueLength = vaultManager.getWithdrawQueueLength(address(this));
-        totalPending = 0; // Would need to track this
-        withdrawsAllowedNow = vaultManager.canWithdrawNow(address(this));
-    }
-    
-    /**
-     * @dev Get withdrawal model name
-     */
-    function getWithdrawModelName() external view returns (string memory) {
-        if (address(vaultManager) == address(0)) return "Direct";
-        return vaultManager.getWithdrawModelName(address(this));
-    }
-    
-    /**
-     * @dev Check if withdrawals are currently allowed
-     */
-    function canWithdrawNow() external view returns (bool) {
-        if (address(vaultManager) == address(0)) return true;
-        return vaultManager.canWithdrawNow(address(this));
-    }
-    
-    /**
-     * @dev Get pending withdraws for a user
-     */
-    function getPendingWithdraws(address user) external view returns (uint256 totalShares, uint256 count) {
-        if (address(vaultManager) == address(0)) return (0, 0);
-        return vaultManager.getPendingWithdraws(address(this), user);
+    function getVaultState() external view returns (VaultState memory s) {
+        s.totalAssetsAmount = totalAssets();
+        s.assetsInVault = _idle();
+        s.assetsInStrategies = s.totalAssetsAmount - s.assetsInVault;
+        s.requiredIdle = (s.totalAssetsAmount * idleBufferBps) / BPS_DENOMINATOR;
+        s.idleBps = idleBufferBps;
+        s.isPaused = paused();
+        s.currentDepositCap = depositCap;
+        s.currentMinDeposit = minDeposit;
+        s.isAllowlistEnabled = allowlistEnabled;
+        s.strategyCount = strategyNames.length;
     }
 }

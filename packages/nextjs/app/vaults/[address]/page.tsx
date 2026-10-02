@@ -19,15 +19,15 @@ import { useVaultContract } from "~~/hooks/useVaultContract";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import deployedContracts from "~~/contracts/deployedContracts";
 
-const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
 export default function VaultDetails() {
   const params = useParams();
   const router = useRouter();
   const vaultAddress = params?.address as string;
   const { address: userAddress, isConnected } = useAccount();
-  const { vaultData, loading, deposit: handleDeposit } = useVaultContract(vaultAddress);
-  
+  const { vaultData, loading } = useVaultContract(vaultAddress);
+
   const [depositAmount, setDepositAmount] = useState("");
   const [showDepositModal, setShowDepositModal] = useState(false);
   const [usdcBalance, setUsdcBalance] = useState<bigint>(0n);
@@ -36,8 +36,10 @@ export default function VaultDetails() {
   const [approving, setApproving] = useState(false);
   const [depositing, setDepositing] = useState(false);
 
-  const usdcAddress = process.env.NEXT_PUBLIC_USDC_ADDRESS || "";
-  const vaultABI = (deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi || [];
+  const deployed = (deployedContracts as any)[CHAIN_ID] || {};
+  const usdcAddress =
+    process.env.NEXT_PUBLIC_USDC_ADDRESS || deployed.MockUSDC?.address || "";
+  const vaultABI = deployed.GroupVault?.abi || [];
 
   // Get USDC balance
   const { data: balance, refetch: refetchBalance } = useReadContract({
@@ -205,7 +207,7 @@ export default function VaultDetails() {
   const minDeposit = vaultData?.minDeposit ? Number(formatUnits(vaultData.minDeposit, 6)) : 0;
   const userBalanceUsdc = usdcBalance ? Number(formatUnits(usdcBalance, 6)) : 0;
   const totalAssetsUsdc = vaultData?.totalAssets ? Number(formatUnits(vaultData.totalAssets, 6)) : 0;
-  const userShares = vaultData?.userShares ? Number(formatUnits(vaultData.userShares, 18)) : 0;
+  const userShares = vaultData?.userShares ? Number(formatUnits(vaultData.userShares, 6)) : 0;
   const userBalanceValue = vaultData?.userBalance ? Number(formatUnits(vaultData.userBalance, 6)) : 0;
 
   const depositAmountNum = parseFloat(depositAmount) || 0;

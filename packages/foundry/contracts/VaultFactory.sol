@@ -2,191 +2,159 @@
 pragma solidity ^0.8.23;
 
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
-import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {GroupVault} from "./GroupVault.sol";
-import {IPermit2} from "./interfaces/IPermit2.sol";
-import {IVaultManager} from "./interfaces/IVaultManager.sol";
-import {CuratorStaking} from "./CruatorStaking.sol";
+import {CuratorStaking} from "./CuratorStaking.sol";
 
 /**
  * @title VaultFactory
- * @dev Factory contract for creating GroupVault instances
- * 
- * Architecture:
- * - Creates minimal proxy clones of GroupVault implementation
- * - Configures vault with VaultManager for strategy logic
- * - VaultManager can be upgraded independently
+ * @dev Clones GroupVault for curators. Requires curator to have approved
+ *      CuratorStaking for the required stake amount (2% of deposit cap).
+ *
+ *      Flow:
+ *        1) Curator approves CuratorStaking to spend `depositCap * 2 / 100` USDC
+ *        2) Curator calls VaultFactory.createVault(...)
+ *        3) Factory pulls stake via CuratorStaking.stakeFor
+ *        4) Factory clones GroupVault and initializes it with curator as admin
  */
 contract VaultFactory {
     GroupVault public immutable implementation;
-    CuratorStaking public immutable curatorstaking;
-    IPermit2 public immutable permit2;
-    IVaultManager public vaultManager;
+    CuratorStaking public immutable curatorStaking;
+    address public immutable asset;   // underlying token (e.g. USDC)
+    address public immutable permit2;
 
-    // state variable 
-    uint public nextVaultId;
-    
-    
-    // Track vault ownership
-    mapping(address => address) public vaultOwner;
-    mapping(address => address[]) public userVaults;
-    mapping(address => uint256) public vaultById;
+    uint256 public constant STAKE_BPS = 200; // 2% of depositCap
+    uint256 public constant BPS_DENOMINATOR = 10_000;
 
-    // Owner of this contract
+    uint256 public nextVaultId;
+
     address public owner;
-    
-    // Track all vaults
+
     address[] public allVaults;
-    
-    // Events
+    mapping(address => address) public vaultOwner;        // vault => curator
+    mapping(address => address[]) public userVaults;      // curator => vaults[]
+    mapping(address => uint256) public vaultId;           // vault => id
+    mapping(address => uint256) public curatorStakeFor;   // vault => stakeAmount
+
     event VaultCreated(
         address indexed vault,
-        address indexed owner,
+        address indexed curator,
         address indexed asset,
         string name,
         string symbol,
-        bool allowlistEnabled,
         uint256 depositCap,
         uint256 minDeposit,
-        uint256 stakeAmount
+        uint256 idleBufferBps,
+        bool allowlistEnabled,
+        uint256 stakeAmount,
+        uint256 vaultId
     );
-    
 
-    event VaultManagerSet(address indexed manager);
+    error NotOwner();
 
-    constructor(GroupVault _implementation, address _permit2, address _vaultManager, address _curatorStaking) {
-        implementation = _implementation;
-        permit2 = IPermit2(_permit2);
-        vaultManager = IVaultManager(_vaultManager);
-        curatorstaking = CuratorStaking(_curatorStaking);
-        owner = msg.sender;
-    }
-
-
-
-    // ============ MODIFIERS ============
     modifier onlyOwner() {
-        require(msg.sender == owner, "Not owner");
+        if (msg.sender != owner) revert NotOwner();
         _;
     }
 
-
-    /**
-     * @dev Set the vault manager (for upgrades)
-     */
-    function setVaultManager(address _manager) external onlyOwner {
-        require(_manager != address(0), "Not authorized");
-        vaultManager = IVaultManager(_manager);
-        emit VaultManagerSet(_manager);
+    constructor(
+        GroupVault _implementation,
+        CuratorStaking _curatorStaking,
+        address _asset,
+        address _permit2
+    ) {
+        require(address(_implementation) != address(0), "Impl=0");
+        require(address(_curatorStaking) != address(0), "Staking=0");
+        require(_asset != address(0), "Asset=0");
+        implementation = _implementation;
+        curatorStaking = _curatorStaking;
+        asset = _asset;
+        permit2 = _permit2;
+        owner = msg.sender;
     }
 
-    /**
-     * @dev Create a new vault with withdrawal model
-     * @param asset The underlying asset (e.g., USDC)
-     * @param admin The curator/admin address
-     * @param name Vault name
-     * @param symbol Vault share token symbol
-     * @param allowlistEnabled Whether allowlist is enabled
-     * @param depositCap Maximum total deposits
-     * @param minDeposit Minimum deposit amount
-     */
     function createVault(
         string calldata name,
         string calldata symbol,
         bool allowlistEnabled,
         uint256 depositCap,
         uint256 minDeposit,
+        uint256 idleBufferBps
     ) external returns (address vault) {
-        require(address(vaultManager) != address(0), "Manager not set");
-        require(depositCap > 0, "Deposit cap must be greater than 0");
-        require(minDeposit > 0, "Min Deposit must be greater than 0");
-        
-        
-        // Clone the implementation
+        require(depositCap > 0, "Cap=0");
+
+        // Pull curator stake first (curator must have approved CuratorStaking).
+        uint256 stakeAmount = (depositCap * STAKE_BPS) / BPS_DENOMINATOR;
+        if (stakeAmount > 0) {
+            curatorStaking.stakeFor(msg.sender, stakeAmount);
+        }
+
+        // Clone implementation and initialize.
         vault = Clones.clone(address(implementation));
-
-        // Stake USDC before initializing the vault
-        uint256 memory stakeAmount = (depositCap * 2) / 100;
-        if(stakeAmount > 0) {}
-        curatorstaking.stake(stakeAmount);
-
         uint256 id = ++nextVaultId;
 
-        // Initialize the vault with manager
         GroupVault(vault).initialize(
-            id,
-            msg.sender,
-            name,
-            symbol,
-            allowlistEnabled,
-            depositCap,
-            minDeposit,
-            address(permit2),
-            address(vaultManager)
+            GroupVault.InitParams({
+                id: id,
+                asset: asset,
+                admin: msg.sender,
+                name: name,
+                symbol: symbol,
+                allowlistEnabled: allowlistEnabled,
+                depositCap: depositCap,
+                minDeposit: minDeposit,
+                idleBufferBps: idleBufferBps,
+                permit2: permit2
+            })
         );
-        
-        // Configure withdrawal model in manager (pass admin as curator)
-        vaultManager.configureVault(vault, msg.sender, stakeAmount);
-                    
-        // Track ownership
+
+        // Track
         vaultOwner[vault] = msg.sender;
         userVaults[msg.sender].push(vault);
-        vaultById[vault] = id;
+        vaultId[vault] = id;
+        curatorStakeFor[vault] = stakeAmount;
         allVaults.push(vault);
 
-        
         emit VaultCreated(
             vault,
             msg.sender,
             asset,
             name,
             symbol,
-            allowlistEnabled,
             depositCap,
             minDeposit,
-            stakeAmount
+            idleBufferBps,
+            allowlistEnabled,
+            stakeAmount,
+            id
         );
     }
 
-    /**
-     * @dev Get all vaults created by a user
-     */
+    // ============ Views ============
+    function getAllVaults() external view returns (address[] memory) {
+        return allVaults;
+    }
+
     function getVaultsByUser(address user) external view returns (address[] memory) {
         return userVaults[user];
     }
 
-    /**
-     * @dev Check if user is admin of a vault
-     */
     function isVaultAdmin(address vault, address user) external view returns (bool) {
         return vaultOwner[vault] == user;
     }
 
-    /**
-     * @dev Get vault owner
-     */
     function getVaultOwner(address vault) external view returns (address) {
         return vaultOwner[vault];
     }
 
-    /**
-     * @dev Get total vaults created by user
-     */
     function getUserVaultCount(address user) external view returns (uint256) {
         return userVaults[user].length;
     }
-    
-    /**
-     * @dev Get all vaults
-     */
-    function getAllVaults() external view returns (address[] memory) {
-        return allVaults;
-    }
-    
-    /**
-     * @dev Get total vault count
-     */
+
     function getTotalVaultCount() external view returns (uint256) {
         return allVaults.length;
+    }
+
+    function computeStakeAmount(uint256 depositCap) external pure returns (uint256) {
+        return (depositCap * STAKE_BPS) / BPS_DENOMINATOR;
     }
 }

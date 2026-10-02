@@ -1,15 +1,19 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
-import { useAccount } from "wagmi";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { formatUnits } from "viem";
+import { useAccount, usePublicClient } from "wagmi";
+import deployedContracts from "../contracts/deployedContracts";
+
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
 export interface VaultMembership {
   vaultAddress: string;
   vaultName: string;
   vaultSymbol: string;
   role: "admin" | "member";
-  userBalance: string;
-  totalAssets: string;
+  userBalance: string;   // in asset units (human)
+  totalAssets: string;   // human
   totalSupply: string;
   isPaused: boolean;
   allowlistEnabled: boolean;
@@ -24,8 +28,13 @@ export interface VaultMembershipState {
   userAddress: string | undefined;
 }
 
+/**
+ * On-chain scan: walk VaultFactory.allVaults() and derive membership
+ * (admin, has shares, or on allowlist) for the connected user.
+ */
 export const useVaultMembership = () => {
   const { address: userAddress, isConnected } = useAccount();
+  const publicClient = usePublicClient();
   const [state, setState] = useState<VaultMembershipState>({
     memberships: [],
     loading: false,
@@ -34,165 +43,101 @@ export const useVaultMembership = () => {
     userAddress: undefined,
   });
 
-  // Check membership for a specific vault
-  const checkVaultMembership = useCallback(async (vaultAddress: string): Promise<VaultMembership | null> => {
-    if (!userAddress || !vaultAddress) return null;
+  const deployed = (deployedContracts as any)[CHAIN_ID] || {};
+  const factoryAddress = deployed.VaultFactory?.address as `0x${string}` | undefined;
+  const factoryAbi = deployed.VaultFactory?.abi ?? [];
+  const vaultAbi = deployed.GroupVault?.abi ?? [];
 
-    try {
-      const response = await fetch(
-        `/api/vault/check-membership?vaultAddress=${vaultAddress}&userAddress=${userAddress}`
-      );
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      if (!data.isMember) {
-        return null;
-      }
-
-      return {
-        vaultAddress: data.vaultAddress,
-        vaultName: data.vaultName,
-        vaultSymbol: data.vaultSymbol,
-        role: data.isOwner ? "admin" : "member",
-        userBalance: data.userBalance,
-        totalAssets: data.totalAssets,
-        totalSupply: data.totalSupply,
-        isPaused: data.isPaused,
-        allowlistEnabled: data.allowlistEnabled,
-        isOnAllowlist: data.isOnAllowlist,
-      };
-    } catch (error) {
-      console.error("Error checking vault membership:", error);
-      throw error;
-    }
-  }, [userAddress]);
-
-  // Discover all vaults where the user is a member
-  const discoverAllMemberships = useCallback(async (): Promise<VaultMembership[]> => {
-    if (!userAddress) return [];
-
-    setState(prev => ({ ...prev, loading: true, error: null }));
-
-    try {
-      // Try the comprehensive user memberships API first
-      let response = await fetch(`/api/vault/user-memberships?userAddress=${userAddress}`);
-      
-      // If the comprehensive API fails, fall back to the simple API
-      if (!response.ok) {
-        console.log("Comprehensive API failed, trying simple API...");
-        response = await fetch(`/api/vault/simple-memberships?userAddress=${userAddress}`);
-      }
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const data = await response.json();
-
-      if (data.error) {
-        throw new Error(data.error);
-      }
-
-      const memberships = data.memberships || [];
-
-      console.log(`Found ${memberships.length} vault memberships for user ${userAddress}`);
-      console.log("Summary:", data.summary);
-
-      setState(prev => ({
-        ...prev,
-        memberships,
-        loading: false,
-        error: null,
-      }));
-
-      return memberships;
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : "Failed to discover vault memberships";
-      console.error("Error discovering vault memberships:", error);
-      
-      setState(prev => ({
-        ...prev,
-        loading: false,
-        error: errorMessage,
-      }));
-
-      throw error;
-    }
-  }, [userAddress]);
-
-  // Refresh memberships
-  const refreshMemberships = useCallback(async () => {
-    if (!isConnected || !userAddress) {
-      setState({
-        memberships: [],
-        loading: false,
-        error: null,
-        isConnected: false,
-        userAddress: undefined,
-      });
+  const refresh = useCallback(async () => {
+    if (!publicClient || !factoryAddress || !userAddress) {
+      setState(s => ({ ...s, memberships: [], loading: false, isConnected, userAddress }));
       return;
     }
-
+    setState(s => ({ ...s, loading: true, error: null }));
     try {
-      await discoverAllMemberships();
-    } catch (error) {
-      // Error is already handled in discoverAllMemberships
-    }
-  }, [isConnected, userAddress, discoverAllMemberships]);
+      const vaults = (await publicClient.readContract<any, any, any>({
+        address: factoryAddress,
+        abi: factoryAbi,
+        functionName: "getAllVaults",
+      } as any)) as `0x${string}`[];
 
-  // Auto-discover memberships when wallet connects
+      const results: VaultMembership[] = [];
+      for (const v of vaults) {
+        try {
+          const [owner, name, symbol, totalAssets, totalSupply, isPaused, allowlistEnabled, userShares, isOnAllowlist] = await Promise.all([
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "owner" } as any) as Promise<`0x${string}`>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "name" } as any) as Promise<string>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "symbol" } as any) as Promise<string>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "totalAssets" } as any) as Promise<bigint>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "totalSupply" } as any) as Promise<bigint>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "paused" } as any) as Promise<boolean>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "allowlistEnabled" } as any) as Promise<boolean>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "balanceOf", args: [userAddress] } as any) as Promise<bigint>,
+            publicClient.readContract<any, any, any>({ address: v, abi: vaultAbi, functionName: "allowlist", args: [userAddress] } as any) as Promise<boolean>,
+          ]);
+
+          const isAdmin = owner.toLowerCase() === userAddress.toLowerCase();
+          const hasShares = userShares > 0n;
+          if (!isAdmin && !hasShares && !isOnAllowlist) continue;
+
+          let userBalance = 0n;
+          if (hasShares) {
+            userBalance = (await publicClient.readContract<any, any, any>({
+              address: v,
+              abi: vaultAbi,
+              functionName: "convertToAssets",
+              args: [userShares],
+            } as any)) as bigint;
+          }
+
+          results.push({
+            vaultAddress: v,
+            vaultName: name,
+            vaultSymbol: symbol,
+            role: isAdmin ? "admin" : "member",
+            userBalance: formatUnits(userBalance, 6),
+            totalAssets: formatUnits(totalAssets, 6),
+            totalSupply: totalSupply.toString(),
+            isPaused,
+            allowlistEnabled,
+            isOnAllowlist,
+          });
+        } catch {
+          // skip problematic vault
+        }
+      }
+      setState({ memberships: results, loading: false, error: null, isConnected, userAddress });
+    } catch (err: any) {
+      setState({ memberships: [], loading: false, error: err?.message || "Failed", isConnected, userAddress });
+    }
+  }, [publicClient, factoryAddress, factoryAbi, vaultAbi, userAddress, isConnected]);
+
   useEffect(() => {
-    if (isConnected && userAddress) {
-      setState(prev => ({
-        ...prev,
-        isConnected: true,
-        userAddress,
-      }));
-      
-      // Small delay to ensure wallet is fully connected
-      const timer = setTimeout(() => {
-        refreshMemberships();
-      }, 1000);
+    refresh();
+  }, [refresh]);
 
-      return () => clearTimeout(timer);
-    } else {
-      setState({
-        memberships: [],
-        loading: false,
-        error: null,
-        isConnected: false,
-        userAddress: undefined,
-      });
-    }
-  }, [isConnected, userAddress, refreshMemberships]);
+  const adminVaults = useMemo(
+    () => state.memberships.filter(m => m.role === "admin"),
+    [state.memberships],
+  );
+  const memberVaults = useMemo(
+    () => state.memberships.filter(m => m.role === "member"),
+    [state.memberships],
+  );
+  const totalValueLocked = useMemo(
+    () => state.memberships.reduce((sum, m) => sum + parseFloat(m.totalAssets || "0"), 0),
+    [state.memberships],
+  );
 
-  // Get admin vaults
-  const adminVaults = state.memberships.filter(membership => membership.role === "admin");
-
-  // Get member vaults (non-admin)
-  const memberVaults = state.memberships.filter(membership => membership.role === "member");
-
-  // Get total value locked across all vaults
-  const totalValueLocked = state.memberships.reduce((total, membership) => {
-    const assets = BigInt(membership.totalAssets || "0");
-    return total + Number(assets) / 1e6; // Convert from USDC units (6 decimals)
-  }, 0);
-
-  return {
-    ...state,
-    adminVaults,
-    memberVaults,
-    totalValueLocked,
-    checkVaultMembership,
-    discoverAllMemberships,
-    refreshMemberships,
-  };
+  return useMemo(
+    () => ({
+      ...state,
+      refresh,
+      refreshMemberships: refresh, // legacy alias
+      adminVaults,
+      memberVaults,
+      totalValueLocked,
+    }),
+    [state, refresh, adminVaults, memberVaults, totalValueLocked],
+  );
 };

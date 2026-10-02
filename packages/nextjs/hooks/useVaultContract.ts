@@ -1,477 +1,251 @@
 "use client";
 
-import { useState, useEffect, useCallback, useMemo } from "react";
-import { useAccount, useReadContract, useWriteContract, useTransaction } from "wagmi";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { parseUnits } from "viem";
+import { useAccount, usePublicClient, useReadContracts, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import deployedContracts from "../contracts/deployedContracts";
-const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
+
+const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 31337);
 
 export interface VaultData {
-  address: string;
+  address: `0x${string}`;
+  asset: `0x${string}` | undefined;
   name: string;
   symbol: string;
-  asset: string;
-  totalAssets: bigint;
-  totalSupply: bigint;
+  owner: `0x${string}` | undefined;
   depositCap: bigint;
   minDeposit: bigint;
-  allowlistEnabled: boolean;
-  isAllowed: boolean;
-  userBalance: bigint;
+  idleBufferBps: bigint;
+  totalAssets: bigint;
+  idleAssets: bigint;
+  investedAssets: bigint;
+  requiredIdle: bigint;
+  totalSupply: bigint;
   userShares: bigint;
+  userBalance: bigint; // user position valued in asset
+  allowlistEnabled: boolean;
   isPaused: boolean;
-  strategy?: string;
+  isAdmin: boolean;
+  isAllowed: boolean;
+  strategyNames: string[];
 }
 
 export const useVaultContract = (vaultAddress?: string) => {
   const { address: userAddress } = useAccount();
-  const [vaultData, setVaultData] = useState<VaultData | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const publicClient = usePublicClient();
 
-  // Debug logging
-  console.log("useVaultContract called with:", vaultAddress);
+  const deployed = (deployedContracts as any)[CHAIN_ID] || {};
+  const vaultAbi = deployed.GroupVault?.abi ?? [];
 
-  // Early return if no valid address
-  if (!vaultAddress || vaultAddress === "0x0000000000000000000000000000000000000000") {
+  const vault = (vaultAddress as `0x${string}` | undefined) || undefined;
+
+  const { data, refetch, isLoading } = useReadContracts({
+    contracts: vault
+      ? [
+          { address: vault, abi: vaultAbi, functionName: "asset" },
+          { address: vault, abi: vaultAbi, functionName: "name" },
+          { address: vault, abi: vaultAbi, functionName: "symbol" },
+          { address: vault, abi: vaultAbi, functionName: "owner" },
+          { address: vault, abi: vaultAbi, functionName: "depositCap" },
+          { address: vault, abi: vaultAbi, functionName: "minDeposit" },
+          { address: vault, abi: vaultAbi, functionName: "idleBufferBps" },
+          { address: vault, abi: vaultAbi, functionName: "totalAssets" },
+          { address: vault, abi: vaultAbi, functionName: "idleAssets" },
+          { address: vault, abi: vaultAbi, functionName: "investedAssets" },
+          { address: vault, abi: vaultAbi, functionName: "requiredIdleBuffer" },
+          { address: vault, abi: vaultAbi, functionName: "totalSupply" },
+          { address: vault, abi: vaultAbi, functionName: "allowlistEnabled" },
+          { address: vault, abi: vaultAbi, functionName: "paused" },
+          { address: vault, abi: vaultAbi, functionName: "getStrategyNames" },
+          ...(userAddress
+            ? [
+                { address: vault, abi: vaultAbi, functionName: "balanceOf", args: [userAddress] as const },
+                { address: vault, abi: vaultAbi, functionName: "isAllowed", args: [userAddress] as const },
+              ]
+            : []),
+        ]
+      : [],
+    query: { enabled: !!vault, refetchInterval: 10_000 },
+  });
+
+  const [userBalanceInAsset, setUserBalanceInAsset] = useState<bigint>(0n);
+
+  const vaultData: VaultData | null = useMemo(() => {
+    if (!vault || !data) return null;
+    const r = (i: number) => data[i]?.result;
+    const asset = r(0) as `0x${string}` | undefined;
+    const name = (r(1) as string) ?? "";
+    const symbol = (r(2) as string) ?? "";
+    const owner = r(3) as `0x${string}` | undefined;
+    const depositCap = (r(4) as bigint) ?? 0n;
+    const minDeposit = (r(5) as bigint) ?? 0n;
+    const idleBufferBps = (r(6) as bigint) ?? 0n;
+    const totalAssets = (r(7) as bigint) ?? 0n;
+    const idleAssets = (r(8) as bigint) ?? 0n;
+    const investedAssets = (r(9) as bigint) ?? 0n;
+    const requiredIdle = (r(10) as bigint) ?? 0n;
+    const totalSupply = (r(11) as bigint) ?? 0n;
+    const allowlistEnabled = (r(12) as boolean) ?? false;
+    const isPaused = (r(13) as boolean) ?? false;
+    const strategyNames = (r(14) as string[]) ?? [];
+    const userShares = userAddress ? ((r(15) as bigint) ?? 0n) : 0n;
+    const isAllowed = userAddress ? ((r(16) as boolean) ?? !allowlistEnabled) : !allowlistEnabled;
+    const isAdmin = userAddress != null && owner != null && owner.toLowerCase() === userAddress.toLowerCase();
+
     return {
-      vaultData: null,
-      loading: false,
-      error: "Invalid vault address",
+      address: vault,
+      asset,
+      name,
+      symbol,
+      owner,
+      depositCap,
+      minDeposit,
+      idleBufferBps,
+      totalAssets,
+      idleAssets,
+      investedAssets,
+      requiredIdle,
+      totalSupply,
+      userShares,
+      userBalance: userBalanceInAsset,
+      allowlistEnabled,
+      isPaused,
+      isAdmin,
+      isAllowed,
+      strategyNames,
     };
-  }
+  }, [vault, data, userAddress, userBalanceInAsset]);
 
-  // Use deployed vault ABI
-  const vaultABI = useMemo(() => (deployedContracts as any)[CHAIN_ID]?.GroupVault?.abi || [], []);
-
-  // Read vault data - only if we have a valid address and ABI
-  const { data: name, isLoading: nameLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "name",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1, // Reduce retries to avoid spam
-    },
-  });
-
-  const { data: symbol, isLoading: symbolLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "symbol",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: asset, isLoading: assetLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "asset",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: totalAssets, isLoading: totalAssetsLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "totalAssets",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: totalSupply, isLoading: totalSupplyLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "totalSupply",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: depositCap, isLoading: depositCapLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "depositCap",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: minDeposit, isLoading: minDepositLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "minDeposit",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: strategyAddr } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "strategy" as any,
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: allowlistEnabled, isLoading: allowlistLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "allowlistEnabled",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  const { data: isAllowed, isLoading: isAllowedLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "isAllowed",
-    args: userAddress ? [userAddress] : undefined,
-    query: {
-      enabled: !!vaultAddress && !!userAddress,
-    },
-  });
-
-  const { data: userBalance, isLoading: userBalanceLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "balanceOf",
-    args: userAddress ? [userAddress] : undefined,
-    query: {
-      enabled: !!vaultAddress && !!userAddress,
-    },
-  });
-
-  const { data: isPaused, isLoading: pausedLoading } = useReadContract({
-    address: vaultAddress as `0x${string}`,
-    abi: vaultABI,
-    functionName: "paused",
-    query: {
-      enabled: !!vaultAddress && !!vaultABI && vaultABI.length > 0,
-      retry: 1,
-    },
-  });
-
-  // Write functions
-  const { writeContract: deposit, data: depositData, isPending: depositLoading } = useWriteContract();
-
-  const { writeContract: withdraw, data: withdrawData, isPending: withdrawLoading } = useWriteContract();
-
-  const { writeContract: setAllowlist, isPending: setAllowlistLoading } = useWriteContract();
-
-  const { writeContract: setDepositCap, isPending: setDepositCapLoading } = useWriteContract();
-
-  const { writeContract: setMinDeposit, isPending: setMinDepositLoading } = useWriteContract();
-
-  const { writeContract: pause, isPending: pauseLoading } = useWriteContract();
-
-  const { writeContract: unpause, isPending: unpauseLoading } = useWriteContract();
-
-  const { writeContract: setStrategyWrite } = useWriteContract();
-  const { writeContract: investWrite } = useWriteContract();
-  const { writeContract: divestWrite } = useWriteContract();
-  const { writeContract: harvestWrite } = useWriteContract();
-
-  // Wait for transactions
-  const { isLoading: depositTxLoading, isSuccess: depositSuccess } = useTransaction({
-    hash: depositData,
-  });
-
-  const { isLoading: withdrawTxLoading, isSuccess: withdrawSuccess } = useTransaction({
-    hash: withdrawData,
-  });
-
-  // Combine vault data
+  // Convert userShares -> underlying assets
   useEffect(() => {
-    if (vaultAddress && name && symbol && asset && totalAssets !== undefined && totalSupply !== undefined) {
-      setVaultData({
-        address: vaultAddress,
-        name: name as string,
-        symbol: symbol as string,
-        asset: asset as string,
-        totalAssets: totalAssets as bigint,
-        totalSupply: totalSupply as bigint,
-        depositCap: depositCap as bigint || 0n,
-        minDeposit: minDeposit as bigint || 0n,
-        allowlistEnabled: allowlistEnabled as boolean || false,
-        isAllowed: isAllowed as boolean || false,
-        userBalance: userBalance as bigint || 0n,
-        userShares: userBalance as bigint || 0n, // balanceOf returns shares
-        isPaused: isPaused as boolean || false,
-        strategy: (strategyAddr as string) || undefined,
-      });
-    }
-  }, [
-    vaultAddress,
-    name,
-    symbol,
-    asset,
-    totalAssets,
-    totalSupply,
-    depositCap,
-    minDeposit,
-    allowlistEnabled,
-    isAllowed,
-    userBalance,
-    isPaused,
-    strategyAddr,
-  ]);
-
-  // Action functions
-  const handleDeposit = useCallback(
-    (amount: string, receiver?: string) => {
-      if (!vaultAddress || !amount) return;
-      
-      try {
-        const amountWei = parseUnits(amount, 6); // USDC has 6 decimals
-        deposit({
-          address: vaultAddress as `0x${string}`,
-          abi: vaultABI,
-          functionName: "deposit",
-          args: [amountWei, receiver || userAddress || "0x0000000000000000000000000000000000000000"],
-        });
-      } catch (err) {
-        setError("Deposit failed");
-        console.error("Deposit error:", err);
+    (async () => {
+      if (!publicClient || !vault || !vaultData?.userShares || vaultData.userShares === 0n) {
+        setUserBalanceInAsset(0n);
+        return;
       }
+      try {
+        const assets = (await publicClient.readContract<any, any, any>({
+          address: vault,
+          abi: vaultAbi,
+          functionName: "convertToAssets",
+          args: [vaultData.userShares],
+        } as any)) as bigint;
+        setUserBalanceInAsset(assets);
+      } catch {
+        setUserBalanceInAsset(0n);
+      }
+    })();
+  }, [publicClient, vault, vaultAbi, vaultData?.userShares]);
+
+  // ---------- Write actions ----------
+  const { writeContractAsync } = useWriteContract();
+  const [actionHash, setActionHash] = useState<`0x${string}` | undefined>();
+  const { isLoading: txLoading, isSuccess } = useWaitForTransactionReceipt({
+    hash: actionHash,
+    query: { enabled: !!actionHash },
+  });
+
+  useEffect(() => {
+    if (isSuccess) refetch();
+  }, [isSuccess, refetch]);
+
+  const call = useCallback(
+    async (fn: string, args: readonly unknown[]) => {
+      if (!vault) throw new Error("No vault");
+      const h = await writeContractAsync({ address: vault, abi: vaultAbi, functionName: fn, args });
+      setActionHash(h);
+      return h;
     },
-    [vaultAddress, deposit, userAddress, vaultABI]
+    [vault, vaultAbi, writeContractAsync],
   );
 
-  const handleWithdraw = useCallback(
-    (shares: string, receiver?: string) => {
-      if (!vaultAddress || !shares) return;
-      
-      try {
-        const sharesWei = parseUnits(shares, 18); // ERC20 shares have 18 decimals
-        withdraw({
-          address: vaultAddress as `0x${string}`,
-          abi: vaultABI,
-          functionName: "withdraw",
-          args: [sharesWei, receiver || userAddress || "0x0000000000000000000000000000000000000000", userAddress || "0x0000000000000000000000000000000000000000"],
-        });
-      } catch (err) {
-        setError("Withdraw failed");
-        console.error("Withdraw error:", err);
-      }
+  const deposit = useCallback(
+    async (humanAmount: string) => {
+      if (!userAddress) throw new Error("No wallet");
+      return call("deposit", [parseUnits(humanAmount, 6), userAddress]);
     },
-    [vaultAddress, withdraw, userAddress, vaultABI]
+    [call, userAddress],
   );
 
-  const handleSetAllowlist = useCallback(
-    (user: string, allowed: boolean) => {
-      if (!vaultAddress) return;
-      
-      try {
-        setAllowlist({
-          address: vaultAddress as `0x${string}`,
-          abi: vaultABI,
-          functionName: "setAllowlist",
-          args: [user, allowed],
-        });
-      } catch (err) {
-        setError("Set allowlist failed");
-        console.error("Set allowlist error:", err);
-      }
+  const withdraw = useCallback(
+    async (humanAmount: string) => {
+      if (!userAddress) throw new Error("No wallet");
+      return call("withdraw", [parseUnits(humanAmount, 6), userAddress, userAddress]);
     },
-    [vaultAddress, setAllowlist, vaultABI]
+    [call, userAddress],
   );
 
-  const handleSetDepositCap = useCallback(
-    (cap: string) => {
-      if (!vaultAddress || !cap) return;
-      
-      try {
-        const capWei = parseUnits(cap, 6); // USDC has 6 decimals
-        setDepositCap({
-          address: vaultAddress as `0x${string}`,
-          abi: vaultABI,
-          functionName: "setDepositCap",
-          args: [capWei],
-        });
-      } catch (err) {
-        setError("Set deposit cap failed");
-        console.error("Set deposit cap error:", err);
-      }
+  // invest/divest accept EITHER (name, amount) or (amount) alone — in the
+  // single-arg form we fall back to the first registered strategy name.
+  const _firstStrategy = useCallback(() => vaultData?.strategyNames?.[0] ?? "default", [vaultData]);
+
+  const invest = useCallback(
+    (nameOrAmount: string, maybeAmount?: string) => {
+      const [name, amt] = maybeAmount == null ? [_firstStrategy(), nameOrAmount] : [nameOrAmount, maybeAmount];
+      return call("invest", [name, parseUnits(amt, 6)]);
     },
-    [vaultAddress, setDepositCap, vaultABI]
+    [call, _firstStrategy],
   );
 
-  const handleSetMinDeposit = useCallback(
-    (min: string) => {
-      if (!vaultAddress || !min) return;
-      
-      try {
-        const minWei = parseUnits(min, 6); // USDC has 6 decimals
-        setMinDeposit({
-          address: vaultAddress as `0x${string}`,
-          abi: vaultABI,
-          functionName: "setMinDeposit",
-          args: [minWei],
-        });
-      } catch (err) {
-        setError("Set min deposit failed");
-        console.error("Set min deposit error:", err);
-      }
+  const divest = useCallback(
+    (nameOrAmount: string, maybeAmount?: string) => {
+      const [name, amt] = maybeAmount == null ? [_firstStrategy(), nameOrAmount] : [nameOrAmount, maybeAmount];
+      return call("divest", [name, parseUnits(amt, 6)]);
     },
-    [vaultAddress, setMinDeposit, vaultABI]
+    [call, _firstStrategy],
   );
 
-  const handlePause = useCallback(() => {
-    if (!vaultAddress) return;
-    
-    try {
-      pause({
-        address: vaultAddress as `0x${string}`,
-        abi: vaultABI,
-        functionName: "pause",
-        args: [],
-      });
-    } catch (err) {
-      setError("Pause failed");
-      console.error("Pause error:", err);
-    }
-  }, [vaultAddress, pause, vaultABI]);
+  // addStrategy / setStrategy: accept (name, address) or (address) alone.
+  const addStrategy = useCallback(
+    (nameOrAddress: string, maybeAddress?: string) => {
+      const [name, address] = maybeAddress == null ? ["default", nameOrAddress] : [nameOrAddress, maybeAddress];
+      return call("addStrategy", [name, address]);
+    },
+    [call],
+  );
 
-  const handleUnpause = useCallback(() => {
-    if (!vaultAddress) return;
-    
-    try {
-      unpause({
-        address: vaultAddress as `0x${string}`,
-        abi: vaultABI,
-        functionName: "unpause",
-        args: [],
-      });
-    } catch (err) {
-      setError("Unpause failed");
-      console.error("Unpause error:", err);
-    }
-  }, [vaultAddress, unpause, vaultABI]);
+  const removeStrategy = useCallback((name: string) => call("removeStrategy", [name]), [call]);
+  const pause = useCallback(() => call("pause", []), [call]);
+  const unpause = useCallback(() => call("unpause", []), [call]);
+  const setAllowlist = useCallback(
+    (user: string, allowed: boolean) => call("setAllowlist", [user as `0x${string}`, allowed]),
+    [call],
+  );
+  const setDepositCap = useCallback(
+    (humanCap: string) => call("setDepositCap", [parseUnits(humanCap, 6)]),
+    [call],
+  );
+  const setMinDeposit = useCallback(
+    (humanMin: string) => call("setMinDeposit", [parseUnits(humanMin, 6)]),
+    [call],
+  );
+  const setIdleBufferBps = useCallback(
+    (bps: number) => call("setIdleBufferBps", [BigInt(bps)]),
+    [call],
+  );
 
-  const handleSetStrategy = useCallback((addr: string) => {
-    if (!vaultAddress || !addr) return;
-    try {
-      setStrategyWrite({
-        address: vaultAddress as `0x${string}`,
-        abi: vaultABI,
-        functionName: "setStrategy" as any,
-        args: [addr],
-      });
-    } catch (err) {
-      setError("Set strategy failed");
-      console.error("Set strategy error:", err);
-    }
-  }, [vaultAddress, setStrategyWrite, vaultABI]);
-
-  const handleInvest = useCallback((assets: string) => {
-    if (!vaultAddress || !assets) return;
-    try {
-      const amt = parseUnits(assets, 6);
-      investWrite({
-        address: vaultAddress as `0x${string}`,
-        abi: vaultABI,
-        functionName: "invest" as any,
-        args: [amt],
-      });
-    } catch (err) {
-      setError("Invest failed");
-      console.error("Invest error:", err);
-    }
-  }, [vaultAddress, investWrite, vaultABI]);
-
-  const handleDivest = useCallback((assets: string) => {
-    if (!vaultAddress || !assets) return;
-    try {
-      const amt = parseUnits(assets, 6);
-      divestWrite({
-        address: vaultAddress as `0x${string}`,
-        abi: vaultABI,
-        functionName: "divest" as any,
-        args: [amt],
-      });
-    } catch (err) {
-      setError("Divest failed");
-      console.error("Divest error:", err);
-    }
-  }, [vaultAddress, divestWrite, vaultABI]);
-
-  const handleHarvest = useCallback((yieldAssets: string) => {
-    if (!vaultAddress || !yieldAssets) return;
-    try {
-      const amt = parseUnits(yieldAssets, 6);
-      harvestWrite({
-        address: vaultAddress as `0x${string}`,
-        abi: vaultABI,
-        functionName: "harvest" as any,
-        args: [amt],
-      });
-    } catch (err) {
-      setError("Harvest failed");
-      console.error("Harvest error:", err);
-    }
-  }, [vaultAddress, harvestWrite, vaultABI]);
-
-  // Loading states
-  const isLoading =
-    nameLoading ||
-    symbolLoading ||
-    assetLoading ||
-    totalAssetsLoading ||
-    totalSupplyLoading ||
-    depositCapLoading ||
-    minDepositLoading ||
-    allowlistLoading ||
-    isAllowedLoading ||
-    userBalanceLoading ||
-    pausedLoading ||
-    depositLoading ||
-    withdrawLoading ||
-    depositTxLoading ||
-    withdrawTxLoading;
+  // Back-compat aliases used by older UI
+  const setStrategy = addStrategy;
+  const harvest = useCallback(async (_amount?: string): Promise<undefined> => undefined, []);
 
   return {
     vaultData,
-    loading: isLoading,
-    error,
-    setError,
-    
-    // Actions
-    deposit: handleDeposit,
-    withdraw: handleWithdraw,
-    setAllowlist: handleSetAllowlist,
-    setDepositCap: handleSetDepositCap,
-    setMinDeposit: handleSetMinDeposit,
-    pause: handlePause,
-    unpause: handleUnpause,
-    setStrategy: handleSetStrategy,
-    invest: handleInvest,
-    divest: handleDivest,
-    harvest: handleHarvest,
-    
-    // Transaction states
-    depositLoading: depositLoading || depositTxLoading,
-    withdrawLoading: withdrawLoading || withdrawTxLoading,
-    setAllowlistLoading,
-    setDepositCapLoading,
-    setMinDepositLoading,
-    pauseLoading,
-    unpauseLoading,
-    
-    // Success states
-    depositSuccess,
-    withdrawSuccess,
+    loading: isLoading || txLoading,
+    actionHash,
+    refetch,
+    deposit,
+    withdraw,
+    invest,
+    divest,
+    addStrategy,
+    removeStrategy,
+    setStrategy,
+    harvest,
+    pause,
+    unpause,
+    setAllowlist,
+    setDepositCap,
+    setMinDeposit,
+    setIdleBufferBps,
   };
 };

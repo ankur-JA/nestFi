@@ -17,13 +17,10 @@ import {
   UserIcon,
   InformationCircleIcon
 } from "@heroicons/react/24/outline";
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { parseUnits } from "viem";
+import { useAccount } from "wagmi";
 import { RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
-import deployedContracts from "~~/contracts/deployedContracts";
+import { useVaultFactory } from "~~/hooks/useVaultFactory";
 import { useTheme } from "~~/contexts/ThemeContext";
-
-const CHAIN_ID = Number(process.env.NEXT_PUBLIC_CHAIN_ID || 11155111);
 
 // Withdrawal model options
 const WITHDRAW_MODELS = [
@@ -111,12 +108,8 @@ export default function CreateVaultPage() {
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [success, setSuccess] = useState(false);
 
-  const asset = process.env.NEXT_PUBLIC_USDC_ADDRESS || "";
-  const factoryAddress = (deployedContracts as any)[CHAIN_ID]?.VaultFactory?.address;
-  const factoryAbi = (deployedContracts as any)[CHAIN_ID]?.VaultFactory?.abi;
-
-  const { writeContract, data: hash, isPending, error: writeError } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({ hash });
+  const { createVault, loading: isConfirming, success: isSuccess, error: writeError } = useVaultFactory();
+  const isPending = isConfirming;
 
   const handleInputChange = (field: string, value: string | boolean | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -163,27 +156,17 @@ export default function CreateVaultPage() {
   };
 
   const handleSubmit = async () => {
-    if (!factoryAddress || !address) return;
-    
+    if (!address) return;
     try {
-      const depositCapWei = parseUnits(formData.depositCap, 6);
-      const minDepositWei = parseUnits(formData.minDeposit, 6);
-      
-      writeContract({
-        address: factoryAddress as `0x${string}`,
-        abi: factoryAbi,
-        functionName: "createVault",
-        args: [
-          asset as `0x${string}`,
-          address,
-          formData.name,
-          formData.symbol,
-          formData.allowlistEnabled,
-          depositCapWei,
-          minDepositWei,
-          formData.withdrawModel,
-          BigInt(formData.withdrawConfig),
-        ],
+      // withdrawConfig is a percentage (e.g. 10 for 10%); convert to basis points.
+      const idleBufferBps = Math.max(800, Math.min(1500, Math.round(formData.withdrawConfig * 100)));
+      await createVault({
+        name: formData.name,
+        symbol: formData.symbol,
+        allowlistEnabled: formData.allowlistEnabled,
+        depositCap: formData.depositCap,
+        minDeposit: formData.minDeposit,
+        idleBufferBps,
       });
     } catch (err) {
       console.error("Error creating vault:", err);
@@ -867,7 +850,7 @@ export default function CreateVaultPage() {
                   <div className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-xl">
                     <p className="text-red-400 text-sm flex items-center gap-2">
                       <ExclamationTriangleIcon className="h-4 w-4" />
-                      {writeError.message || "Transaction failed"}
+                      {writeError || "Transaction failed"}
                     </p>
                   </div>
                 )}

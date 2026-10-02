@@ -123,7 +123,7 @@ export const VaultActions: React.FC<VaultActionsProps> = ({ vaultAddress, onSucc
         >
           <p className="text-red-400 text-sm flex items-center gap-2">
             <ExclamationTriangleIcon className="h-4 w-4" />
-            {error || txError?.message || "Transaction failed"}
+            {error || txError || "Transaction failed"}
           </p>
         </motion.div>
       )}
